@@ -1,10 +1,32 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="1_workshop"]
+[ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="2_workshop"]
+[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="3_layout"]
+[ext_resource type="PackedScene" path="res://components/camera_shake/camera_shake.tscn" id="4_shake"]
 
 [node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="LayoutMarks" type="Node2D" parent="."]
+
+[node name="CameraLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(960, 540)
+
+[node name="CameraPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(540, 960)
+
+[node name="Layout" parent="." node_paths=PackedStringArray("movers", "landscape_marks", "portrait_marks") instance=ExtResource("3_layout")]
+drive_window = true
+movers = [NodePath("../Camera")]
+landscape_marks = [NodePath("../LayoutMarks/CameraLandscape")]
+portrait_marks = [NodePath("../LayoutMarks/CameraPortrait")]
+copy_scale = false
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(960, 540)
 
-[node name="Workshop" parent="." instance=ExtResource("1_workshop")]
+[node name="CameraShake" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("4_shake")]
+camera = NodePath("../Camera")
+
+[node name="Workshop" parent="." instance=ExtResource("2_workshop")]

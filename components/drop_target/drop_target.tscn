@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/drop_target/drop_target.gd" id="1_drop"]
+
+[node name="DropTarget" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = 80.0
+mouse_filter = 2
+script = ExtResource("1_drop")

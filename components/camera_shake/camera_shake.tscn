@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/camera_shake/camera_shake.gd" id="1_shake"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_shake"]
+noise_type = 3
+frequency = 0.3
+
+[node name="CameraShake" type="Node"]
+script = ExtResource("1_shake")
+noise = SubResource("FastNoiseLite_shake")

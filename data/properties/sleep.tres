@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PropertyData" format=3]
+
+[ext_resource type="Script" path="res://data/properties/property_data.gd" id="1_property_data"]
+
+[resource]
+script = ExtResource("1_property_data")
+id = &"sleep"
+name_key = &"PROPERTY_SLEEP_NAME"
+color = Color(0.423529, 0.482353, 0.85098, 1)
+pattern = 4
+density_rank = 5
+evaporate_temp = 55.0
+burn_temp = -1.0

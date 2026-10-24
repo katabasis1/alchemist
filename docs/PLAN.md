@@ -1,6 +1,6 @@
 # План разработки — «Лавка алхимика» (рабочее название)
 
-Версия плана: **1.3** (2026-10-24). История: 1.1 — GitHub с v0.0.1, temp-графика + промпт, humanizer; 1.2 — GDD v1, классы данных по GDD §13; 1.3 — портретный фон перенесён на S1.5, соглашения об именах файлов (S1.1). Статусы: `[ ]` не начато · `[~]` в работе · `[x]` готово.
+Версия плана: **1.4** (2026-10-24). История: 1.1 — GitHub с v0.0.1, temp-графика + промпт, humanizer; 1.2 — GDD v1, классы данных по GDD §13; 1.3 — портретный фон перенесён на S1.5, соглашения об именах файлов (S1.1); 1.4 — обмен с GitHub файлами/патчами (D16), S1.3 закрыт чтением GitHub напрямую. Статусы: `[ ]` не начато · `[~]` в работе · `[x]` готово.
 Все числа — **стартовые значения** (Numbers Policy): проверяются плейтестом, итог фиксируется в `docs/GDD.md`.
 
 ## Версии
@@ -37,10 +37,10 @@
 ## S1. Каркас и GitHub
 - [x] S1.1 Валидатор v1 `tools/validate_project.py` (только stdlib Python 3.10+): синтаксис `.tscn/.tres/project.godot`, пути `ext_resource`/автозагрузок, уникальность id, ссылки `ExtResource/SubResource`, родители узлов, `NodePath` в `@export`, связи сигналов (метод существует), `uid://` без выдумок, базовый lint GDScript (типизация, `extends` только встроенных классов, запрет `Node.new()`, шапка `##`, «магические числа» — предупреждение), локализация (`strings.csv` ↔ `humanized.txt` ↔ `tr()`), контракт ассетов (`ASSET_REGISTRY.md`: файл есть, холст совпадает, промпт есть), имена файлов `snake_case`. Самотест на фикстурах: `--self-test`.
 - [x] S1.2 Минимальный проект: `project.godot` (Compatibility, 1920×1080, `canvas_items` + `expand`, аудио-шины), структура папок (`.gdignore` в `docs/`, `tools/`), сцена `main.tscn` → `workshop.tscn` с временным фоном, слоем прилавка и клиентом из пробников; `README.md`, `.gitignore` (`.godot/`, экспорт), `.gitattributes`; `AGENTS.md` и `docs/` переезжают в репозиторий; `tools/pod_sync.py` — протокол сохранения одной командой. → **M0 = v0.0.1 → GitHub**
-- [ ] S1.3 Проверка обмена туда-обратно: пользователь открывает в Godot, коммитит сгенерированные файлы (`*.uid`, `*.import`), выкладывает ZIP репозитория в `inbox/` Pod → агент синхронизирует.
-- [ ] S1.4 Автозагрузки: `EventBus`, `GameState`, `SaveService`, `Platform` (адаптер SDK + mock), `AudioDirector`, `SceneRouter`.
-- [ ] S1.5 Компоненты v1: `HitArea`, `Hoverable`, `Draggable`, `DropTarget`, `StateMachine`+`State`, `JuicePunch`, `SquashStretch`, `CameraShake`, `Flash`, `SfxComponent`, `Tooltip`, `LayoutSwitcher` + портретный фон `bg_workshop_portrait` (temp + промпт P-BG-02).
-- [ ] S1.6 Классы данных (Resource) по GDD §13: `PropertyData`, `IngredientData`, `RecipeData`, `ClientData`, `OrderTemplate`, `ToolData` (вкл. улучшения — `UpgradeData` не нужен), `RankData`, `DailyRewardConfig`, `EconomyConfig`; `.tres` с данными GDD v1.
+- [x] S1.3 Проверка обмена туда-обратно: пользователь выложил проект на GitHub (`katabasis1/alchemist`), открыл в Godot, закоммитил `*.import` → агент восстановил текстовые файлы с GitHub веб-инструментом (байт-в-байт), картинки — заглушками для валидатора (AGENTS.md §2.3). Выдача пользователю — `alchemist_update_v*.zip` + патчи.
+- [x] S1.4 Автозагрузки: `EventBus`, `GameState`, `SaveService`, `Platform` (адаптер SDK + mock), `AudioDirector`, `SceneRouter` — сценами в `autoload/`; запуск в `scenes/main/main.gd`; проверочная сцена `scenes/debug/services_smoke.tscn`. → v0.0.2
+- [x] S1.5 Компоненты v1: `HitArea`, `Hoverable`, `Draggable`, `DropTarget`, `StateMachine`+`State`, `JuicePunch`, `SquashStretch`, `CameraShake`, `Flash`, `SfxComponent`, `Tooltip`, `LayoutSwitcher` + портретный фон `bg_workshop_portrait` (temp + промпт P-BG-02).
+- [x] S1.6 Классы данных (Resource) по GDD §13: `PropertyData`, `IngredientData`, `RecipeData`, `ClientData`, `OrderTemplate`, `ToolData` (вкл. улучшения — `UpgradeData` не нужен), `RankData`, `DailyRewardConfig`, `EconomyConfig`; `.tres` с данными GDD v1.
 - [ ] S1.7 Локализация ru/en: `strings.csv`, `humanized.txt`, экран загрузки. → **M1 = v0.1.0**
 
 ## S2. Вертикальный срез: ступка («игрушка»)

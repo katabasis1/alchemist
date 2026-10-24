@@ -1,0 +1,86 @@
+# COMPONENTS — каталог компонентов и рецепты сборки
+
+Сущность = сцена из узлов-компонентов (AGENTS.md §3, п. 1–5). Здесь собрано, какие компоненты есть, кто чем владеет
+и как из них собирать предметы, станции и экраны. Живой пример всего ниже: `scenes/debug/components_demo.tscn` (F6).
+Числа в таблицах — стартовые значения (Numbers Policy, GDD §12). Менять их нужно в инспекторе, а не в коде.
+
+## 1. Главное правило: одно свойство узла — один владелец
+
+Анимации разных компонентов не должны спорить за одно и то же свойство одного узла. Поэтому сущность делится на вложенные
+узлы-«слои», и у каждого свойства каждого слоя ровно один хозяин:
+
+| Свойство узла | Кто может владеть | Кому нельзя его отдавать одновременно |
+|---|---|---|
+| `position` корня сущности | Draggable (перенос, полёт домой) или LayoutSwitcher (раскладка) | Draggable берёт новую «домашнюю» точку при следующем взятии в покое, так что их можно совмещать |
+| `position`, `scale` слоя Lift | Draggable (`lift_node`: подъём при взятии) | JuicePunch, SquashStretch, Hoverable |
+| `scale` слоя | **один** из: SquashStretch, JuicePunch.punch, Hoverable (`hover_scale ≠ 1`), LayoutSwitcher (`copy_scale`) | все остальные из этого списка |
+| `rotation` слоя | JuicePunch.wiggle | — |
+| `modulate` | Hoverable, Flash (режим MODULATE), DropTarget (на узле `highlight`), Draggable (на узле `shadow`) | два из них на одном узле: Flash и Hoverable вычисляют цвет от «базы», запомненной в `_ready` |
+| параметр шейдера `flash` | Flash (режим SHADER) | — |
+
+Типичная лесенка предмета: `Корень (Draggable двигает) → Lift (подъём) → Squash (SquashStretch, опора у основания) → Sprite (Hoverable — только цвет, Flash — шейдер)`.
+
+## 2. Каталог
+
+| Компонент | Сцена | Узел | Назначение | Сигналы | Методы для владельца |
+|---|---|---|---|---|---|
+| HitArea | `components/hit_area/hit_area.tscn` | Control | Зона касания: нажатие, тап, долгое нажатие, наведение. Прямоугольник или круг (`radius`). Не меньше 96 px (GDD §12) | `pointer_down/moved/up`, `pointer_cancelled`, `tapped`, `long_pressed`, `hover_changed` | `cancel()`, `contains_world_point()` |
+| Hoverable | `components/hoverable/hoverable.tscn` | Node | Подсветка при наведении мышью (на телефоне молчит) | `hover_started`, `hover_ended` | — |
+| Draggable | `components/draggable/draggable.tscn` | Node | Перенос и запасной режим «тап по предмету → тап по цели». Подъём, тень, полёт домой | `drag_started`, `drag_moved`, `dropped`, `drop_rejected`, `landed`, `returned`, `selected_changed` | `select()`, `deselect()`, `cancel()`, `place_at()` — мгновенно, `send_to()` — плавно |
+| DropTarget | `components/drop_target/drop_target.tscn` | Control | Цель для переноса: фильтр по `kind`, приоритет, подсветка, точка установки, вето станции | `drop_attempted`, `received`, `rejected(reason)`, `highlight_changed` | `reject(reason)` (только внутри `drop_attempted`), `find_at()` (static) |
+| StateMachine + State | `components/state_machine/*.tscn` | Node | Состояния станции/клиента: разрешённые переходы, таймер выхода, очередь перехода из обработчика | `state_changed`, `transition_refused`; у State: `entered`, `exited`, `updated` | `start()`, `transition_to(name, force)`, `is_in()` |
+| JuicePunch | `components/juice_punch/juice_punch.tscn` | Node | Пульс масштабом («да!») и покачивание («нет») | `finished` | `punch(strength)`, `wiggle(strength)` |
+| SquashStretch | `components/squash_stretch/squash_stretch.tscn` | Node | Сжатие и вытягивание с пружиной, площадь сохраняется | — | `squash()`, `stretch()`, `hold(value)`, `release()` |
+| CameraShake | `components/camera_shake/camera_shake.tscn` | Node | Тряска камеры по «травме» (шум, затухание). Выключается настройкой | — | `add_trauma()`, `stop()`; глобально — `EventBus.camera_shake_requested` |
+| Flash | `components/flash/flash.tscn` | Node | Вспышка цветом: шейдер `flash_material.tres` (сохраняет силуэт) или `modulate` | — | `flash(strength)` |
+| SfxComponent | `components/sfx_component/sfx_component.tscn` | Node | Звук события: варианты без повтора подряд, разброс высоты, защита от «пулемёта» | — | `play()`, `play_index()` |
+| Tooltip | `components/tooltip/tooltip.tscn` | PanelContainer | Подсказка: наведение 0,4 с на ПК, долгое нажатие на телефоне. Текст — ключ локализации | — | `set_text_key()`, `show_tip()`, `hide_tip()` |
+| LayoutSwitcher | `components/layout_switcher/layout_switcher.tscn` | Node | Портрет/ландшафт (GDD §10): ведущий меняет базовое разрешение окна, остальные переставляют узлы по меткам | `layout_applied(portrait)`; глобально — `EventBus.layout_changed` | `apply()`, `wants_portrait()` |
+
+## 3. Рецепты
+
+### 3.1 Предмет, который носят (ингредиент, зелье)
+Образец — `scenes/debug/demo_item.tscn`.
+1. Корень `Node2D` → `Shadow` (эллипс, `modulate.a = 0`) → `Lift` → `Squash` (в точке опоры) → `Sprite` (материал вспышки).
+2. `HitArea` 140×140 по центру. `Draggable`: `hit_area`, `body = ..`, `lift_node = Lift`, `shadow = Shadow`, `kind`.
+3. `Hoverable` на `Sprite` с `hover_scale = 1`, потому что масштабом `Squash` уже владеет `SquashStretch`.
+4. Отклик (не меньше двух каналов): `drag_started → SfxPickup.play + SquashStretch.stretch`,
+   `landed/returned → SfxDrop.play + SquashStretch.squash`. Отказ озвучивает **цель**, а не предмет:
+   `drop_rejected(null)` значит «бросили мимо всех целей», и там хватает мягкого возврата.
+5. `Tooltip` с `hit_area` и ключом названия.
+
+### 3.2 Станция-приёмник (ступка, котёл)
+Образец — узел `Mortar` в `components_demo.tscn`, логика в `components_demo.gd`.
+1. `DropTarget` с `accepted_kinds`, `highlight` (узел подсветки, скрыт), `snap_point`.
+2. `StateMachine` с состояниями; `next_states` задают, куда можно перейти, а `timeout_sec/timeout_to` — выход по таймеру.
+3. В `drop_attempted`: если станция занята, вызвать `reject(DropTarget.REASON_BUSY)`. Если о занятости известно заранее,
+   лучше выключить цель (`enabled = false`): тогда она даже не подсвечивается.
+4. `received` → перевести машину, отклик (`JuicePunch.punch`, `Flash`, звук, `EventBus.camera_shake_requested`).
+   `rejected` → `JuicePunch.wiggle`, красная вспышка, звук отказа.
+5. Вернуть предмет на полку — `Draggable.send_to(точка)`. Точку полки запомнить в `drop_attempted`: пока предмет
+   не встал на станцию, его `home_position` — ещё место на полке.
+
+### 3.3 Кнопка-сущность с откликом (монета, колокольчик)
+`HitArea` (можно круглую, `radius`) → `tapped` → `JuicePunch.punch` + `Flash` (MODULATE) + `SfxComponent` (`ui_bus = true`).
+Наведение — `Hoverable` на отдельном слое `Hover`, если пульс уже занял масштаб `Sprite`.
+
+### 3.4 Экран с двумя раскладками
+1. Один ведущий `LayoutSwitcher` (`drive_window = true`) на всю игру — сейчас в `scenes/main/main.tscn`. Он же двигает камеру.
+2. В экране — свой `LayoutSwitcher` (ведомый): `landscape_only/portrait_only` (фоны), `movers` и пары меток
+   `landscape_marks/portrait_marks` (`Marker2D`). Метки лежат в узле `LayoutMarks`.
+3. Масштабом mover при `copy_scale = true` владеет раскладка, и JuicePunch на этот же узел вешать нельзя.
+
+## 4. Подводные камни
+
+- **Материал вспышки в одной сцене общий.** `flash_material.tres` помечен «local to scene», то есть копируется на каждый
+  экземпляр сцены. Но два спрайта со вспышкой внутри **одной** сцены получат один материал и будут вспыхивать вместе.
+  Второму дайте Flash в режиме MODULATE, свой `ShaderMaterial` как sub_resource или вынесите его в отдельную сцену.
+- **Базы запоминаются в `_ready`.** JuicePunch, SquashStretch, Hoverable и Flash запоминают исходный масштаб/цвет при
+  старте. Если владелец меняет их позже (раскладка, смена картинки), трогайте другой слой.
+- **Пауза (реклама).** HitArea и Draggable отменяют перенос по `NOTIFICATION_PAUSED`; предмет долетает домой после паузы.
+- **Ведущий LayoutSwitcher и камера живут в `Main`.** `SceneRouter.go_to()` заменяет текущую сцену целиком, поэтому
+  переход на другой экран через роутер оставит игру без камеры и ведущего. Пока экран один (лавка), это не мешает.
+  Решить, когда появится второй экран (S7): либо SceneRouter меняет содержимое слота внутри `Main`, либо ведущий
+  переезжает в автозагрузку. Записано в `docs/PROGRESS.md`, «Известный долг».
+- **`drag_started/drag_ended` в EventBus** — общие для переноса и выбора тапом. DropTarget гасит подсветку только по
+  `drag_ended` того предмета, который сейчас несут.

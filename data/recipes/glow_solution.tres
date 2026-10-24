@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://data/recipes/recipe_data.gd" id="1_recipe_data"]
+
+[resource]
+script = ExtResource("1_recipe_data")
+id = &"glow_solution"
+name_key = &"RECIPE_GLOW_SOLUTION_NAME"
+desc_key = &"RECIPE_GLOW_SOLUTION_DESC"
+property_set = Array[StringName]([&"light"])
+tier = 2
+hint_steps = Array[StringName]([&"ing_golden_root", &"mortar", &"settler_top"])

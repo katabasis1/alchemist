@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="OrderTemplate" format=3]
+
+[ext_resource type="Script" path="res://data/orders/order_template.gd" id="1_order_template"]
+
+[resource]
+script = ExtResource("1_order_template")
+id = &"warming_ointment_s2_p2"
+required = Array[StringName]([&"heat"])
+strength_req = 2
+purity_req = 2
+base_pay = 60
+min_rank = 2
+weight = 1.0
+line_key = &"ORDER_WARMING_OINTMENT_LINE"

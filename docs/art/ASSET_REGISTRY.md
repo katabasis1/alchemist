@@ -8,6 +8,8 @@
 |---|---|---|---|---|---|---|---|
 | bg_workshop | assets/backgrounds/bg_workshop.png | 1920×1080 | top-left | — | temp | P-BG-01 | Край прилавка y≈760: из этого же файла вырезается слой `bg_workshop_bench` (y ≥ 760) поверх клиента |
 | bg_workshop_bench | assets/backgrounds/bg_workshop_bench.png | 1920×324 | top-left, узел в (0, 756) | — | temp | P-BG-01 | Производный слой прилавка: `python tools/art/derive.py bench --top 756` из `bg_workshop`. Отдельно не генерировать; после финального фона проверить линию края |
+| bg_workshop_portrait | assets/backgrounds/bg_workshop_portrait.png | 1080×1920 | top-left | — | temp | P-BG-02 | Портрет (телефон, GDD §10). Край прилавка y≈781: верх — клиент и заказ, прилавок — станции, ящики внизу — полка-лента |
+| bg_workshop_portrait_bench | assets/backgrounds/bg_workshop_portrait_bench.png | 1080×1139 | top-left, узел в (0, 781) | — | temp | P-BG-02 | Производный слой: `python tools/art/derive.py bench --bg assets/backgrounds/bg_workshop_portrait.png --top 781 --out assets/backgrounds/bg_workshop_portrait_bench.png`. Отдельно не генерировать |
 | prop_mortar_full | art_probes/style_A/cutouts/prop_mortar_full.png | 512×512 | bottom | #FF00FF | probe | — | Только пробник; в игре — две части ниже |
 | prop_mortar_bowl | assets/props/prop_mortar_bowl.png | 512×512 | bottom | #FF00FF | planned (S2.2) | P-PROP-01 | Чаша; порошок — шейдер |
 | prop_pestle | assets/props/prop_pestle.png | 256×512 | center | #FF00FF | planned (S2.2) | P-PROP-02 | Пестик; точка вращения задаётся в сцене |

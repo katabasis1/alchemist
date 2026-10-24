@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://autoload/audio_director/audio_director.gd" id="1_audio"]
+
+[node name="AudioDirector" type="Node" node_paths=PackedStringArray("music_player", "sfx_pool", "ui_player")]
+process_mode = 3
+script = ExtResource("1_audio")
+music_player = NodePath("Music")
+sfx_pool = NodePath("SfxPool")
+ui_player = NodePath("Ui")
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+bus = &"Music"
+
+[node name="SfxPool" type="Node" parent="."]
+
+[node name="Sfx1" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Sfx2" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Sfx3" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Sfx4" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Sfx5" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Sfx6" type="AudioStreamPlayer" parent="SfxPool"]
+bus = &"SFX"
+
+[node name="Ui" type="AudioStreamPlayer" parent="."]
+bus = &"UI"

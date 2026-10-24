@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ClientData" format=3]
+
+[ext_resource type="Script" path="res://data/clients/client_data.gd" id="1_client_data"]
+[ext_resource type="Script" path="res://data/orders/order_template.gd" id="2_order_template"]
+[ext_resource type="Resource" path="res://data/orders/cooling_tonic_s1_p2.tres" id="3_cooling_tonic_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/cooling_tonic_s2_p2.tres" id="4_cooling_tonic_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/burn_salve_s1_p2.tres" id="5_burn_salve_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/summer_night_drops_s1_p2.tres" id="6_summer_night_drops_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/burn_salve_s2_p3.tres" id="7_burn_salve_s2_p3"]
+[ext_resource type="Resource" path="res://data/orders/freshness_elixir_s2_p2.tres" id="8_freshness_elixir_s2_p2"]
+
+[resource]
+script = ExtResource("1_client_data")
+id = &"gardener"
+name_key = &"CLIENT_GARDENER_NAME"
+min_rank = 2
+orders = Array[ExtResource("2_order_template")]([ExtResource("3_cooling_tonic_s1_p2"), ExtResource("4_cooling_tonic_s2_p2"), ExtResource("5_burn_salve_s1_p2"), ExtResource("6_summer_night_drops_s1_p2"), ExtResource("7_burn_salve_s2_p3"), ExtResource("8_freshness_elixir_s2_p2")])
+pay_multiplier = 1.0
+visits_per_day = 0

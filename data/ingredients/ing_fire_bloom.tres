@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="IngredientData" format=3]
+
+[ext_resource type="Script" path="res://data/ingredients/ingredient_data.gd" id="1_ingredient_data"]
+[ext_resource type="Texture2D" path="res://assets/ingredients/ing_fire_bloom.png" id="2_ing_fire_bloom"]
+
+[resource]
+script = ExtResource("1_ingredient_data")
+id = &"ing_fire_bloom"
+name_key = &"ING_FIRE_BLOOM_NAME"
+texture = ExtResource("2_ing_fire_bloom")
+properties = Dictionary[StringName, float]({&"heat": 2.0, &"acid": 1.0})
+hardness = 0
+cost_per_use = 0
+unlock_rank = 1
+unlock_price = 0
+is_rare = false

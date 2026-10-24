@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ClientData" format=3]
+
+[ext_resource type="Script" path="res://data/clients/client_data.gd" id="1_client_data"]
+[ext_resource type="Script" path="res://data/orders/order_template.gd" id="2_order_template"]
+[ext_resource type="Resource" path="res://data/orders/healing_balm_s2_p2.tres" id="3_healing_balm_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/glow_solution_s1_p2.tres" id="4_glow_solution_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/glow_solution_s2_p2.tres" id="5_glow_solution_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/vigor_elixir_s1_p2.tres" id="6_vigor_elixir_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/sleepy_drops_s1_p2.tres" id="7_sleepy_drops_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/restful_draught_s1_p2.tres" id="8_restful_draught_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/vigor_elixir_s2_p3.tres" id="9_vigor_elixir_s2_p3"]
+[ext_resource type="Resource" path="res://data/orders/frost_lantern_oil_s2_p2.tres" id="10_frost_lantern_oil_s2_p2"]
+
+[resource]
+script = ExtResource("1_client_data")
+id = &"guard"
+name_key = &"CLIENT_GUARD_NAME"
+min_rank = 2
+orders = Array[ExtResource("2_order_template")]([ExtResource("3_healing_balm_s2_p2"), ExtResource("4_glow_solution_s1_p2"), ExtResource("5_glow_solution_s2_p2"), ExtResource("6_vigor_elixir_s1_p2"), ExtResource("7_sleepy_drops_s1_p2"), ExtResource("8_restful_draught_s1_p2"), ExtResource("9_vigor_elixir_s2_p3"), ExtResource("10_frost_lantern_oil_s2_p2")])
+pay_multiplier = 1.0
+visits_per_day = 0

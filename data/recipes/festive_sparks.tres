@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://data/recipes/recipe_data.gd" id="1_recipe_data"]
+
+[resource]
+script = ExtResource("1_recipe_data")
+id = &"festive_sparks"
+name_key = &"RECIPE_FESTIVE_SPARKS_NAME"
+desc_key = &"RECIPE_FESTIVE_SPARKS_DESC"
+property_set = Array[StringName]([&"heat", &"light"])
+tier = 3
+hint_steps = Array[StringName]([&"ing_fire_bloom", &"ing_glow_flower", &"mortar", &"burner_75_89"])

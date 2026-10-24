@@ -1,0 +1,84 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/demo_item.gd" id="1_item"]
+[ext_resource type="Texture2D" path="res://assets/ingredients/ing_fire_bloom.png" id="2_tex"]
+[ext_resource type="Material" path="res://components/flash/flash_material.tres" id="3_mat"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="4_hit"]
+[ext_resource type="PackedScene" path="res://components/draggable/draggable.tscn" id="5_drag"]
+[ext_resource type="PackedScene" path="res://components/hoverable/hoverable.tscn" id="6_hover"]
+[ext_resource type="PackedScene" path="res://components/squash_stretch/squash_stretch.tscn" id="7_squash"]
+[ext_resource type="PackedScene" path="res://components/flash/flash.tscn" id="8_flash"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="9_sfx"]
+[ext_resource type="PackedScene" path="res://components/tooltip/tooltip.tscn" id="10_tip"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_pickup.ogg" id="11_pick"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_1.ogg" id="12_drop1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_2.ogg" id="13_drop2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_3.ogg" id="14_drop3"]
+
+[node name="DemoItem" type="Node2D" node_paths=PackedStringArray("sprite", "draggable", "tooltip", "reject_flash")]
+script = ExtResource("1_item")
+texture = ExtResource("2_tex")
+sprite = NodePath("Lift/Squash/Sprite")
+draggable = NodePath("Draggable")
+tooltip = NodePath("Tooltip")
+reject_flash = NodePath("Flash")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+modulate = Color(1, 1, 1, 0)
+position = Vector2(0, 66)
+color = Color(0.164706, 0.0705882, 0.0196078, 1)
+polygon = PackedVector2Array(58, 0, 55.2, 4.3, 46.9, 8.2, 34.1, 11.3, 17.9, 13.3, 0, 14, -17.9, 13.3, -34.1, 11.3, -46.9, 8.2, -55.2, 4.3, -58, 0, -55.2, -4.3, -46.9, -8.2, -34.1, -11.3, -17.9, -13.3, -0, -14, 17.9, -13.3, 34.1, -11.3, 46.9, -8.2, 55.2, -4.3)
+
+[node name="Lift" type="Node2D" parent="."]
+
+[node name="Squash" type="Node2D" parent="Lift"]
+position = Vector2(0, 66)
+
+[node name="Sprite" type="Sprite2D" parent="Lift/Squash"]
+material = ExtResource("3_mat")
+position = Vector2(0, -66)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("2_tex")
+
+[node name="HitArea" parent="." instance=ExtResource("4_hit")]
+offset_left = -70.0
+offset_top = -70.0
+offset_right = 70.0
+offset_bottom = 70.0
+pivot_offset = Vector2(70, 70)
+
+[node name="Draggable" parent="." node_paths=PackedStringArray("hit_area", "body", "lift_node", "shadow") instance=ExtResource("5_drag")]
+hit_area = NodePath("../HitArea")
+body = NodePath("..")
+lift_node = NodePath("../Lift")
+shadow = NodePath("../Shadow")
+kind = &"ingredient"
+
+[node name="Hoverable" parent="." node_paths=PackedStringArray("hit_area", "target") instance=ExtResource("6_hover")]
+hit_area = NodePath("../HitArea")
+target = NodePath("../Lift/Squash/Sprite")
+hover_scale = 1.0
+
+[node name="SquashStretch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("7_squash")]
+target = NodePath("../Lift/Squash")
+
+[node name="Flash" parent="." node_paths=PackedStringArray("target") instance=ExtResource("8_flash")]
+target = NodePath("../Lift/Squash/Sprite")
+flash_color = Color(1, 0.3, 0.2, 1)
+peak = 0.6
+
+[node name="SfxPickup" parent="." instance=ExtResource("9_sfx")]
+streams = Array[AudioStream]([ExtResource("11_pick")])
+
+[node name="SfxDrop" parent="." instance=ExtResource("9_sfx")]
+streams = Array[AudioStream]([ExtResource("12_drop1"), ExtResource("13_drop2"), ExtResource("14_drop3")])
+
+[node name="Tooltip" parent="." node_paths=PackedStringArray("hit_area") instance=ExtResource("10_tip")]
+hit_area = NodePath("../HitArea")
+
+[connection signal="drag_started" from="Draggable" to="SfxPickup" method="play"]
+[connection signal="drag_started" from="Draggable" to="SquashStretch" method="stretch"]
+[connection signal="landed" from="Draggable" to="SfxDrop" method="play"]
+[connection signal="landed" from="Draggable" to="SquashStretch" method="squash"]
+[connection signal="returned" from="Draggable" to="SfxDrop" method="play"]
+[connection signal="returned" from="Draggable" to="SquashStretch" method="squash"]

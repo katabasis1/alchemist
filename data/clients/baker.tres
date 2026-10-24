@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ClientData" format=3]
+
+[ext_resource type="Script" path="res://data/clients/client_data.gd" id="1_client_data"]
+[ext_resource type="Texture2D" path="res://assets/characters/client_baker_neutral.png" id="2_client_baker_neutral"]
+[ext_resource type="Script" path="res://data/orders/order_template.gd" id="3_order_template"]
+[ext_resource type="Resource" path="res://data/orders/healing_balm_s1_p1.tres" id="4_healing_balm_s1_p1"]
+[ext_resource type="Resource" path="res://data/orders/healing_balm_s1_p2.tres" id="5_healing_balm_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/warming_ointment_s1_p1.tres" id="6_warming_ointment_s1_p1"]
+[ext_resource type="Resource" path="res://data/orders/warming_balm_s1_p1.tres" id="7_warming_balm_s1_p1"]
+[ext_resource type="Resource" path="res://data/orders/warming_balm_s1_p2.tres" id="8_warming_balm_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/healing_balm_s2_p2.tres" id="9_healing_balm_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/warming_balm_s2_p2.tres" id="10_warming_balm_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/burn_salve_s1_p2.tres" id="11_burn_salve_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/cozy_brew_s1_p2.tres" id="12_cozy_brew_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/festive_sparks_s1_p2.tres" id="13_festive_sparks_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/burn_salve_s2_p3.tres" id="14_burn_salve_s2_p3"]
+
+[resource]
+script = ExtResource("1_client_data")
+id = &"baker"
+name_key = &"CLIENT_BAKER_NAME"
+portrait_neutral = ExtResource("2_client_baker_neutral")
+min_rank = 1
+orders = Array[ExtResource("3_order_template")]([ExtResource("4_healing_balm_s1_p1"), ExtResource("5_healing_balm_s1_p2"), ExtResource("6_warming_ointment_s1_p1"), ExtResource("7_warming_balm_s1_p1"), ExtResource("8_warming_balm_s1_p2"), ExtResource("9_healing_balm_s2_p2"), ExtResource("10_warming_balm_s2_p2"), ExtResource("11_burn_salve_s1_p2"), ExtResource("12_cozy_brew_s1_p2"), ExtResource("13_festive_sparks_s1_p2"), ExtResource("14_burn_salve_s2_p3")])
+pay_multiplier = 1.0
+visits_per_day = 0

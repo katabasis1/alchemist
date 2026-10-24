@@ -222,7 +222,7 @@
 
 ## 8. День, удержание, монетизация
 - **Игровой день** = 6 заказов → итог дня: выручка, репутация, открытия, кнопка «Удвоить выручку (реклама)», затем предложение магазина (если что-то по карману).
-- **Ежедневная награда** (реальные сутки, время сервера SDK), 7 дней: 40 · 60 · кристалл · 100 · 150 · 2 кристалла · 300. Пропущенный день цепочку не обнуляет: она просто ждёт.
+- **Ежедневная награда** (реальные сутки, время сервера SDK), 7 дней: 40 · 60 · кристалл · 100 · 150 · 2 кристалла · 300. Пропущенный день цепочку не обнуляет: она просто ждёт. После 7-го дня цепочка начинается заново (стартовое решение, `DailyRewardConfig.restart_after_last`; проверка — удержание D7+ на S8).
 - **Реклама за награду** (всегда по выбору игрока, кнопка помечена значком рекламы): удвоить выручку дня; подсказка к заказу (1 бесплатно в сутки, дальше за рекламу); вернуть ингредиенты после неверного эффекта (если они были платными); «подарок торговца» — 1 кристалл в сутки (ранг 4+). Частоту показов rewarded Яндекс не ограничивает (источник: yandex.ru/dev/games/doc/ru/sdk/sdk-adv).
 - **Полноэкранная реклама** — только по кнопке «Следующий день» после итога и не в первые 2 игровых дня. Частотой полноэкранной рекламы управляет платформа; вызывать её во время активной игры нельзя — это считается фродом (источник: yandex.ru/dev/games/doc/ru/sdk/sdk-adv).
 - **Стики-баннер** в MVP выключен (решаем на S10 после проверки раскладки).
@@ -282,18 +282,24 @@
 | Пороги рангов | 15 / 50 / 120 / 250 | симуляция + телеметрия | ранг 2 ≈ 6 мин, 3 ≈ 15, 4 ≈ 40, 5 ≈ 75 | ±20 % |
 | Заказов в дне | 6 | телеметрия | ≥ 60 % доигрывают день 1 | 5 |
 | Цели касания | 96 px | телефон 5" | промахов < 5 % | 112 px |
+| Ввод | перенос от 12 px; тап ≤ 24 px и ≤ 0,35 с; долгое нажатие 0,45 с | сцена `scenes/debug/components_demo.tscn` на телефоне и ПК, M1 | тап не срывается в перенос, перенос не срабатывает от дрожи пальца | порог переноса 16 px, тап ≤ 0,4 с |
+| Подсказка | 0,4 с наведения (ПК), долгое нажатие (телефон) | та же сцена, M1 | подсказка не мигает при проведении мышью, но и не заставляет ждать | 0,6 с |
+| Смена раскладки | портрет при ширина/высота < 0,9, ландшафт при > 1,1 | ресайз окна браузера, поворот телефона, M1 | без «дребезга» у почти квадратного окна | 0,8 / 1,2 |
 
 **Известный риск:** после 4-го ранга монеты копятся, а тратить их не на что. Проверяем на S6.4. Варианты: улучшения станций, которые **меняют решения** (а не дают «+5 %»), украшения лавки (после MVP).
 
-## 13. Данные → ресурсы (для S1.6)
-- `PropertyData`: id, name_key, color, icon, pattern, density_rank, evaporate_temp (−1 — стойкое), burn_temp (−1 — нет).
-- `IngredientData`: id, name_key, texture, properties (Dictionary[StringName, float]), hardness, cost_per_use, unlock_rank, unlock_price, is_rare.
-- `RecipeData`: id, name_key, desc_key, property_set, tier, hint_steps.
-- `OrderTemplate`: id, required, strength_req, purity_req, base_pay, min_rank, weight, line_key.
-- `ClientData`: id, name_key, portrait_neutral / happy / upset, min_rank, orders.
-- `ToolData`: id, kind (station / knowledge / upgrade), price, unlock_rank, name_key, desc_key, icon. Улучшения тоже здесь, отдельный `UpgradeData` не нужен.
-- **Новые:** `RankData` (index, name_key, threshold, unlocks), `DailyRewardConfig` (7 наград).
-- `EconomyConfig`: все пороги, скорости и множители из §3, §5, §12.
+## 13. Данные → ресурсы (сделано на S1.6)
+Классы — `data/<вид>/*.gd`, данные — `.tres` рядом; все вместе собраны в `data/catalog.tres` (`DataCatalog`, сцены получают его через `@export`). Источник правды — `.tres` (правятся в редакторе). `tools/data/bootstrap_gdd_v1.py` один раз выгрузил GDD v1 и не перезаписывает файлы; `--check` проверяет решаемость заказов упрощённым перебором. В Godot данные проверяет `scenes/debug/data_check.tscn`.
+- `PropertyData` (`data/properties/`): id, name_key, color, icon, pattern (enum: пузыри, волны, листья, снежинки, луны, искры — рисует шейдер), density_rank, evaporate_temp, burn_temp (−1 — никогда).
+- `IngredientData` (`data/ingredients/`): id, name_key, texture, properties (`Dictionary[StringName, float]`), hardness (enum), cost_per_use, unlock_rank, unlock_price, is_rare.
+- `RecipeData` (`data/recipes/`): id, name_key, desc_key, property_set, tier, hint_steps. Подсказка — id ингредиентов и шаги станций (`mortar`, `settler_top`, `settler_bottom`, `burner_35_54`, `burner_55_74`, `burner_75_89`); рисуется иконками, без текста.
+- `OrderTemplate` (`data/orders/`, FTUE — `data/orders/ftue/`): id, required, strength_req, purity_req, base_pay, min_rank, weight (0 — генератор не выдаёт), line_key. База сгенерированных = формула §5.3; у FTUE — своя (§9). Фраза общая для заказов одного рецепта (`ORDER_<РЕЦЕПТ>_LINE`).
+- `ClientData` (`data/clients/`): id, name_key, portrait_neutral / happy / upset (пока нет — показывается нейтральный), min_rank, orders, **pay_multiplier** (гонец ×2), **visits_per_day** (гонец 1, 0 — без ограничения).
+- `ToolData` (`data/equipment/`): id, kind (station / knowledge / upgrade), price, unlock_rank, name_key, desc_key, icon. Улучшения тоже здесь.
+- `RankData` (`data/ranks/`): index, name_key, threshold. **Отклонение:** поля unlocks нет — что открывает ранг, выводится из unlock_rank / min_rank (`DataCatalog.unlocks_for_rank`), чтобы не было двух источников правды.
+- `DailyRewardConfig` (`data/daily/`): coins и crystals по дням, crystal_item (Звёздный кристалл), restart_after_last.
+- `EconomyConfig` (`data/economy/`): все пороги, скорости и множители из §3, §5, §8, §12 и функции, которые их толкуют (звёзды, извлечение, база, оплата). Числа ввода, подсказок и раскладки из §12 живут в `@export` компонентов (S1.5).
+- Ключи текстов: `PROPERTY_<ID>_NAME`, `ING_<ID>_NAME`, `RECIPE_<ID>_NAME/_DESC`, `ORDER_<РЕЦЕПТ>_LINE`, `ORDER_FTUE_<N>_LINE`, `CLIENT_<ID>_NAME`, `TOOL_<ID>_NAME/_DESC`, `RANK_<N>_NAME` — тексты появятся на S1.7.
 
 ## 14. Ассеты, которые вводит GDD
 Временная версия и промпт появляются на подэтапе, где ассет попадает в проект (правило 7). Для ингредиентов промпты уже готовы, чтобы финальную графику можно было делать заранее.

@@ -13,6 +13,7 @@
         #   3) archive/history/alchemist_v<ver>_<ID>_<slug>.zip (хранятся последние 10)
         #   4) archive/alchemist_repo.bundle           — `git bundle --all` (с тегами)
         #   5) outbox/patches/v<ver>/*.patch            — с прошлой выдачи (outbox/patches/LAST_PATCHED)
+        #      outbox/alchemist_update_v<ver>.zip       — те же изменения файлами (распаковать поверх)
         #   6) project/ — зеркало дерева; docs/, tools/ и AGENTS.md в корне Pod — тоже зеркало
         #   7) archive/LAST_SYNC.txt                    — что и когда выгружено
 
@@ -86,6 +87,27 @@ def make_bundle(pod: Path, tmp: Path) -> None:
     print(f"[pod_sync] bundle → archive/alchemist_repo.bundle ({bundle.stat().st_size // 1024} КБ)")
 
 
+def make_update_zip(pod: Path, tmp: Path, since: str, head: str, ver: str, name: str = "") -> None:
+    """outbox/alchemist_update_v<ver>.zip — только изменённые и новые файлы с прошлой выдачи.
+
+    Пользователь распаковывает поверх папки проекта (или перетаскивает в GitHub → Add file → Upload files).
+    Удалённые файлы перечислены в DELETED.txt внутри архива — их нужно удалить руками.
+    """
+    changed = git("diff", "--name-only", "--diff-filter=ACMRT", since, head).split("\n")
+    changed = [c for c in changed if c]
+    deleted = [c for c in git("diff", "--name-only", "--diff-filter=D", since, head).split("\n") if c]
+    name = name or f"alchemist_update_v{ver}.zip"
+    out = tmp / name
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for rel in changed:
+            z.writestr(rel, subprocess.run(["git", "show", f"{head}:{rel}"], cwd=REPO, check=True,
+                                           capture_output=True).stdout)
+        if deleted:
+            z.writestr("DELETED.txt", "\n".join(deleted) + "\n")
+    copy_file(out, pod / "outbox" / name)
+    print(f"[pod_sync] обновление → outbox/{name} (файлов {len(changed)}, удалить {len(deleted)})")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--pod", type=Path, default=POD_DEFAULT)
@@ -93,6 +115,9 @@ def main() -> None:
     ap.add_argument("--id", help="ID подэтапа, например S1.2")
     ap.add_argument("--slug", help="короткое имя снапшота, snake_case")
     ap.add_argument("--allow-dirty", action="store_true", help="не требовать чистое дерево (не рекомендуется)")
+    ap.add_argument("--base", help="коммит/тег, на котором стоит GitHub пользователя: дополнительно собрать "
+                                   "сводный outbox/alchemist_update_<base-label>_to_v<ver>.zip (прежние сводные удаляются)")
+    ap.add_argument("--base-label", help="метка базы в имени сводного архива, например v0.0.1")
     a = ap.parse_args()
 
     pod: Path = a.pod
@@ -150,6 +175,14 @@ def main() -> None:
             marker.parent.mkdir(parents=True, exist_ok=True)
             marker.write_text(head + "\n", encoding="utf-8")
             print(f"[pod_sync] патчи → outbox/patches/v{ver}/ ({len(list(pdir.iterdir()))} шт., изменено файлов {n})")
+            if since:
+                make_update_zip(pod, tmp, since, head, ver)
+        if a.base:
+            label = a.base_label or a.base
+            for old in (pod / "outbox").glob("alchemist_update_*_to_v*.zip"):
+                old.unlink()
+            make_update_zip(pod, tmp, git("rev-parse", a.base), head, ver,
+                            f"alchemist_update_{label}_to_v{ver}.zip")
 
         # 6. зеркала
         tree = tmp / "tree"

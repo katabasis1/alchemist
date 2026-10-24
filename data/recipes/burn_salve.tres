@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://data/recipes/recipe_data.gd" id="1_recipe_data"]
+
+[resource]
+script = ExtResource("1_recipe_data")
+id = &"burn_salve"
+name_key = &"RECIPE_BURN_SALVE_NAME"
+desc_key = &"RECIPE_BURN_SALVE_DESC"
+property_set = Array[StringName]([&"life", &"cold"])
+tier = 2
+hint_steps = Array[StringName]([&"ing_sage_bundle", &"ing_moon_moss", &"mortar", &"settler_bottom"])

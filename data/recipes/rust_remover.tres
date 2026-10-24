@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://data/recipes/recipe_data.gd" id="1_recipe_data"]
+
+[resource]
+script = ExtResource("1_recipe_data")
+id = &"rust_remover"
+name_key = &"RECIPE_RUST_REMOVER_NAME"
+desc_key = &"RECIPE_RUST_REMOVER_DESC"
+property_set = Array[StringName]([&"acid"])
+tier = 3
+hint_steps = Array[StringName]([&"ing_rust_lichen", &"mortar", &"settler_bottom"])

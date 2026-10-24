@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/data_check.gd" id="1_check"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
+
+[node name="DataCheck" type="Node"]
+script = ExtResource("1_check")
+catalog = ExtResource("2_catalog")

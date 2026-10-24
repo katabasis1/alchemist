@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/juice_punch/juice_punch.gd" id="1_punch"]
+
+[node name="JuicePunch" type="Node"]
+script = ExtResource("1_punch")

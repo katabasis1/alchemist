@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PropertyData" format=3]
+
+[ext_resource type="Script" path="res://data/properties/property_data.gd" id="1_property_data"]
+
+[resource]
+script = ExtResource("1_property_data")
+id = &"life"
+name_key = &"PROPERTY_LIFE_NAME"
+color = Color(0.494118, 0.85098, 0.341176, 1)
+pattern = 2
+density_rank = 3
+evaporate_temp = -1.0
+burn_temp = 90.0

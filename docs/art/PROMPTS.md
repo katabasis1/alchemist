@@ -14,6 +14,7 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 | ID | Файл | Что это |
 |---|---|---|
 | P-BG-01 | `bg_workshop.png` | Фон лавки (ландшафт) |
+| P-BG-02 | `bg_workshop_portrait.png` | Фон лавки (портрет, телефон) |
 | P-PROP-01 | `prop_mortar_bowl.png` | Ступка (чаша без пестика) |
 | P-PROP-02 | `prop_pestle.png` | Пестик (отдельно) |
 | P-PROP-03 | `prop_flask_round.png` | Колба круглодонная (пустая) |
@@ -47,6 +48,20 @@ Wide game background: interior of a cozy fairytale alchemist's shop seen from th
 
 Landscape 1536x1024. Keep all important content inside the central 16:9 band (top and bottom ~8% may be cropped). No characters.
 ```
+
+## P-BG-02 — Фон лавки (портрет, телефон) → `bg_workshop_portrait.png`
+
+Приложи к чату и готовый `bg_workshop.png` (ландшафт): это та же лавка, нужна та же мебель и та же палитра.
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+Tall portrait game background for a phone screen: the same cozy fairytale alchemist's shop as in the attached landscape background (same furniture, materials and light), recomposed vertically, straight front view from the alchemist's side. Upper part (top 40% of the image): back wall with wooden shelves of assorted jars and bottles, bundles of dried herbs hanging from a ceiling beam, a round leaded window on the left with warm golden afternoon light, potted plants, copper pipes, a small brass scale on a high shelf, a wooden door with a little shop bell on the right. The empty space in front of the left-middle shelves is where a customer will stand, so keep it calm and uncluttered. Lower part: a large empty wooden workbench seen from slightly above; the back edge of the workbench top must be at about 40% of the image height, the bench surface must be completely clear for gameplay objects and take up roughly the next 35% of the height; below it the front of the bench with simple wooden drawers down to the bottom edge. Calm, warm, inviting atmosphere; the background is slightly softer and less contrasted than gameplay objects.
+
+Portrait 1024x1536. Keep all important content inside the central 9:16 band (left and right ~8% may be cropped). No characters.
+```
+
+После замены: проверить линию края прилавка (сейчас y = 781 на холсте 1080×1920), при необходимости поправить `--top` в реестре и позицию узла `BenchPortrait` в `scenes/workshop/workshop.tscn`, затем пересобрать слой прилавка командой из реестра.
 
 ## P-PROP-01 — Ступка (чаша без пестика) → `prop_mortar_bowl.png`
 

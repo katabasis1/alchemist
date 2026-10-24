@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://components/flash/flash.gdshader" id="1_flash"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_flash")
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+shader_parameter/flash_amount = 0.0
