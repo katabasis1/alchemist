@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="1_workshop"]
+
+[node name="Main" type="Node"]
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Workshop" parent="." instance=ExtResource("1_workshop")]

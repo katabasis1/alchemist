@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop.png" id="1_bg"]
+[ext_resource type="Texture2D" path="res://assets/characters/client_baker_neutral.png" id="2_client"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_bench.png" id="3_bench"]
+
+[node name="Workshop" type="Node2D"]
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("1_bg")
+centered = false
+
+[node name="ClientSpot" type="Marker2D" parent="."]
+position = Vector2(1440, 860)
+
+[node name="Client" type="Sprite2D" parent="ClientSpot"]
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2_client")
+offset = Vector2(0, -384)
+
+[node name="Bench" type="Sprite2D" parent="."]
+position = Vector2(0, 756)
+texture = ExtResource("3_bench")
+centered = false
