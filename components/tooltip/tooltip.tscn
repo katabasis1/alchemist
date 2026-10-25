@@ -2,37 +2,17 @@
 
 [ext_resource type="Script" path="res://components/tooltip/tooltip.gd" id="1_tip"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tip"]
-content_margin_left = 18.0
-content_margin_top = 10.0
-content_margin_right = 18.0
-content_margin_bottom = 12.0
-bg_color = Color(0.988, 0.949, 0.773, 0.97)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.263, 0.114, 0.051, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-shadow_color = Color(0.165, 0.071, 0.02, 0.3)
-shadow_size = 6
-shadow_offset = Vector2(0, 3)
-
 [node name="Tooltip" type="PanelContainer" node_paths=PackedStringArray("label")]
 visible = false
 top_level = true
 z_index = 100
 mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
+theme_type_variation = &"TooltipPanel"
 script = ExtResource("1_tip")
 label = NodePath("Label")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.263, 0.114, 0.051, 1)
-theme_override_font_sizes/font_size = 28
+theme_type_variation = &"TooltipLabel"
 horizontal_alignment = 1

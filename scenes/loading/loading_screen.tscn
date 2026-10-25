@@ -1,0 +1,86 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/loading/loading_screen.gd" id="1_loading"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_flask_round.png" id="2_flask"]
+
+[node name="LoadingScreen" type="CanvasLayer" node_paths=PackedStringArray("root", "bar", "flask")]
+process_mode = 3
+layer = 90
+script = ExtResource("1_loading")
+root = NodePath("Root")
+bar = NodePath("Root/Center/Column/Bar")
+flask = NodePath("Root/Center/Column/FlaskHolder/Flask")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.258824, 0.133333, 0.054902, 1)
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Column" type="VBoxContainer" parent="Root/Center"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 28
+alignment = 1
+
+[node name="FlaskHolder" type="Control" parent="Root/Center/Column"]
+custom_minimum_size = Vector2(192, 256)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+
+[node name="Flask" type="TextureRect" parent="Root/Center/Column/FlaskHolder"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(96, 256)
+mouse_filter = 2
+texture = ExtResource("2_flask")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Root/Center/Column"]
+custom_minimum_size = Vector2(960, 0)
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "GAME_TITLE"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Bar" type="ProgressBar" parent="Root/Center/Column"]
+custom_minimum_size = Vector2(560, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+max_value = 3.0
+show_percentage = false
+
+[node name="Status" type="Label" parent="Root/Center/Column"]
+layout_mode = 2
+theme_type_variation = &"LightLabel"
+text = "LOADING"
+horizontal_alignment = 1
