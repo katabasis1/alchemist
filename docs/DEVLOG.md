@@ -73,3 +73,11 @@
 - Наблюдения по балансу (в PROGRESS, «Известный долг»): Едкость решается Огнецветом через низ Отстойника; «Масло ледяного фонаря» ★★/★★ варится без лотоса.
 - Архив: `outbox/alchemist_update_v0.0.4.zip`, сводный `outbox/alchemist_update_v0.0.1_to_v0.0.4.zip`, `outbox/patches/v0.0.4/`, `archive/history/alchemist_v0.0.4_S1.6_data_classes.zip`.
 - Следующий шаг: S1.7 Локализация → M1.
+
+## 2026-10-25 — сессия 9 — S1.7 Локализация, часть 1 (шрифты и тексты) — v0.0.5
+- Сделано: пользователь запушил v0.0.4 (`355ab53`). Клонировать GitHub из Computer нельзя (прокси), поэтому история агента собрана заново из ZIP ветки `main` (`github_main.bin`): 328 файлов сверены с SHA из API `git/trees`, коммит `6912f09` = точная копия `355ab53`, тег `v0.0.4`, PNG теперь в истории. Шрифты: Kurale Regular (заголовки) и Nunito из вариативного в статичные 600 и 800 (текст, кнопки, числа), все урезаны до латиницы, кириллицы и типографских знаков — `tools/fonts/build_fonts.py`, исходники в `tools/fonts/src/`, лицензии OFL рядом, записи в `docs/THIRD_PARTY.md`. `localization/strings.csv`: 110 ключей ru/en — все `name_key`/`desc_key`/`line_key` из `.tres`, названия языков, ключ демо-колбы. Тексты прошли humanizer (ru — SKILL + `check_facts.py`: ошибок нет; en — SKILL), ключи в `humanized.txt`. Перевод подключён в `project.godot` (`locale/translations`).
+- Файлы: assets/fonts/*, tools/fonts/*, localization/strings.csv, localization/humanized.txt, docs/THIRD_PARTY.md, project.godot (перевод, 0.0.5), AGENTS.md §2.3, docs/PLAN.md, docs/PROGRESS.md
+- Решения: (1) фразы клиентов — для атмосферы, а не инструкция (GDD §5): короткие, без цифр и названий рецептов, сам заказ — иконками в пузыре; (2) названия языков не переводятся («Русский», «English» в обоих столбцах); (3) промежуточная выдача v0.0.5 до M1, чтобы пользователь сразу забрал шрифты и тексты. Валидатор: 0 ошибок, 0 предупреждений; `build_fonts.py --check`: всех символов хватает.
+- Проблемы/долг: шрифты пока не в теме; `.translation` создаст Godot при импорте — пользователь коммитит их вместе с `*.import`.
+- Архив: `outbox/alchemist_update_v0.0.5.zip`, `outbox/patches/v0.0.5/`, `archive/history/alchemist_v0.0.5_S1.7_fonts_strings.zip`.
+- Следующий шаг: тема, экран загрузки, `l10n_check` → M1 = v0.1.0.

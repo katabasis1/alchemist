@@ -42,6 +42,8 @@
 - [x] S1.5 Компоненты v1: `HitArea`, `Hoverable`, `Draggable`, `DropTarget`, `StateMachine`+`State`, `JuicePunch`, `SquashStretch`, `CameraShake`, `Flash`, `SfxComponent`, `Tooltip`, `LayoutSwitcher` + портретный фон `bg_workshop_portrait` (temp + промпт P-BG-02).
 - [x] S1.6 Классы данных (Resource) по GDD §13: `PropertyData`, `IngredientData`, `RecipeData`, `ClientData`, `OrderTemplate`, `ToolData` (вкл. улучшения — `UpgradeData` не нужен), `RankData`, `DailyRewardConfig`, `EconomyConfig`; `.tres` с данными GDD v1.
 - [ ] S1.7 Локализация ru/en: `strings.csv`, `humanized.txt`, экран загрузки. → **M1 = v0.1.0**
+  - [x] часть 1 (v0.0.5): шрифты OFL (Kurale, Nunito 600/800), `strings.csv` 110 ключей, humanizer, перевод в `project.godot`
+  - [ ] часть 2: тема со шрифтами, экран загрузки, `scenes/debug/l10n_check.tscn`
 
 ## S2. Вертикальный срез: ступка («игрушка»)
 - [ ] S2.1 Полка ингредиентов + перетаскивание, подсветка цели. Ассеты S2 (GDD §14): `prop_mortar_bowl`, `prop_pestle`, `prop_shelf`, `ui_trash`, `icon_prop_*` ×6.

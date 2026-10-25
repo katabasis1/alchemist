@@ -1,0 +1,111 @@
+keys,ru,en
+PROPERTY_HEAT_NAME,Жар,Heat
+PROPERTY_COLD_NAME,Холод,Cold
+PROPERTY_LIFE_NAME,Жизнь,Life
+PROPERTY_ACID_NAME,Едкость,Acid
+PROPERTY_LIGHT_NAME,Свет,Light
+PROPERTY_SLEEP_NAME,Сон,Sleep
+ING_SAGE_BUNDLE_NAME,Шалфей,Sage
+ING_FIRE_BLOOM_NAME,Огнецвет,Firebloom
+ING_MOON_MOSS_NAME,Лунный мох,Moon Moss
+ING_DROWSE_HERB_NAME,Дрёма-трава,Drowsewort
+ING_GOLDEN_ROOT_NAME,Золотой корень,Golden Root
+ING_RUST_LICHEN_NAME,Ржавый лишайник,Rust Lichen
+ING_FROST_BERRY_NAME,Морозника,Frostberry
+ING_GLOW_FLOWER_NAME,Светоцвет,Glowbloom
+ING_EMBER_NUT_NAME,Жар-орех,Ember Nut
+ING_SUN_PETAL_NAME,Солнечник,Sun Petal
+ING_SNOW_LOTUS_NAME,Снежный лотос,Snow Lotus
+ING_STAR_CRYSTAL_NAME,Звёздный кристалл,Star Crystal
+RECIPE_HEALING_BALM_NAME,Целебный бальзам,Healing Balm
+RECIPE_WARMING_OINTMENT_NAME,Согревающая мазь,Warming Ointment
+RECIPE_SMITH_FLUX_NAME,Кузнечный флюс,Smith's Flux
+RECIPE_WARMING_BALM_NAME,Согревающий бальзам,Warming Balm
+RECIPE_COOLING_TONIC_NAME,Остужающий настой,Cooling Tonic
+RECIPE_SLEEPY_DROPS_NAME,Сонные капли,Sleepy Drops
+RECIPE_GLOW_SOLUTION_NAME,Светящийся раствор,Glow Solution
+RECIPE_BURN_SALVE_NAME,Мазь от ожогов,Burn Salve
+RECIPE_RESTFUL_DRAUGHT_NAME,Отвар целебного сна,Restful Draught
+RECIPE_VIGOR_ELIXIR_NAME,Эликсир бодрости,Vigor Elixir
+RECIPE_SUMMER_NIGHT_DROPS_NAME,Капли летней ночи,Summer Night Drops
+RECIPE_CLEAR_DREAM_ELIXIR_NAME,Эликсир ясного сна,Clear Dream Elixir
+RECIPE_SNOW_PEACE_DRAUGHT_NAME,Снежный покой,Snowy Calm
+RECIPE_RUST_REMOVER_NAME,Средство от ржавчины,Rust Remover
+RECIPE_ARMOR_POLISH_NAME,Полироль для доспехов,Armor Polish
+RECIPE_FESTIVE_SPARKS_NAME,Праздничные искры,Festive Sparks
+RECIPE_COZY_BREW_NAME,Уютный отвар,Cozy Brew
+RECIPE_FRESHNESS_ELIXIR_NAME,Эликсир свежести,Freshness Elixir
+RECIPE_SUN_ELIXIR_NAME,Солнечный эликсир,Sun Elixir
+RECIPE_FROST_LANTERN_OIL_NAME,Масло ледяного фонаря,Frost Lantern Oil
+RECIPE_HEALING_BALM_DESC,Заживляет царапины и ссадины.,Heals scratches and scrapes.
+RECIPE_WARMING_OINTMENT_DESC,Согревает замёрзшие руки.,Warms up frozen hands.
+RECIPE_SMITH_FLUX_DESC,Помогает кузнецу: очищает металл перед ковкой.,Helps the smith by cleaning metal before forging.
+RECIPE_WARMING_BALM_DESC,Лечит и согревает после долгой прогулки на холоде.,Heals and warms you up after a long walk in the cold.
+RECIPE_COOLING_TONIC_DESC,Освежает в жаркий день.,Cools you down on a hot day.
+RECIPE_SLEEPY_DROPS_DESC,"Пара капель, и крепкий сон до утра.",A couple of drops and you sleep soundly until morning.
+RECIPE_GLOW_SOLUTION_DESC,"Светится в темноте, как маленький фонарик.",Glows in the dark like a little lantern.
+RECIPE_BURN_SALVE_DESC,Остужает и заживляет ожоги.,Cools and heals burns.
+RECIPE_RESTFUL_DRAUGHT_DESC,"Крепкий сон, после которого просыпаешься отдохнувшим и здоровым.",Deep sleep that leaves you rested and healthy.
+RECIPE_VIGOR_ELIXIR_DESC,Прогоняет усталость и даёт сил на весь день.,Chases off tiredness and keeps you going all day.
+RECIPE_SUMMER_NIGHT_DROPS_DESC,Помогают уснуть душной летней ночью.,Help you fall asleep on a stuffy summer night.
+RECIPE_CLEAR_DREAM_ELIXIR_DESC,Дарит добрые и ясные сны.,"Brings kind, clear dreams."
+RECIPE_SNOW_PEACE_DRAUGHT_DESC,"Успокаивает и остужает, как тихий снегопад.",Calms and cools like quiet snowfall.
+RECIPE_RUST_REMOVER_DESC,Снимает ржавчину с железа.,Takes rust off iron.
+RECIPE_ARMOR_POLISH_DESC,"Счищает налёт, и доспехи сияют.",Scrubs off grime and makes armor shine.
+RECIPE_FESTIVE_SPARKS_DESC,Тёплые искры для праздника на площади.,Warm sparks for a party in the town square.
+RECIPE_COZY_BREW_DESC,Тёплый отвар для долгого зимнего вечера.,A warm brew for a long winter evening.
+RECIPE_FRESHNESS_ELIXIR_DESC,Цветы и зелень после него долго остаются свежими.,Keeps flowers and greens fresh for a long time.
+RECIPE_SUN_ELIXIR_DESC,Немного летнего солнца в бутылке.,A little summer sunshine in a bottle.
+RECIPE_FROST_LANTERN_OIL_DESC,Фонарь на этом масле светит холодным светом и не греется.,Lantern oil that gives a cold light and doesn't get hot.
+CLIENT_BAKER_NAME,Пекарша,Baker
+CLIENT_SMITH_NAME,Кузнец,Blacksmith
+CLIENT_GUARD_NAME,Стражница,Guard
+CLIENT_GARDENER_NAME,Садовник,Gardener
+CLIENT_LIBRARIAN_NAME,Библиотекарь,Librarian
+CLIENT_MAGE_NAME,Придворный маг,Court Mage
+CLIENT_HERALD_NAME,Королевский гонец,Royal Herald
+RANK_1_NAME,Ученик,Apprentice
+RANK_2_NAME,Травник,Herbalist
+RANK_3_NAME,Алхимик,Alchemist
+RANK_4_NAME,Мастер,Master
+RANK_5_NAME,Магистр,Grand Master
+TOOL_SETTLER_NAME,Отстойник,Settling Flask
+TOOL_SETTLER_DESC,"Смесь расслаивается: тяжёлое оседает вниз, лёгкое поднимается наверх. Верхний слой можно слить в приёмник.","The mix settles into layers: heavy sinks, light rises. Pour the top layer off into the beaker."
+TOOL_INDICATOR_PAPER_NAME,Индикаторная бумага,Indicator Paper
+TOOL_INDICATOR_PAPER_DESC,"Показывает на любой станции точные доли свойств, чистоту смеси и пороги звёзд.","Shows exact property amounts, mix purity and star thresholds at any station."
+TOOL_BURNER_NAME,Горелка,Burner
+TOOL_BURNER_DESC,Нагревает смесь. Каждое свойство уходит паром при своей температуре.,Heats the mix. Each property boils off at its own temperature.
+TOOL_THERMOMETER_NAME,Термометр с делениями,Marked Thermometer
+TOOL_THERMOMETER_DESC,"Отмечает температуру, при которой улетает каждое свойство в смеси.",Marks the temperature at which each property in the mix boils off.
+TOOL_MORTAR_THIRD_SLOT_NAME,Третье место в ступке,Third Mortar Slot
+TOOL_MORTAR_THIRD_SLOT_DESC,"В ступку помещается три ингредиента, а не два. Тройные зелья и сила на три звезды даются легче.",The mortar holds three ingredients instead of two. Triple potions and three-star strength get easier.
+TOOL_SPROUT_CHECKER_NAME,Росток-проверяльщик,Sprout Tester
+TOOL_SPROUT_CHECKER_DESC,"Показывает звёзды зелья до того, как оно уйдёт к клиенту. Проверенный рецепт сразу попадает в Гримуар.",Shows a potion's stars before it goes to the customer. A tested recipe goes straight into the Grimoire.
+ORDER_HEALING_BALM_LINE,Ссадина саднит. Найдётся что-нибудь целебное?,This scrape stings. Got anything healing?
+ORDER_WARMING_OINTMENT_LINE,Руки совсем замёрзли. Чем бы их согреть?,My hands are freezing. What can warm them up?
+ORDER_SMITH_FLUX_LINE,"Флюс закончился, а в кузнице полно работы.","I'm out of flux, and there's plenty of work at the forge."
+ORDER_WARMING_BALM_LINE,Холод пробирает до костей. Есть что-нибудь согревающее и целебное?,It's bitter cold out there. Anything that warms and heals?
+ORDER_COOLING_TONIC_LINE,"В теплице жара, грядки сохнут. Нужна прохлада.",The greenhouse is baking and the beds are drying out. They need cooling.
+ORDER_SLEEPY_DROPS_LINE,Третью ночь не могу уснуть.,Third night in a row I can't sleep.
+ORDER_GLOW_SOLUTION_LINE,"В кладовой темно, а свечи кончились.","It's dark in the storeroom, and we're out of candles."
+ORDER_BURN_SALVE_LINE,Ожог ноет. Его бы остудить и подлечить.,This burn really hurts. Can you cool it and help it heal?
+ORDER_RESTFUL_DRAUGHT_LINE,"Мне бы крепко выспаться, чтобы к утру всё прошло.",I need a good night's sleep so I'm better by morning.
+ORDER_VIGOR_ELIXIR_LINE,"Опять ночной караул, а глаза слипаются.","Night watch again, and I can barely keep my eyes open."
+ORDER_SUMMER_NIGHT_DROPS_LINE,"Ночью так душно, никак не уснуть.","It's so stuffy at night, I just can't fall asleep."
+ORDER_CLEAR_DREAM_ELIXIR_LINE,Хочу увидеть во сне что-нибудь доброе и ясное.,"I'd like a kind, clear dream tonight."
+ORDER_SNOW_PEACE_DRAUGHT_LINE,Голова гудит после долгого дня. Мне бы тишины и прохлады.,My head is buzzing after a long day. I could use some cool quiet.
+ORDER_RUST_REMOVER_LINE,Старые ворота все в ржавчине.,The old gate is covered in rust.
+ORDER_ARMOR_POLISH_LINE,Страже нужны сияющие доспехи к параду.,The guard needs shiny armor for the parade.
+ORDER_FESTIVE_SPARKS_LINE,"Вечером праздник! Нужны искры, да потеплее.",There's a party tonight! I need some warm sparks.
+ORDER_COZY_BREW_LINE,Хочется уютного вечера у камина.,I'm in the mood for a cozy evening by the fire.
+ORDER_FRESHNESS_ELIXIR_LINE,"Завтра ярмарка, а цветы уже вянут.","The fair is tomorrow, and my flowers are already wilting."
+ORDER_SUN_ELIXIR_LINE,"Во дворце зима, всем не хватает солнца.","It's winter at the palace, and everyone misses the sun."
+ORDER_FROST_LANTERN_OIL_LINE,"Нужно масло для фонаря, чтобы светил и не грелся.",I need lantern oil that shines without getting hot.
+ORDER_FTUE_1_LINE,Здравствуйте! Вы новый алхимик? Мне нужно что-нибудь целебное.,Hello! Are you the new alchemist? I need something healing.
+ORDER_FTUE_2_LINE,"Помогло! А можно ещё одно, посильнее?","That worked! Could I have another one, a bit stronger?"
+ORDER_FTUE_3_LINE,Горну нужен жар. Только без лишних примесей.,"My forge needs heat. Nothing extra mixed in, please."
+ORDER_FTUE_4_LINE,Теперь нужно совсем чистое. Чтобы ни капли едкости.,Now I need it really pure. Not a drop of acid.
+ORDER_FTUE_5_LINE,"А можно сразу и согреть, и подлечить?",Could you make something that warms and heals at once?
+LANG_RU,Русский,Русский
+LANG_EN,English,English
+PROP_FLASK_NAME,Круглая колба,Round Flask
