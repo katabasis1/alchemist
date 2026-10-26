@@ -4,8 +4,10 @@
 Для агента в Computer: репозиторий в /tmp/work/repo, Pod смонтирован в /files/pod.
 Пользователю этот скрипт не нужен.
 
-  python tools/pod_sync.py --quick
-        # страховка после любого коммита: только archive/alchemist_repo.bundle (секунды)
+  python tools/pod_sync.py --quick --note "что сделано"
+        # ПОСЛЕ КАЖДОГО ШАГА (секунды): строка в docs/HANDOFF.md → коммит всего незакоммиченного
+        # ("wip: <note>") → archive/alchemist_repo.bundle → HANDOFF.md, AGENTS.md и docs/PROGRESS.md
+        # в корень Pod → archive/LAST_SYNC.txt. Без --note — то же, но без строки в журнале.
   python tools/pod_sync.py --id S1.2 --slug minimal_project
         # полный протокол после подэтапа:
         #   1) рабочее дерево чистое, валидатор без ошибок
@@ -36,6 +38,11 @@ REPO = Path(__file__).resolve().parents[1]
 POD_DEFAULT = Path("/files/pod")
 HISTORY_KEEP = 10
 MIRROR_TO_ROOT = ("docs", "tools", "AGENTS.md")
+HANDOFF_MD = "docs/HANDOFF.md"
+HANDOFF_LOG_HEADER = "## Журнал"
+# Что --quick кладёт в Pod открытым текстом (следующий агент читает без git).
+QUICK_COPIES = ((HANDOFF_MD, "HANDOFF.md"), ("AGENTS.md", "AGENTS.md"), ("docs/PROGRESS.md", "docs/PROGRESS.md"),
+                (HANDOFF_MD, "docs/HANDOFF.md"))
 
 
 def git(*args: str, cwd: Path = REPO) -> str:
@@ -80,6 +87,37 @@ def mirror_tree(src: Path, dst: Path) -> int:
     return changed
 
 
+def utc_stamp() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def append_handoff(note: str) -> None:
+    path = REPO / HANDOFF_MD
+    text = path.read_text(encoding="utf-8") if path.exists() else f"# HANDOFF\n\n{HANDOFF_LOG_HEADER}\n"
+    if HANDOFF_LOG_HEADER not in text:
+        text = text.rstrip("\n") + f"\n\n{HANDOFF_LOG_HEADER}\n"
+    path.write_text(text.rstrip("\n") + f"\n- {utc_stamp()} — {note}\n", encoding="utf-8")
+
+
+def quick_save(pod: Path, tmp: Path, note: str) -> None:
+    """Страховка после каждого шага: журнал → коммит → bundle → открытые копии в Pod."""
+    if note:
+        append_handoff(note)
+    if git("status", "--porcelain"):
+        git("add", "-A")
+        git("commit", "-q", "-m", "wip: " + (note or "автосохранение").splitlines()[0][:120])
+        print("[pod_sync] закоммичено незавершённое: " + git("log", "-1", "--format=%h %s"))
+    make_bundle(pod, tmp)
+    for src, dst in QUICK_COPIES:
+        if (REPO / src).exists():
+            copy_file(REPO / src, pod / dst)
+    head = git("rev-parse", "HEAD")
+    (pod / "archive" / "LAST_SYNC.txt").write_text(
+        f"version: v{project_version()}\nstep: quick — {note or 'автосохранение'}\ncommit: {head}\n"
+        f"synced: {utc_stamp()}\n", encoding="utf-8")
+    print(f"[pod_sync] quick: {head[:8]}; HANDOFF.md, AGENTS.md, docs/PROGRESS.md → Pod")
+
+
 def make_bundle(pod: Path, tmp: Path) -> None:
     bundle = tmp / "alchemist_repo.bundle"
     git("bundle", "create", str(bundle), "--all")
@@ -111,7 +149,9 @@ def make_update_zip(pod: Path, tmp: Path, since: str, head: str, ver: str, name:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--pod", type=Path, default=POD_DEFAULT)
-    ap.add_argument("--quick", action="store_true", help="только bundle")
+    ap.add_argument("--quick", action="store_true",
+                    help="страховка после каждого шага: коммит wip + bundle + HANDOFF.md в Pod")
+    ap.add_argument("--note", default="", help="с --quick: что сделано (строка в docs/HANDOFF.md и в коммите)")
     ap.add_argument("--id", help="ID подэтапа, например S1.2")
     ap.add_argument("--slug", help="короткое имя снапшота, snake_case")
     ap.add_argument("--allow-dirty", action="store_true", help="не требовать чистое дерево (не рекомендуется)")
@@ -127,7 +167,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
         if a.quick:
-            make_bundle(pod, tmp)
+            quick_save(pod, tmp, a.note.strip())
             return
 
         if not (a.id and a.slug):

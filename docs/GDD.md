@@ -299,7 +299,7 @@
 - `RankData` (`data/ranks/`): index, name_key, threshold. **Отклонение:** поля unlocks нет — что открывает ранг, выводится из unlock_rank / min_rank (`DataCatalog.unlocks_for_rank`), чтобы не было двух источников правды.
 - `DailyRewardConfig` (`data/daily/`): coins и crystals по дням, crystal_item (Звёздный кристалл), restart_after_last.
 - `EconomyConfig` (`data/economy/`): все пороги, скорости и множители из §3, §5, §8, §12 и функции, которые их толкуют (звёзды, извлечение, база, оплата). Числа ввода, подсказок и раскладки из §12 живут в `@export` компонентов (S1.5).
-- Ключи текстов: `PROPERTY_<ID>_NAME`, `ING_<ID>_NAME`, `RECIPE_<ID>_NAME/_DESC`, `ORDER_<РЕЦЕПТ>_LINE`, `ORDER_FTUE_<N>_LINE`, `CLIENT_<ID>_NAME`, `TOOL_<ID>_NAME/_DESC`, `RANK_<N>_NAME` — тексты появятся на S1.7.
+- Ключи текстов: `PROPERTY_<ID>_NAME`, `ING_<ID>_NAME`, `RECIPE_<ID>_NAME/_DESC`, `ORDER_<РЕЦЕПТ>_LINE`, `ORDER_FTUE_<N>_LINE`, `CLIENT_<ID>_NAME`, `TOOL_<ID>_NAME/_DESC`, `RANK_<N>_NAME`. Тексты ru/en — в `localization/strings.csv` (S1.7, прошли humanizer); валидатор проверяет, что каждый `*_key` из данных есть в CSV (L011).
 
 ## 14. Ассеты, которые вводит GDD
 Временная версия и промпт появляются на подэтапе, где ассет попадает в проект (правило 7). Для ингредиентов промпты уже готовы, чтобы финальную графику можно было делать заранее.

@@ -6,5 +6,7 @@
 |---|---|---|---|---|
 | tools/humanizer/ru/* (инструмент, не входит в сборку игры) | https://github.com/Vladimir-Human/humanizer-ru | Vladimir-Human | MIT | Без изменений, офлайн-копия |
 | tools/humanizer/en/SKILL.md (инструмент, не входит в сборку игры) | https://github.com/blader/humanizer | blader | MIT | Без изменений, офлайн-копия |
-| assets/fonts/kurale_regular.ttf (исходник: tools/fonts/src/kurale_regular.ttf) | https://github.com/google/fonts/tree/main/ofl/kurale | Eduardo Tunni, The Kurale Project Authors | SIL OFL 1.1 (`assets/fonts/kurale_ofl.txt`) | Урезан до латиницы, кириллицы и типографских знаков (`tools/fonts/build_fonts.py`). Reserved Font Name нет, имя сохранено |
-| assets/fonts/nunito_semibold.ttf, assets/fonts/nunito_extrabold.ttf (исходник: tools/fonts/src/nunito_variable.ttf) | https://github.com/google/fonts/tree/main/ofl/nunito | The Nunito Project Authors (https://github.com/googlefonts/nunito) | SIL OFL 1.1 (`assets/fonts/nunito_ofl.txt`) | Из вариативного шрифта сделаны статичные начертания 600 и 800, урезка как у Kurale (`tools/fonts/build_fonts.py`). Reserved Font Name нет, имя сохранено |
+| assets/fonts/kurale_regular.ttf (заголовки) | https://fonts.google.com/specimen/Kurale · https://github.com/google/fonts/tree/main/ofl/kurale | Eduardo Tunni (The Kurale Project Authors) | SIL OFL 1.1 — текст лицензии: `assets/fonts/ofl_kurale.txt` | Без изменений (v2.000) |
+| assets/fonts/nunito_regular.ttf, assets/fonts/nunito_bold.ttf (основной текст) | https://fonts.google.com/specimen/Nunito · https://github.com/googlefonts/nunito | The Nunito Project Authors | SIL OFL 1.1 — текст лицензии: `assets/fonts/ofl_nunito.txt` | Статические начертания 400 и 700 вариативного шрифта (v3.602), как их отдаёт Google Fonts; глифы не менялись |
+
+Шрифты OFL можно встраивать в игру и продавать вместе с ней; продавать сами файлы шрифтов отдельно нельзя, а файл лицензии должен лежать рядом с ними.

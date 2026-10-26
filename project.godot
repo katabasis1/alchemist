@@ -11,6 +11,10 @@ config_version=5
 [application]
 
 config/name="Лавка алхимика"
+config/name_localized={
+"en": "The Alchemist's Shop",
+"ru": "Лавка алхимика"
+}
 config/description="Уютный симулятор алхимической лавки"
 config/version="0.1.0"
 run/main_scene="res://scenes/main/main.tscn"
@@ -45,7 +49,7 @@ window/stretch/aspect="expand"
 
 [gui]
 
-theme/custom="res://ui/theme/main_theme.tres"
+theme/custom="res://assets/ui/main_theme.tres"
 
 [internationalization]
 

@@ -52,9 +52,9 @@ python tools/validate_project.py --self-test
 - `services_smoke.tscn` — автозагрузки, ждём `SMOKE: 8/8 OK`;
 - `components_demo.tscn` — компоненты, ждём `COMPONENTS: 20/20 OK`; ниже в Output — что проверить руками;
 - `data_check.tscn` — данные игры (`data/catalog.tres`), ждём `DATA: 23/23 OK`;
-- `l10n_check.tscn` — локализация: переводы ru/en, ключи данных, тема и символы шрифтов, ждём `L10N: 9/9 OK`.
+- `l10n_check.tscn` — переводы ru/en, шрифты и тема, ждём `L10N: 9/9 OK`; на экране образцы текста, язык сам переключается каждые 2 секунды.
 
-Английский язык без смены языка системы: в `autoload/platform/platform.tscn` у узла `PlatformMock` поле `language_override` = `en` (вернуть пустым после проверки).
+Язык игры: настройка игрока → язык платформы (в редакторе — язык ОС; для проверки английского задай `language_override = "en"` у узла `PlatformMock` в `autoload/platform/platform.tscn`).
 
 ## Правила разработки
 Коротко: композиция вместо наследования, все объекты — сцены и узлы, данные — в `.tres`, тексты — через ключи локализации и humanizer, графика — временная плюс сразу промпт для ChatGPT Image. Полностью — в [`AGENTS.md`](AGENTS.md).

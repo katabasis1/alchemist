@@ -24,6 +24,7 @@ REPO = Path(__file__).resolve().parents[1]
 REGISTRY = REPO / "docs" / "art" / "ASSET_REGISTRY.md"
 EXCLUDE = REPO / ".git" / "info" / "exclude"
 LIVE_STATUSES = ("temp", "final")
+CONTENT_SIZED = (64, 64)
 
 
 def png_bytes(w: int, h: int) -> bytes:
@@ -45,7 +46,13 @@ def main() -> None:
         if len(cells) < 6 or not cells[1].startswith("assets/"):
             continue
         m = re.match(r"(\d+)\s*[×x]\s*(\d+)", cells[2])
-        if not m or not cells[5].startswith(LIVE_STATUSES):
+        if not cells[5].startswith(LIVE_STATUSES):
+            continue
+        if m:
+            w, h = int(m.group(1)), int(m.group(2))
+        elif cells[2].startswith("по содержимому"):
+            w, h = CONTENT_SIZED  # холст не фиксирован — валидатору нужен только файл
+        else:
             continue
         path = REPO / cells[1]
         if path.exists():
@@ -53,7 +60,7 @@ def main() -> None:
         made.append(cells[1])
         if not a.dry:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(png_bytes(int(m.group(1)), int(m.group(2))))
+            path.write_bytes(png_bytes(w, h))
     if made and not a.dry:
         EXCLUDE.parent.mkdir(parents=True, exist_ok=True)
         with EXCLUDE.open("a", encoding="utf-8") as f:

@@ -1,0 +1,17 @@
+[gd_resource type="Theme" format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/nunito_regular.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/nunito_bold.ttf" id="2_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/kurale_regular.ttf" id="3_title"]
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 32
+BoldLabel/base_type = &"Label"
+BoldLabel/fonts/font = ExtResource("2_bold")
+Button/fonts/font = ExtResource("2_bold")
+RichTextLabel/fonts/bold_font = ExtResource("2_bold")
+RichTextLabel/fonts/normal_font = ExtResource("1_body")
+TitleLabel/base_type = &"Label"
+TitleLabel/font_sizes/font_size = 72
+TitleLabel/fonts/font = ExtResource("3_title")

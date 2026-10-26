@@ -246,6 +246,7 @@ RULES: dict[str, str] = {
     "L008": "текст, видимый игроку, задан не ключом локализации",
     "L009": "слово, на которое может среагировать модерация Яндекса",
     "L010": "ключ локализации не в формате UPPER_SNAKE_CASE",
+    "L011": "ключ локализации из данных (свойство *_key в .tres/.tscn) не найден в strings.csv",
     "A001": "реестр ассетов не найден",
     "A002": "ассет со статусом temp/final отсутствует",
     "A003": "размер холста ассета не совпадает с реестром",
@@ -1355,6 +1356,24 @@ def check_scene_texts(p: Project, rel: str) -> None:
                 p.r.warn("L008", rel, ln, f"{k} = \"{val[:40]}\"")
 
 
+def check_data_keys(p: Project, rel: str) -> None:
+    """Свойства *_key (name_key, desc_key, line_key, tip_key…) в ресурсах и сценах — ключи strings.csv."""
+    try:
+        sections = parse_godot_text(p.read(rel))
+    except ParseError:
+        return
+    keys = p.load_csv()
+    for s in sections:
+        for k, v, ln in s.props:
+            if not k.endswith("_key"):
+                continue
+            val = unquote(v.lstrip("&")) if v.startswith(("&\"", "\"")) else None
+            if not val or not KEY_RE.match(val):
+                continue
+            if keys is None or val not in keys:
+                p.r.err("L011", rel, ln, f"{k} = {val}")
+
+
 def text_hash(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8")).hexdigest()[:10]
 
@@ -1512,6 +1531,7 @@ def run(root: Path) -> Report:
     for rel in p.files:
         if rel.endswith((".tscn", ".tres")):
             check_resource_file(p, rel)
+            check_data_keys(p, rel)
             if rel.endswith(".tscn"):
                 check_scene_texts(p, rel)
         elif rel.endswith(".gd"):

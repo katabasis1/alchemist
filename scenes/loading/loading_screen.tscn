@@ -1,17 +1,15 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenes/loading/loading_screen.gd" id="1_loading"]
-[ext_resource type="Texture2D" path="res://assets/props/prop_flask_round.png" id="2_flask"]
 
-[node name="LoadingScreen" type="CanvasLayer" node_paths=PackedStringArray("root", "bar", "flask")]
+[node name="LoadingScreen" type="CanvasLayer" node_paths=PackedStringArray("content", "status")]
 process_mode = 3
 layer = 90
 script = ExtResource("1_loading")
-root = NodePath("Root")
-bar = NodePath("Root/Center/Column/Bar")
-flask = NodePath("Root/Center/Column/FlaskHolder/Flask")
+content = NodePath("Content")
+status = NodePath("Content/Center/Box/Status")
 
-[node name="Root" type="Control" parent="."]
+[node name="Content" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,17 +17,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Background" type="ColorRect" parent="Root"]
+[node name="Backdrop" type="ColorRect" parent="Content"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
 color = Color(0.258824, 0.133333, 0.054902, 1)
 
-[node name="Center" type="CenterContainer" parent="Root"]
+[node name="Center" type="CenterContainer" parent="Content"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -38,49 +35,23 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Column" type="VBoxContainer" parent="Root/Center"]
+[node name="Box" type="VBoxContainer" parent="Content/Center"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 28
-alignment = 1
+theme_override_constants/separation = 24
 
-[node name="FlaskHolder" type="Control" parent="Root/Center/Column"]
-custom_minimum_size = Vector2(192, 256)
-layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-
-[node name="Flask" type="TextureRect" parent="Root/Center/Column/FlaskHolder"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-pivot_offset = Vector2(96, 256)
-mouse_filter = 2
-texture = ExtResource("2_flask")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Title" type="Label" parent="Root/Center/Column"]
-custom_minimum_size = Vector2(960, 0)
+[node name="Title" type="Label" parent="Content/Center/Box"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(0.988, 0.949, 0.773, 1)
+theme_override_colors/font_shadow_color = Color(0.165, 0.071, 0.02, 0.6)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 4
 text = "GAME_TITLE"
 horizontal_alignment = 1
-autowrap_mode = 3
 
-[node name="Bar" type="ProgressBar" parent="Root/Center/Column"]
-custom_minimum_size = Vector2(560, 40)
+[node name="Status" type="Label" parent="Content/Center/Box"]
 layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-max_value = 3.0
-show_percentage = false
-
-[node name="Status" type="Label" parent="Root/Center/Column"]
-layout_mode = 2
-theme_type_variation = &"LightLabel"
-text = "LOADING"
+theme_override_colors/font_color = Color(0.941, 0.812, 0.537, 1)
+text = "LOADING_TEXT"
 horizontal_alignment = 1
