@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://components/flash/flash.gd" id="1_flash"]
-
-[node name="Flash" type="Node"]
-script = ExtResource("1_flash")

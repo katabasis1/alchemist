@@ -11,8 +11,10 @@
 | bg_workshop_portrait | assets/backgrounds/bg_workshop_portrait.png | 1080×1920 | top-left | — | temp | P-BG-02 | Портрет (телефон, GDD §10). Край прилавка y≈781: верх — клиент и заказ, прилавок — станции, ящики внизу — полка-лента |
 | bg_workshop_portrait_bench | assets/backgrounds/bg_workshop_portrait_bench.png | 1080×1139 | top-left, узел в (0, 781) | — | temp | P-BG-02 | Производный слой: `python tools/art/derive.py bench --bg assets/backgrounds/bg_workshop_portrait.png --top 781 --out assets/backgrounds/bg_workshop_portrait_bench.png`. Отдельно не генерировать |
 | prop_mortar_full | art_probes/style_A/cutouts/prop_mortar_full.png | 512×512 | bottom | #FF00FF | probe | — | Только пробник; в игре — две части ниже |
-| prop_mortar_bowl | assets/props/prop_mortar_bowl.png | 512×512 | bottom | #FF00FF | planned (S2.2) | P-PROP-01 | Чаша; порошок — шейдер |
-| prop_pestle | assets/props/prop_pestle.png | 256×512 | center | #FF00FF | planned (S2.2) | P-PROP-02 | Пестик; точка вращения задаётся в сцене |
+| prop_mortar_bowl | assets/props/prop_mortar_bowl.png | 512×512 | bottom | #FF00FF | temp | P-PROP-01 | Чаша; порошок — шейдер. Временная — S2.1 (лист вместе с пестиком, `cutout.py --split`) |
+| prop_pestle | assets/props/prop_pestle.png | 256×512 | center | #FF00FF | temp | P-PROP-02 | Пестик; точка вращения задаётся в сцене |
+| prop_mortar_bowl_front | assets/props/prop_mortar_bowl_front.png | 512×512 | bottom | — | temp | P-PROP-01 | Производный слой: передний край чаши поверх содержимого (ингредиенты «внутри»). `python tools/art/derive.py front assets/props/prop_mortar_bowl.png assets/props/prop_mortar_bowl_front.png --ellipse 256,94,180,52` (эллипс — внутренний край горлышка). Отдельно не генерировать; после финальной чаши проверить эллипс и пересобрать |
+| prop_shelf_slot | assets/props/prop_shelf_slot.png | 256×192 | bottom | #FF00FF | temp | P-PROP-04 | Ячейка полки под один ингредиент; в сетке и в ленте одна и та же. В GDD §14 — «prop_shelf» |
 | prop_flask_round | assets/props/prop_flask_round.png | 384×512 | bottom | #FF00FF (global) | temp | P-PROP-03 | Стекло прозрачное, жидкость — шейдер |
 | ing_fire_bloom | assets/ingredients/ing_fire_bloom.png | 256×256 | center | #FF00FF | temp | P-ING-01 |  |
 | ing_moon_moss | assets/ingredients/ing_moon_moss.png | 256×256 | center | #FF00FF | temp | P-ING-02 |  |
@@ -34,3 +36,10 @@
 | icon_coin | assets/ui/icon_coin.png | 256×256 | center | #FF00FF | temp | P-UI-03 |  |
 | icon_star | assets/ui/icon_star.png | 256×256 | center | #FF00FF | temp | P-UI-04 |  |
 | ui_badge_round | assets/ui/ui_badge_round.png | 256×256 | center | #FF00FF | temp | P-UI-05 |  |
+| ui_trash | assets/ui/ui_trash.png | 256×256 | center | #FF00FF | temp | P-UI-06 | Корзина «вылить» у станции (кнопка) |
+| icon_prop_acid | assets/ui/icon_prop_acid.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Пузырьки; заливка белая, цвет — `PropertyData.color` через modulate |
+| icon_prop_heat | assets/ui/icon_prop_heat.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Пламя; заливка белая, цвет — `PropertyData.color` через modulate |
+| icon_prop_life | assets/ui/icon_prop_life.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Лист; заливка белая, цвет — `PropertyData.color` через modulate |
+| icon_prop_cold | assets/ui/icon_prop_cold.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Снежинка; заливка белая, цвет — `PropertyData.color` через modulate |
+| icon_prop_sleep | assets/ui/icon_prop_sleep.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Полумесяц; заливка белая, цвет — `PropertyData.color` через modulate |
+| icon_prop_light | assets/ui/icon_prop_light.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Искра; заливка белая, цвет — `PropertyData.color` через modulate |

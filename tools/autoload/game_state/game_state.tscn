@@ -1,9 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://autoload/game_state/game_state.gd" id="1_script"]
-[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
-
-[node name="GameState" type="Node"]
-process_mode = 3
-script = ExtResource("1_script")
-catalog = ExtResource("2_catalog")

@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/stations/station_trash.gd" id="1_trash"]
+[ext_resource type="Texture2D" path="res://assets/ui/ui_trash.png" id="2_tex"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="3_hit"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="4_punch"]
+[ext_resource type="PackedScene" path="res://components/hoverable/hoverable.tscn" id="5_hover"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="6_sfx"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_1.ogg" id="7_d1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_2.ogg" id="8_d2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_3.ogg" id="9_d3"]
+
+[node name="StationTrash" type="Node2D" node_paths=PackedStringArray("hit_area", "punch", "sfx")]
+script = ExtResource("1_trash")
+hit_area = NodePath("HitArea")
+punch = NodePath("JuicePunch")
+sfx = NodePath("Sfx")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite" type="Sprite2D" parent="Visual"]
+scale = Vector2(0.36, 0.36)
+texture = ExtResource("2_tex")
+
+[node name="HitArea" parent="." instance=ExtResource("3_hit")]
+offset_left = -52.0
+offset_top = -52.0
+offset_right = 52.0
+offset_bottom = 52.0
+pivot_offset = Vector2(52, 52)
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("4_punch")]
+target = NodePath("../Visual")
+
+[node name="Hoverable" parent="." node_paths=PackedStringArray("hit_area", "target") instance=ExtResource("5_hover")]
+hit_area = NodePath("../HitArea")
+target = NodePath("../Visual/Sprite")
+
+[node name="Sfx" parent="." instance=ExtResource("6_sfx")]
+streams = Array[AudioStream]([ExtResource("7_d1"), ExtResource("8_d2"), ExtResource("9_d3")])

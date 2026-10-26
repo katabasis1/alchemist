@@ -13,7 +13,7 @@ const NEVER: float = -1.0
 @export var id: StringName = &""
 @export var name_key: StringName = &""
 @export var color: Color = Color.WHITE
-## Иконка свойства: плавает над слоем и стоит в пузыре заказа. Появится на S2–S3.
+## Иконка свойства (белая заливка, цвет даёт color через modulate): ячейка полки, слой в колбе, пузырь заказа.
 @export var icon: Texture2D
 @export var pattern: Pattern = Pattern.BUBBLES
 ## Порядок плотности: 1 — самое тяжёлое (лежит на дне).

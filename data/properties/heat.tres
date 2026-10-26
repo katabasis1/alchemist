@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="PropertyData" format=3]
 
 [ext_resource type="Script" path="res://data/properties/property_data.gd" id="1_property_data"]
+[ext_resource type="Texture2D" path="res://assets/ui/icon_prop_heat.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_property_data")
 id = &"heat"
 name_key = &"PROPERTY_HEAT_NAME"
 color = Color(1, 0.419608, 0.172549, 1)
+icon = ExtResource("2_icon")
 pattern = 1
 density_rank = 2
 evaporate_temp = -1.0

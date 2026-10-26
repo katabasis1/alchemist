@@ -2,9 +2,12 @@
 ## Взял: предмет приподнимается, появляется тень, цели подсвечиваются (EventBus.drag_started).
 ## Отпустил над целью: DropTarget решает, принять ли; принят — встаёт на цель (или как задано on_accept),
 ## нет — возвращается домой (drop_rejected, затем returned; дрожь и звук вешаются на эти сигналы в сцене).
+## Лента с прокруткой (pass_horizontal): нажатие, ушедшее сначала вбок, предмет не берёт — press_passed,
+##   дальше жестом распоряжается владелец (слушает HitArea этого предмета).
 ## Сигналы: drag_started, drag_moved(world_pos), dropped(target), drop_rejected(target), landed, returned,
-##   selected_changed(selected). target в drop_rejected == null — отпустили мимо всех целей.
-## Методы для владельца: select/deselect, cancel, place_at (мгновенно), send_to (плавно, станция вернула предмет).
+##   selected_changed(selected), press_passed(world_pos). target в drop_rejected == null — отпустили мимо всех целей.
+## Методы для владельца: select/deselect, cancel, place_at (мгновенно), send_to (плавно, станция вернула предмет),
+##   drop_on (бросить на цель без пальца: обучение, проверки), is_busy.
 ## Зависимости: HitArea (ввод), DropTarget (цели), EventBus (drag_started, drag_ended).
 class_name Draggable
 extends Node
@@ -16,6 +19,8 @@ signal drop_rejected(target: DropTarget)
 signal landed
 signal returned
 signal selected_changed(selected: bool)
+## Нажатие ушло вбок при pass_horizontal: предмет не взят, жест отдан владельцу (прокрутка ленты).
+signal press_passed(world_pos: Vector2)
 
 ## Что делать после приёма: встать на цель / вернуться домой (полка-источник) / остаться где отпустили (владелец сам решит).
 enum AcceptMode { SNAP, RETURN, STAY }
@@ -37,6 +42,10 @@ enum AcceptMode { SNAP, RETURN, STAY }
 @export var on_accept: AcceptMode = AcceptMode.SNAP
 ## Сколько пикселей мира провести пальцем, чтобы нажатие стало переносом. Стартовое значение — GDD §12, строка «Ввод».
 @export var drag_threshold: float = 12.0
+## Первое движение вбок не берёт предмет, а отдаёт жест (press_passed). Включает полка-лента, когда её можно листать.
+@export var pass_horizontal: bool = false
+## «Вбок» — когда сдвиг по x больше сдвига по y, умноженного на это число.
+@export var pass_ratio: float = 1.0
 ## Как плотно предмет следует за пальцем (1/с); 0 — без сглаживания.
 @export var follow_sharpness: float = 28.0
 @export var lift_offset: Vector2 = Vector2(0.0, -18.0)
@@ -131,6 +140,26 @@ func place_at(world_pos: Vector2) -> void:
 	body.global_position = world_pos
 
 
+## Бросить предмет на цель без пальца (сценарий обучения, проверочные сцены) — как будто его отпустили над целью.
+func drop_on(target: DropTarget) -> void:
+	_pressing = false
+	if is_dragging:
+		is_dragging = false
+		set_process(false)
+		_set_hover_target(null)
+	elif is_selected:
+		_set_selected(false, false)
+	else:
+		_capture_home()
+	body.z_index = carry_z_index
+	_resolve_drop(target, fly_sec)
+
+
+## Предмет занят: в руке, выбран или летит. Раскладка (прокрутка ленты) двигает только свободные предметы.
+func is_busy() -> bool:
+	return is_dragging or is_selected or _is_moving()
+
+
 ## Плавно отправить предмет в новую «домашнюю» точку: станция вернула предмет на полку, полка перестроилась.
 ## Перенос или выбор, если были, отменяются. По прибытии — landed.
 func send_to(world_pos: Vector2) -> void:
@@ -184,7 +213,12 @@ func _on_pointer_moved(world: Vector2) -> void:
 	if not _pressing:
 		return
 	if not is_dragging:
-		if world.distance_to(_press_world) < drag_threshold:
+		var shift: Vector2 = world - _press_world
+		if shift.length() < drag_threshold:
+			return
+		if pass_horizontal and absf(shift.x) > absf(shift.y) * pass_ratio:
+			_pressing = false
+			press_passed.emit(world)
 			return
 		_begin_drag()
 	_goal = world + _grab_offset

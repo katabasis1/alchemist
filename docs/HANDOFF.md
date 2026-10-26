@@ -6,25 +6,22 @@
 > Ответ агента может оборваться в любой момент. Чего нет в Pod, следующий агент не увидит.
 
 ## Сейчас
-- **S1.7 закончен, v0.1.0 = M1 выдан** (коммит `S1.7: …`, тег `v0.1.0`, полный `pod_sync`). Пользователю: `outbox/alchemist_update_v0.1.0.zip`.
-- Ждём от пользователя проверку M1 — список в `docs/PROGRESS.md`, «Ждём от пользователя».
-- Следующий агент: сверить GitHub (AGENTS.md §2.2) → если пользователь прислал Output с ошибками, сначала исправить → затем S2.1 (вписать его чек-лист сюда вместо чек-листа S1.7).
-- Рабочая копия: `/tmp/work/repo`. Если песочница перезапускалась: `git clone /files/pod/archive/alchemist_repo.bundle /tmp/work/repo && cd /tmp/work/repo && python tools/placeholder_pngs.py`
-- GitHub: `355ab53` = v0.0.4 (проверено 2026-10-26 09:10 UTC)
+- **Сессия 10 (2026-10-26), новый Pod «новая игра»** — bundle и архивов прошлого Pod здесь нет. Рабочая копия восстановлена с GitHub `df4d87b` (коммит пользователя «0.1.2») веб-инструментом через `dsbx`; база — коммит `sync: GitHub df4d87b`, теги `gh-df4d87b`, `v0.1.0`.
+- Что было на GitHub: v0.1.0 (M1) + файлы Godot (`*.uid`, `*.import`, `strings.*.translation`) + **мусор**: (а) копия всего проекта в `tools/` (326 файлов = `alchemist_latest.zip`, видимо распакован не в ту папку); (б) файлы параллельной ветки от 25.10 (`7d6f99a` «0.0.5», `e548792`): второй набор шрифтов `nunito_extrabold/semibold`, `ui/theme/main_theme.tres`, `tools/fonts/`; (в) файлы **другого проекта «Турбовендетта»**: `docs/ARCHITECTURE.md`, `DECISIONS.md`, `SPIKES.md`, `SPIKE_CHECKLIST.md`, `tools/validate.py`, `tools/agent/*`, `scenes/boot/build_info.gd`. Ничто в игре на них не ссылается → удалены коммитом `S2.0: уборка`; пользователю — `DELETED.txt` в архиве обновления.
+- Веб-инструмент кэширует ответы GitHub (дерево `main` отдавалось суточной давности). Сверять **с параметром `?nocache=<время>`** на `api.github.com/.../commits` и брать дерево по SHA коммита.
+- Бинарники < 28 КБ (ogg, `.translation`, PNG фикстур) скачаны через `git/blobs` (base64) и закоммичены; PNG ассетов и TTF шрифтов — заглушки в `.git/info/exclude`.
+- Дальше: **S2.1** — полка ингредиентов + перетаскивание + подсветка цели.
 
-## Чек-лист S1.7
-- [x] `localization/strings.csv`: 111 ключей ru/en — все `*_key` из `data/**/*.tres` + `GAME_TITLE`, `LOADING_TEXT`, `LANGUAGE_NAME`, `PROP_FLASK_NAME`
-- [x] humanizer ru/en, все ключи отмечены в `localization/humanized.txt`
-- [x] шрифты: Kurale (заголовки), Nunito 400/700 (текст) + OFL-лицензии; строки в `docs/THIRD_PARTY.md`; кириллица и все символы CSV есть (проверено fontTools)
-- [x] `project.godot`: `locale/translations`, `gui/theme/custom`, `config/name_localized`, версия 0.1.0
-- [x] `assets/ui/main_theme.tres`: шрифт по умолчанию 32, вариации `TitleLabel` (Kurale 72) и `BoldLabel`
-- [x] экран загрузки `scenes/loading/loading_screen.tscn` + подключение в `scenes/main/main.tscn` / `main.gd`
-- [x] смена языка по настройке: `EventBus.settings_changed` → `TranslationServer.set_locale`
-- [x] проверочная сцена `scenes/debug/l10n_check.tscn` → `L10N: x/y OK`
-- [x] валидатор: правило L011 — ключ из `*_key` в `.tres/.tscn` есть в `strings.csv` (+ фикстура, самотест)
-- [x] документы: PROGRESS, DEVLOG (сессия 9), PLAN [x], ART_STYLE §5, README «Проверка в Godot», GDD §13
-- [x] коммит `S1.7: ...`, тег `v0.1.0`, `python tools/pod_sync.py --id S1.7 --slug localization`
-- [ ] ответ пользователю: какой архив распаковать, что проверить на M1
+## Чек-лист S2.1 (v0.1.1)
+- [x] сверка с GitHub, восстановление рабочей копии, уборка (S2.0)
+- [x] ассеты S2: `prop_shelf_slot`, `prop_mortar_bowl`, `prop_pestle`, `ui_trash`, `icon_prop_*` ×6 — временные + промпты P-* в PROMPTS.md + ASSET_REGISTRY
+- [x] данные: иконка у `PropertyData`, иконка у `IngredientData` (если нет) — уже были (`icon`, `texture`)
+- [x] сцены: ячейка полки (ингредиент + иконки свойств), полка (сетка в ландшафте / лента в портрете), ступка-цель (DropTarget + подсветка), корзина
+- [x] перетаскивание ингредиента на ступку: подсветка допустимой цели, отскок при промахе, ступка принимает ≤ 2, корзина возвращает на полку
+- [x] тексты (если появятся) — через humanizer, ключи в CSV — новых текстов нет (подсказка ингредиента — его `name_key`)
+- [x] проверочная сцена `scenes/debug/shelf_check.tscn`
+- [ ] документы: PROGRESS, DEVLOG (сессия 10), PLAN [x], COMPONENTS/GDD при необходимости
+- [ ] коммит `S2.1: …`, тег `v0.1.1`, `pod_sync --id S2.1 --slug shelf_drag --base gh-df4d87b --base-label github_df4d87b` + DELETED.txt с бинарниками/копией `tools/`
 
 ## Журнал (новое — внизу; пишется через --note)
 - 2026-10-26 07:50–08:02 UTC — агент 1 (сессия 9a): сверка с GitHub `355ab53` = v0.0.4 → коммит `835f1ff` (тег v0.0.4); правка `tools/placeholder_pngs.py` (`54a7f3c`); bundle. Начал S1.7 (сбор ключей из данных). Ответ оборвался; PROGRESS не обновлён.
@@ -38,3 +35,18 @@
 - 2026-10-26 09:17 UTC — документы: ART_STYLE §5 (шрифты решены), GDD §13, PLAN S1.7 [x], README (l10n_check, язык для проверки). Дальше: PROGRESS + DEVLOG, затем коммит S1.7 и тег v0.1.0
 - 2026-10-26 09:17 UTC — PROGRESS переписан под M1 (что проверить пользователю, следующий шаг S2.1). Дальше: DEVLOG сессии 9, коммит S1.7, тег v0.1.0, полный pod_sync
 - 2026-10-26 09:18 UTC — DEVLOG: запись сессии 9. Дальше: финальный коммит S1.7, тег v0.1.0, pod_sync --id S1.7 --slug localization
+- 2026-10-26 11:34 UTC — сессия 10: восстановлено с GitHub df4d87b, уборка S2.0 (копия в tools/, файлы «Турбовендетты», дубли шрифтов/темы). Дальше: ассеты S2.1
+- 2026-10-26 11:49 UTC — сессия 11: пользователь подтвердил удаление всех трёх групп лишних файлов и что проверка M1 в Godot 4.7 прошла. GitHub HEAD всё ещё df4d87b (nocache). Начинаю S2.1: ассеты
+- 2026-10-26 11:54 UTC — S2.1 ассеты: временные prop_mortar_bowl, prop_pestle, prop_shelf_slot (в GDD было prop_shelf), ui_trash, icon_prop_* ×6 (белые, тон — PropertyData.color); промпты P-PROP-04, P-UI-06, P-UI-07; иконки в data/properties/*.tres. Дальше: сцены ячейки полки и полки
+- 2026-10-26 11:59 UTC — S2.1: Draggable — pass_horizontal/press_passed (жест вбок отдаётся ленте), drop_on, is_busy. Дальше: ingredient_item.tscn
+- 2026-10-26 14:02 UTC — сессия 12: найдена несохранённая работа — scenes/ingredient/ingredient_item.tscn/.gd (ингредиент полки: Draggable, Tooltip, Flash отказа, масштаб в станции). Дальше: shelf_slot + shelf
+- 2026-10-26 14:08 UTC — S2.1: шейдер подсветки цели components/drop_target/drop_glow.gdshader + drop_glow.tscn (мягкий пульсирующий овал, яркость — modulate от DropTarget). Дальше: shelf_slot
+- 2026-10-26 14:12 UTC — S2.1: scenes/shelf/shelf_slot.tscn/.gd — ячейка полки (ящичек, ингредиент, до 3 иконок свойств; всегда полна: новый pop_in после приёма станцией; take_back — вернувшийся летит и сливается; жест вбок отдаётся ленте). Дальше: shelf.tscn/.gd
+- 2026-10-26 14:13 UTC — S2.1: scenes/shelf/shelf.tscn/.gd — полка: сетка (ландшафт) / лента с прокрутткой, инерцией и колесом (портрет), таяние ячеек у края, take_back, scroll_to; слушает EventBus.layout_changed. Дальше: ступка (mortar) + корзина
+- 2026-10-26 14:15 UTC — S2.1: корзина scenes/stations/station_trash.tscn/.gd (кнопка «вылить», приглушена у пустой станции); derive.py front + assets/props/prop_mortar_bowl_front.png (передний край чаши — ингредиенты лежат внутри), строка в ASSET_REGISTRY. Дальше: mortar.tscn/.gd
+- 2026-10-26 15:57 UTC — сессия 13: найден несохранённый scenes/stations/mortar/mortar.gd (приём ≤2/3, цена при броске, возврат тапом и корзиной, огоньки слотов). Дальше: проверка API компонентов, mortar.tscn
+- 2026-10-26 16:01 UTC — S2.1: scenes/stations/mortar/mortar.tscn — чаша/содержимое/передний край, пестик, места на 2 и 3, огоньки, DropTarget с подсветкой, корзина, StateMachine Empty⇄Loaded; в mortar.gd переходы без повторного входа. Дальше: проверка раскладки картинкой, shelf_check
+- 2026-10-26 16:03 UTC — S2.1: mortar.gd — перенос в чашу и возврат по тапу кадром позже (не трогаем узел посреди его же обработки касания). Дальше: scenes/debug/shelf_check
+- 2026-10-26 16:05 UTC — S2.1: scenes/debug/shelf_check.tscn/.gd — мастерская + полка (6 ингредиентов) + ступка; 27 автопроверок (полка, иконки, подсветка, приём/цена/полно/монеты, возврат тапом и корзиной, улучшение, лента) → «SHELF: x/y OK» + памятка. Дальше: промпты/реестр, humanizer, документы, выдача v0.1.1
+- 2026-10-26 16:06 UTC — S2.1: mortar — вместимость по умолчанию = число мест slots_two, перекладка при смене вместимости; чек-лист: данные/сцены/перенос/тексты/проверочная сцена [x]. Дальше: документы (PROGRESS, DEVLOG, PLAN, COMPONENTS), версия 0.1.1, выдача
+- 2026-10-26 16:07 UTC — S2.1: версия 0.1.1, PLAN [x], README (shelf_check), COMPONENTS §2.1 (сущности S2). Дальше: PROGRESS, DEVLOG, коммит/тег, полная выдача

@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="PropertyData" format=3]
 
 [ext_resource type="Script" path="res://data/properties/property_data.gd" id="1_property_data"]
+[ext_resource type="Texture2D" path="res://assets/ui/icon_prop_acid.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_property_data")
 id = &"acid"
 name_key = &"PROPERTY_ACID_NAME"
 color = Color(0.607843, 0.364706, 0.898039, 1)
+icon = ExtResource("2_icon")
 pattern = 0
 density_rank = 1
 evaporate_temp = 75.0

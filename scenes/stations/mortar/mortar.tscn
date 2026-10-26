@@ -1,0 +1,142 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/stations/mortar/mortar.gd" id="1_mortar"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="2_economy"]
+[ext_resource type="Resource" path="res://data/equipment/mortar_third_slot.tres" id="3_upgrade"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_mortar_bowl.png" id="4_bowl"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_mortar_bowl_front.png" id="5_front"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_pestle.png" id="6_pestle"]
+[ext_resource type="PackedScene" path="res://components/drop_target/drop_glow.tscn" id="7_glow"]
+[ext_resource type="PackedScene" path="res://components/drop_target/drop_target.tscn" id="8_drop"]
+[ext_resource type="PackedScene" path="res://scenes/stations/station_trash.tscn" id="9_trash"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state_machine.tscn" id="10_sm"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state.tscn" id="11_state"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="12_punch"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="13_sfx"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_accept.ogg" id="14_accept"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_reject.ogg" id="15_reject"]
+
+[node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "trash", "punch", "sfx_accept", "sfx_reject")]
+script = ExtResource("1_mortar")
+economy = ExtResource("2_economy")
+third_slot_upgrade = ExtResource("3_upgrade")
+drop_target = NodePath("DropTarget")
+state_machine = NodePath("StateMachine")
+contents = NodePath("Visual/Contents")
+slots_two = [NodePath("Slots/Two1"), NodePath("Slots/Two2")]
+slots_three = [NodePath("Slots/Three1"), NodePath("Slots/Three2"), NodePath("Slots/Three3")]
+pips = [NodePath("Pips/Pip1"), NodePath("Pips/Pip2"), NodePath("Pips/Pip3")]
+pip_fills = [NodePath("Pips/Pip1/Fill"), NodePath("Pips/Pip2/Fill"), NodePath("Pips/Pip3/Fill")]
+trash = NodePath("Trash")
+punch = NodePath("JuicePunch")
+sfx_accept = NodePath("SfxAccept")
+sfx_reject = NodePath("SfxReject")
+
+[node name="Glow" parent="." instance=ExtResource("7_glow")]
+offset_left = -240.0
+offset_top = -400.0
+offset_right = 240.0
+offset_bottom = 40.0
+
+[node name="Pestle" type="Sprite2D" parent="."]
+position = Vector2(150, -250)
+rotation = 0.42
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("6_pestle")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Bowl" type="Sprite2D" parent="Visual"]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("4_bowl")
+offset = Vector2(0, -256)
+
+[node name="Contents" type="Node2D" parent="Visual"]
+
+[node name="BowlFront" type="Sprite2D" parent="Visual"]
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("5_front")
+offset = Vector2(0, -256)
+
+[node name="Slots" type="Node2D" parent="."]
+
+[node name="Two1" type="Marker2D" parent="Slots"]
+position = Vector2(-50, -272)
+
+[node name="Two2" type="Marker2D" parent="Slots"]
+position = Vector2(50, -272)
+
+[node name="Three1" type="Marker2D" parent="Slots"]
+position = Vector2(-70, -266)
+
+[node name="Three2" type="Marker2D" parent="Slots"]
+position = Vector2(0, -286)
+
+[node name="Three3" type="Marker2D" parent="Slots"]
+position = Vector2(70, -266)
+
+[node name="Pips" type="Node2D" parent="."]
+position = Vector2(0, 26)
+
+[node name="Pip1" type="Node2D" parent="Pips"]
+position = Vector2(-30, 0)
+
+[node name="Ring" type="Polygon2D" parent="Pips/Pip1"]
+color = Color(1, 0.94, 0.8, 0.85)
+polygon = PackedVector2Array(12, 0, 11.1, 4.6, 8.5, 8.5, 4.6, 11.1, 0, 12, -4.6, 11.1, -8.5, 8.5, -11.1, 4.6, -12, 0, -11.1, -4.6, -8.5, -8.5, -4.6, -11.1, -0, -12, 4.6, -11.1, 8.5, -8.5, 11.1, -4.6)
+
+[node name="Fill" type="Polygon2D" parent="Pips/Pip1"]
+color = Color(0.25, 0.16, 0.1, 0.55)
+polygon = PackedVector2Array(8, 0, 7.4, 3.1, 5.7, 5.7, 3.1, 7.4, 0, 8, -3.1, 7.4, -5.7, 5.7, -7.4, 3.1, -8, 0, -7.4, -3.1, -5.7, -5.7, -3.1, -7.4, -0, -8, 3.1, -7.4, 5.7, -5.7, 7.4, -3.1)
+
+[node name="Pip2" type="Node2D" parent="Pips"]
+position = Vector2(0, 0)
+
+[node name="Ring" type="Polygon2D" parent="Pips/Pip2"]
+color = Color(1, 0.94, 0.8, 0.85)
+polygon = PackedVector2Array(12, 0, 11.1, 4.6, 8.5, 8.5, 4.6, 11.1, 0, 12, -4.6, 11.1, -8.5, 8.5, -11.1, 4.6, -12, 0, -11.1, -4.6, -8.5, -8.5, -4.6, -11.1, -0, -12, 4.6, -11.1, 8.5, -8.5, 11.1, -4.6)
+
+[node name="Fill" type="Polygon2D" parent="Pips/Pip2"]
+color = Color(0.25, 0.16, 0.1, 0.55)
+polygon = PackedVector2Array(8, 0, 7.4, 3.1, 5.7, 5.7, 3.1, 7.4, 0, 8, -3.1, 7.4, -5.7, 5.7, -7.4, 3.1, -8, 0, -7.4, -3.1, -5.7, -5.7, -3.1, -7.4, -0, -8, 3.1, -7.4, 5.7, -5.7, 7.4, -3.1)
+
+[node name="Pip3" type="Node2D" parent="Pips"]
+position = Vector2(30, 0)
+
+[node name="Ring" type="Polygon2D" parent="Pips/Pip3"]
+color = Color(1, 0.94, 0.8, 0.85)
+polygon = PackedVector2Array(12, 0, 11.1, 4.6, 8.5, 8.5, 4.6, 11.1, 0, 12, -4.6, 11.1, -8.5, 8.5, -11.1, 4.6, -12, 0, -11.1, -4.6, -8.5, -8.5, -4.6, -11.1, -0, -12, 4.6, -11.1, 8.5, -8.5, 11.1, -4.6)
+
+[node name="Fill" type="Polygon2D" parent="Pips/Pip3"]
+color = Color(0.25, 0.16, 0.1, 0.55)
+polygon = PackedVector2Array(8, 0, 7.4, 3.1, 5.7, 5.7, 3.1, 7.4, 0, 8, -3.1, 7.4, -5.7, 5.7, -7.4, 3.1, -8, 0, -7.4, -3.1, -5.7, -5.7, -3.1, -7.4, -0, -8, 3.1, -7.4, 5.7, -5.7, 7.4, -3.1)
+
+[node name="DropTarget" parent="." node_paths=PackedStringArray("highlight", "snap_point") instance=ExtResource("8_drop")]
+offset_left = -190.0
+offset_top = -380.0
+offset_right = 190.0
+offset_bottom = 10.0
+accepted_kinds = Array[StringName]([&"ingredient"])
+highlight = NodePath("../Glow")
+snap_point = NodePath("../Slots/Two1")
+
+[node name="Trash" parent="." instance=ExtResource("9_trash")]
+position = Vector2(-235, -46)
+
+[node name="StateMachine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("10_sm")]
+initial_state = NodePath("Empty")
+
+[node name="Empty" parent="StateMachine" instance=ExtResource("11_state")]
+next_states = Array[StringName]([&"Loaded"])
+
+[node name="Loaded" parent="StateMachine" instance=ExtResource("11_state")]
+next_states = Array[StringName]([&"Empty"])
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("12_punch")]
+target = NodePath("../Visual")
+
+[node name="SfxAccept" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("14_accept")])
+
+[node name="SfxReject" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("15_reject")])

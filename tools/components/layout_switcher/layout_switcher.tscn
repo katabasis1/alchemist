@@ -1,6 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://components/layout_switcher/layout_switcher.gd" id="1_layout"]
-
-[node name="LayoutSwitcher" type="Node"]
-script = ExtResource("1_layout")

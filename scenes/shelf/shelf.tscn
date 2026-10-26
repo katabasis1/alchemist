@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/shelf/shelf.gd" id="1_shelf"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
+[ext_resource type="PackedScene" path="res://scenes/shelf/shelf_slot.tscn" id="3_slot"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="4_hit"]
+
+[node name="Shelf" type="Node2D" node_paths=PackedStringArray("slots_root", "scroll_hit")]
+script = ExtResource("1_shelf")
+catalog = ExtResource("2_catalog")
+slot_scene = ExtResource("3_slot")
+slots_root = NodePath("Slots")
+scroll_hit = NodePath("ScrollHit")
+
+[node name="ScrollHit" parent="." instance=ExtResource("4_hit")]
+visible = false
+offset_left = 0.0
+offset_top = -210.0
+offset_right = 1080.0
+offset_bottom = 0.0
+pivot_offset = Vector2(0, 0)
+
+[node name="Slots" type="Node2D" parent="."]

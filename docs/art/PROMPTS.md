@@ -38,6 +38,9 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 | P-UI-03 | `icon_coin.png` | Иконка монеты |
 | P-UI-04 | `icon_star.png` | Иконка звезды (оценка) |
 | P-UI-05 | `ui_badge_round.png` | Рамка-медальон (пузырь заказа) |
+| P-PROP-04 | `prop_shelf_slot.png` | Ячейка полки (деревянный лоток под один ингредиент) |
+| P-UI-06 | `ui_trash.png` | Корзина «вылить» (деревянное ведёрко) |
+| P-UI-07 | `icon_prop_sheet.png` → `icon_prop_*.png` ×6 | Иконки шести свойств одним листом (агент режет) |
 
 ## P-BG-01 — Фон лавки (ландшафт) → `bg_workshop.png`
 
@@ -291,4 +294,39 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 A small round copper badge frame with an empty light parchment center for an icon.
 
 Flat front view game UI element, centered, fully visible with generous empty margin, blank (no text, no icons unless described). Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Square 1024x1024.
+```
+
+## P-PROP-04 — Ячейка полки → `prop_shelf_slot.png`
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+A small square open wooden crate-tray (one shelf compartment) made of honey-coloured wood planks with brass corner caps and tiny rivets, a low front wall, empty inside, seen from the front and slightly above so the empty floor of the tray is visible. Wider than tall, sturdy and cosy, nothing inside.
+
+Single isolated game asset, centered, three-quarter front view seen slightly from above, the whole object fully visible with generous empty margin. Transparent background (PNG with alpha). If transparency is not possible: perfectly flat solid pure magenta #FF00FF background, no gradient. No cast shadow, no floor, no other objects. Square 1024x1024.
+```
+
+## P-UI-06 — Корзина «вылить» → `ui_trash.png`
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+A small empty wooden slop bucket with two brass hoops and a little rope handle, slightly tilted toward the viewer so the empty inside is visible, for pouring out a failed mix. Friendly and clean, no liquid, no dirt.
+
+Flat front view game UI element, centered, fully visible with generous empty margin, blank (no text, no icons unless described). Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Square 1024x1024.
+```
+
+## P-UI-07 — Иконки свойств (лист из шести) → `icon_prop_sheet.png`
+
+Агент режет лист на `icon_prop_acid`, `icon_prop_heat`, `icon_prop_life`, `icon_prop_cold`, `icon_prop_sleep`, `icon_prop_light` (порядок — как в промпте). Заливка **белая**: цвет свойства игра накладывает сама из `PropertyData.color`, иначе цвета разъедутся с GDD §3.1.
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+A game UI icon sheet: six simple bold symbol icons arranged in a 3 by 2 grid with wide empty gaps between them, none touching. Each icon is a chunky, rounded silhouette filled with flat pure white (#FFFFFF) and very light grey soft shading only, with a clean confident dark warm-brown outline (#431D0D) of thick consistent weight, readable at 48 pixels.
+Top row, left to right: 1) a cluster of three round bubbles of different sizes; 2) a plump flame; 3) a single leaf with a curled stem.
+Bottom row, left to right: 4) a six-armed snowflake with rounded tips; 5) a crescent moon; 6) a four-pointed sparkle star.
+No colour fills other than white and light grey, no frames, no badges.
+
+Flat front view, all six icons fully visible with generous empty margin. Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Landscape 1536x1024.
 ```

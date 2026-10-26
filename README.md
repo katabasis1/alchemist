@@ -52,7 +52,8 @@ python tools/validate_project.py --self-test
 - `services_smoke.tscn` — автозагрузки, ждём `SMOKE: 8/8 OK`;
 - `components_demo.tscn` — компоненты, ждём `COMPONENTS: 20/20 OK`; ниже в Output — что проверить руками;
 - `data_check.tscn` — данные игры (`data/catalog.tres`), ждём `DATA: 23/23 OK`;
-- `l10n_check.tscn` — переводы ru/en, шрифты и тема, ждём `L10N: 9/9 OK`; на экране образцы текста, язык сам переключается каждые 2 секунды.
+- `l10n_check.tscn` — переводы ru/en, шрифты и тема, ждём `L10N: 9/9 OK`; на экране образцы текста, язык сам переключается каждые 2 секунды;
+- `shelf_check.tscn` — полка ингредиентов и ступка, ждём `SHELF: 30/30 OK`; ниже в Output — что проверить руками.
 
 Язык игры: настройка игрока → язык платформы (в редакторе — язык ОС; для проверки английского задай `language_override = "en"` у узла `PlatformMock` в `autoload/platform/platform.tscn`).
 

@@ -37,6 +37,19 @@
 | Tooltip | `components/tooltip/tooltip.tscn` | PanelContainer | Подсказка: наведение 0,4 с на ПК, долгое нажатие на телефоне. Текст — ключ локализации | — | `set_text_key()`, `show_tip()`, `hide_tip()` |
 | LayoutSwitcher | `components/layout_switcher/layout_switcher.tscn` | Node | Портрет/ландшафт (GDD §10): ведущий меняет базовое разрешение окна, остальные переставляют узлы по меткам | `layout_applied(portrait)`; глобально — `EventBus.layout_changed` | `apply()`, `wants_portrait()` |
 
+### 2.1 Сущности игры на этих компонентах (S2)
+
+| Сущность | Сцена | Из чего собрана | Сигналы | Методы |
+|---|---|---|---|---|
+| Подсветка цели | `components/drop_target/drop_glow.tscn` | ColorRect + шейдер `drop_glow.gdshader`: мягкий пульсирующий овал. Яркость задаёт DropTarget через `modulate` узла `highlight` | — | — |
+| Ингредиент | `scenes/ingredient/ingredient_item.tscn` | HitArea (круг) + Draggable (`kind = ingredient`) + Tooltip (название) + SquashStretch + Flash + Sfx. На полке крупнее, в станции мельче | — | `data`, `set_in_station(on)`, `pop_in()` |
+| Ячейка полки | `scenes/shelf/shelf_slot.tscn` | Ящичек, ингредиент, до трёх иконок свойств. Взяли ингредиент — сразу появляется такой же; вернули — летит в ячейку и сливается | `item_taken`, `gesture_passed/moved/ended` (жест вбок — ленте) | `setup()`, `take_back()`, `settle()` |
+| Полка | `scenes/shelf/shelf.tscn` | Ячейки по `GameState.unlocked_ingredients` (или `ingredient_ids`). Ландшафт — сетка, портрет — лента внизу: листается пальцем, жестом вбок по ингредиенту, колесом, катится по инерции | `ingredient_taken` | `set_ribbon()`, `take_back(item)`, `slot_for()`, `scroll_to()` |
+| Корзина станции | `scenes/stations/station_trash.tscn` | HitArea + JuicePunch + Sfx; у пустой станции приглушена | `pressed` | `set_active()` |
+| Ступка | `scenes/stations/mortar/mortar.tscn` | DropTarget + подсветка + StateMachine (Empty ⇄ Loaded; Grinding/Ground — S2.2) + корзина + огоньки мест + JuicePunch + Sfx. Ингредиенты лежат между чашей и её передним краем | `item_released`, `contents_changed`, `drop_refused(reason)` | `release()`, `empty_to_shelf()`, `refresh_capacity()`, `is_full()`, `ids()` |
+
+Станция отдаёт ингредиент сигналом `item_released`, полка ловит его в `take_back` (связь — в сцене, где они встречаются). Узел, который сейчас обрабатывает своё касание, переносить к другому родителю кадром позже (`call_deferred`).
+
 ## 3. Рецепты
 
 ### 3.1 Предмет, который носят (ингредиент, зелье)

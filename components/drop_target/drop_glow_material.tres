@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://components/drop_target/drop_glow.gdshader" id="1_glow"]
+
+[resource]
+shader = ExtResource("1_glow")
+shader_parameter/glow_color = Color(1, 0.85, 0.45, 0.9)
+shader_parameter/softness = 0.6
+shader_parameter/hollow = 0.0
+shader_parameter/pulse_speed = 4.0
+shader_parameter/pulse_amount = 0.25
