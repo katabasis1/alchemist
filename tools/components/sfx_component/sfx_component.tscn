@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/sfx_component/sfx_component.gd" id="1_sfx"]
+
+[node name="Sfx" type="Node"]
+script = ExtResource("1_sfx")

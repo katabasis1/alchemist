@@ -1,0 +1,5 @@
+# humanized.txt — ключи, тексты которых прошли humanizer (ru: tools/humanizer/ru, en: tools/humanizer/en).
+# Формат: KEY ru=<sha1[:10]> en=<sha1[:10]>. Писать только через:
+#   python tools/validate_project.py --mark-humanized KEY ...
+# Если текст в strings.csv изменится, валидатор выдаст L005 — нужен повторный humanizer.
+ITEM_TITLE ru=8305fb79e4 en=c3bd776c44

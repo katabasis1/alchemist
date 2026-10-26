@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://autoload/platform/platform.gd" id="1_platform"]
+[ext_resource type="Script" path="res://autoload/platform/platform_mock.gd" id="2_mock"]
+
+[node name="Platform" type="Node" node_paths=PackedStringArray("mock_backend")]
+process_mode = 3
+script = ExtResource("1_platform")
+mock_backend = NodePath("PlatformMock")
+
+[node name="PlatformMock" type="Node" parent="."]
+script = ExtResource("2_mock")

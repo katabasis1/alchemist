@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/hoverable/hoverable.gd" id="1_hover"]
+
+[node name="Hoverable" type="Node"]
+script = ExtResource("1_hover")

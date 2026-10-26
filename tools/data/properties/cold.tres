@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PropertyData" format=3]
+
+[ext_resource type="Script" path="res://data/properties/property_data.gd" id="1_property_data"]
+
+[resource]
+script = ExtResource("1_property_data")
+id = &"cold"
+name_key = &"PROPERTY_COLD_NAME"
+color = Color(0.356863, 0.784314, 0.960784, 1)
+pattern = 3
+density_rank = 4
+evaporate_temp = 35.0
+burn_temp = -1.0

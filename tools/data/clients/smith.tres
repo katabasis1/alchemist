@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ClientData" format=3]
+
+[ext_resource type="Script" path="res://data/clients/client_data.gd" id="1_client_data"]
+[ext_resource type="Script" path="res://data/orders/order_template.gd" id="2_order_template"]
+[ext_resource type="Resource" path="res://data/orders/warming_ointment_s1_p1.tres" id="3_warming_ointment_s1_p1"]
+[ext_resource type="Resource" path="res://data/orders/warming_ointment_s1_p2.tres" id="4_warming_ointment_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/warming_ointment_s2_p2.tres" id="5_warming_ointment_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/smith_flux_s1_p2.tres" id="6_smith_flux_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/smith_flux_s2_p2.tres" id="7_smith_flux_s2_p2"]
+[ext_resource type="Resource" path="res://data/orders/rust_remover_s1_p2.tres" id="8_rust_remover_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/rust_remover_s2_p3.tres" id="9_rust_remover_s2_p3"]
+[ext_resource type="Resource" path="res://data/orders/armor_polish_s1_p2.tres" id="10_armor_polish_s1_p2"]
+[ext_resource type="Resource" path="res://data/orders/armor_polish_s1_p3.tres" id="11_armor_polish_s1_p3"]
+
+[resource]
+script = ExtResource("1_client_data")
+id = &"smith"
+name_key = &"CLIENT_SMITH_NAME"
+min_rank = 1
+orders = Array[ExtResource("2_order_template")]([ExtResource("3_warming_ointment_s1_p1"), ExtResource("4_warming_ointment_s1_p2"), ExtResource("5_warming_ointment_s2_p2"), ExtResource("6_smith_flux_s1_p2"), ExtResource("7_smith_flux_s2_p2"), ExtResource("8_rust_remover_s1_p2"), ExtResource("9_rust_remover_s2_p3"), ExtResource("10_armor_polish_s1_p2"), ExtResource("11_armor_polish_s1_p3")])
+pay_multiplier = 1.0
+visits_per_day = 0

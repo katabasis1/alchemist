@@ -1,0 +1,360 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/components_demo.gd" id="1_demo"]
+[ext_resource type="PackedScene" path="res://scenes/debug/demo_item.tscn" id="2_item"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop.png" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_bench.png" id="4_bench"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_portrait.png" id="5_bgp"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_portrait_bench.png" id="6_benchp"]
+[ext_resource type="Texture2D" path="res://assets/characters/client_baker_neutral.png" id="7_client"]
+[ext_resource type="Texture2D" path="res://assets/ui/ui_badge_round.png" id="8_badge"]
+[ext_resource type="Texture2D" path="res://assets/ui/icon_coin.png" id="9_coin"]
+[ext_resource type="Texture2D" path="res://assets/ingredients/ing_moon_moss.png" id="10_moss"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_flask_round.png" id="11_flask"]
+[ext_resource type="Material" path="res://components/flash/flash_material.tres" id="12_mat"]
+[ext_resource type="PackedScene" path="res://components/drop_target/drop_target.tscn" id="13_drop"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state_machine.tscn" id="14_sm"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state.tscn" id="15_state"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="16_punch"]
+[ext_resource type="PackedScene" path="res://components/flash/flash.tscn" id="17_flash"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="18_sfx"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="19_hit"]
+[ext_resource type="PackedScene" path="res://components/hoverable/hoverable.tscn" id="20_hover"]
+[ext_resource type="PackedScene" path="res://components/squash_stretch/squash_stretch.tscn" id="21_squash"]
+[ext_resource type="PackedScene" path="res://components/camera_shake/camera_shake.tscn" id="22_shake"]
+[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="23_layout"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_accept.ogg" id="24_ok"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_reject.ogg" id="25_no"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_1.ogg" id="26_d1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_2.ogg" id="27_d2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_drop_wood_3.ogg" id="28_d3"]
+
+[node name="ComponentsDemo" type="Node2D" node_paths=PackedStringArray("mortar_target", "mortar_machine", "mortar_punch", "mortar_flash_ok", "mortar_flash_no", "mortar_sfx_ok", "mortar_sfx_no", "client_target", "client_punch", "client_sfx_ok", "client_sfx_no", "coin_hit", "coin_punch", "coin_flash", "coin_sfx", "screen_flash", "layout", "check_point", "check_ingredient", "check_potion", "check_target_plain", "check_target_potion", "check_target_best", "check_machine", "check_done_state", "check_timed_state", "check_punch", "check_squash", "check_sfx")]
+script = ExtResource("1_demo")
+mortar_target = NodePath("Mortar/DropTarget")
+mortar_machine = NodePath("Mortar/Machine")
+mortar_punch = NodePath("Mortar/Punch")
+mortar_flash_ok = NodePath("Mortar/FlashOk")
+mortar_flash_no = NodePath("Mortar/FlashNo")
+mortar_sfx_ok = NodePath("Mortar/SfxOk")
+mortar_sfx_no = NodePath("Mortar/SfxNo")
+client_target = NodePath("Client/DropTarget")
+client_punch = NodePath("Client/Punch")
+client_sfx_ok = NodePath("Client/SfxOk")
+client_sfx_no = NodePath("Client/SfxNo")
+coin_hit = NodePath("Coin/HitArea")
+coin_punch = NodePath("Coin/Punch")
+coin_flash = NodePath("Coin/Flash")
+coin_sfx = NodePath("Coin/Sfx")
+screen_flash = NodePath("ScreenFlash")
+layout = NodePath("Layout")
+check_point = NodePath("Checks/Point")
+check_ingredient = NodePath("ItemFire")
+check_potion = NodePath("ItemFlask")
+check_target_plain = NodePath("Checks/TargetPlain")
+check_target_potion = NodePath("Checks/TargetPotion")
+check_target_best = NodePath("Checks/TargetBest")
+check_machine = NodePath("Checks/Machine")
+check_done_state = NodePath("Checks/Machine/Done")
+check_timed_state = NodePath("Checks/Machine/Timed")
+check_punch = NodePath("Checks/Punch")
+check_squash = NodePath("Checks/Squash")
+check_sfx = NodePath("Checks/Sfx")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("3_bg")
+centered = false
+
+[node name="BackgroundPortrait" type="Sprite2D" parent="."]
+visible = false
+texture = ExtResource("5_bgp")
+centered = false
+
+[node name="Client" type="Node2D" parent="."]
+position = Vector2(1480, 860)
+
+[node name="Highlight" type="Polygon2D" parent="Client"]
+visible = false
+color = Color(1, 0.82, 0.35, 1)
+polygon = PackedVector2Array(200, -300, 193.2, -230.1, 173.2, -165, 141.4, -109.1, 100, -66.2, 51.8, -39.2, 0, -30, -51.8, -39.2, -100, -66.2, -141.4, -109.1, -173.2, -165, -193.2, -230.1, -200, -300, -193.2, -369.9, -173.2, -435, -141.4, -490.9, -100, -533.8, -51.8, -560.8, -0, -570, 51.8, -560.8, 100, -533.8, 141.4, -490.9, 173.2, -435, 193.2, -369.9)
+
+[node name="Sprite" type="Sprite2D" parent="Client"]
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("7_client")
+offset = Vector2(0, -384)
+
+[node name="DropTarget" parent="Client" node_paths=PackedStringArray("highlight") instance=ExtResource("13_drop")]
+offset_left = -200.0
+offset_top = -570.0
+offset_right = 200.0
+offset_bottom = -40.0
+accepted_kinds = Array[StringName]([&"potion"])
+highlight = NodePath("../Highlight")
+
+[node name="Punch" parent="Client" node_paths=PackedStringArray("target") instance=ExtResource("16_punch")]
+target = NodePath("../Sprite")
+punch_scale = 0.08
+
+[node name="SfxOk" parent="Client" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("24_ok")])
+
+[node name="SfxNo" parent="Client" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("25_no")])
+
+[node name="Bench" type="Sprite2D" parent="."]
+position = Vector2(0, 756)
+texture = ExtResource("4_bench")
+centered = false
+
+[node name="BenchPortrait" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(0, 781)
+texture = ExtResource("6_benchp")
+centered = false
+
+[node name="Mortar" type="Node2D" parent="."]
+position = Vector2(960, 850)
+
+[node name="Highlight" type="Polygon2D" parent="Mortar"]
+visible = false
+color = Color(1, 0.82, 0.35, 1)
+polygon = PackedVector2Array(140, 0, 135.2, 36.2, 121.2, 70, 99, 99, 70, 121.2, 36.2, 135.2, 0, 140, -36.2, 135.2, -70, 121.2, -99, 99, -121.2, 70, -135.2, 36.2, -140, 0, -135.2, -36.2, -121.2, -70, -99, -99, -70, -121.2, -36.2, -135.2, -0, -140, 36.2, -135.2, 70, -121.2, 99, -99, 121.2, -70, 135.2, -36.2)
+
+[node name="Visual" type="Node2D" parent="Mortar"]
+
+[node name="Sprite" type="Sprite2D" parent="Mortar/Visual"]
+material = ExtResource("12_mat")
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("8_badge")
+
+[node name="SnapPoint" type="Marker2D" parent="Mortar"]
+position = Vector2(0, -10)
+
+[node name="DropTarget" parent="Mortar" node_paths=PackedStringArray("highlight", "snap_point") instance=ExtResource("13_drop")]
+offset_left = -140.0
+offset_top = -140.0
+offset_right = 140.0
+offset_bottom = 140.0
+accepted_kinds = Array[StringName]([&"ingredient"])
+highlight = NodePath("../Highlight")
+snap_point = NodePath("../SnapPoint")
+
+[node name="Machine" parent="Mortar" node_paths=PackedStringArray("initial_state") instance=ExtResource("14_sm")]
+initial_state = NodePath("Empty")
+
+[node name="Empty" parent="Mortar/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Loaded"])
+
+[node name="Loaded" parent="Mortar/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Empty"])
+timeout_sec = 3.0
+timeout_to = &"Empty"
+
+[node name="Punch" parent="Mortar" node_paths=PackedStringArray("target") instance=ExtResource("16_punch")]
+target = NodePath("../Visual")
+punch_scale = 0.12
+
+[node name="FlashOk" parent="Mortar" node_paths=PackedStringArray("target") instance=ExtResource("17_flash")]
+target = NodePath("../Visual/Sprite")
+peak = 0.7
+
+[node name="FlashNo" parent="Mortar" node_paths=PackedStringArray("target") instance=ExtResource("17_flash")]
+target = NodePath("../Visual/Sprite")
+flash_color = Color(1, 0.3, 0.2, 1)
+peak = 0.6
+
+[node name="SfxOk" parent="Mortar" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("24_ok")])
+
+[node name="SfxNo" parent="Mortar" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("25_no")])
+
+[node name="ItemFire" parent="." instance=ExtResource("2_item")]
+position = Vector2(330, 900)
+tip_key = &"ING_FIRE_BLOOM_NAME"
+
+[node name="ItemMoss" parent="." instance=ExtResource("2_item")]
+position = Vector2(530, 900)
+texture = ExtResource("10_moss")
+tip_key = &"ING_MOON_MOSS_NAME"
+
+[node name="ItemFlask" parent="." instance=ExtResource("2_item")]
+position = Vector2(730, 880)
+texture = ExtResource("11_flask")
+sprite_scale = 0.3
+kind = &"potion"
+on_accept = 1
+tip_key = &"PROP_FLASK_NAME"
+
+[node name="Coin" type="Node2D" parent="."]
+position = Vector2(1800, 110)
+
+[node name="Hover" type="Node2D" parent="Coin"]
+
+[node name="Sprite" type="Sprite2D" parent="Coin/Hover"]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("9_coin")
+
+[node name="HitArea" parent="Coin" instance=ExtResource("19_hit")]
+offset_left = -64.0
+offset_top = -64.0
+offset_right = 64.0
+offset_bottom = 64.0
+pivot_offset = Vector2(64, 64)
+radius = 64.0
+
+[node name="Hoverable" parent="Coin" node_paths=PackedStringArray("hit_area", "target") instance=ExtResource("20_hover")]
+hit_area = NodePath("../HitArea")
+target = NodePath("../Hover")
+hover_scale = 1.08
+
+[node name="Punch" parent="Coin" node_paths=PackedStringArray("target") instance=ExtResource("16_punch")]
+target = NodePath("../Hover/Sprite")
+punch_scale = 0.25
+
+[node name="Flash" parent="Coin" node_paths=PackedStringArray("target") instance=ExtResource("17_flash")]
+target = NodePath("../Hover/Sprite")
+mode = 1
+flash_color = Color(1.8, 1.7, 1.3, 1)
+
+[node name="Sfx" parent="Coin" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("24_ok")])
+ui_bus = true
+
+[node name="ScreenFlashLayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="Rect" type="ColorRect" parent="ScreenFlashLayer"]
+modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 0.96, 0.85, 1)
+
+[node name="ScreenFlash" parent="." node_paths=PackedStringArray("target") instance=ExtResource("17_flash")]
+target = NodePath("../ScreenFlashLayer/Rect")
+mode = 1
+flash_color = Color(1, 1, 1, 0.35)
+peak = 1.0
+fade_sec = 0.25
+
+[node name="Checks" type="Node2D" parent="."]
+position = Vector2(-4000, -4000)
+
+[node name="Point" type="Marker2D" parent="Checks"]
+
+[node name="TargetPlain" parent="Checks" instance=ExtResource("13_drop")]
+offset_left = -50.0
+offset_top = -50.0
+offset_right = 50.0
+offset_bottom = 50.0
+accepted_kinds = Array[StringName]([&"ingredient"])
+
+[node name="TargetPotion" parent="Checks" instance=ExtResource("13_drop")]
+offset_left = -50.0
+offset_top = -50.0
+offset_right = 50.0
+offset_bottom = 50.0
+accepted_kinds = Array[StringName]([&"potion"])
+priority = 5
+
+[node name="TargetBest" parent="Checks" instance=ExtResource("13_drop")]
+offset_left = -50.0
+offset_top = -50.0
+offset_right = 50.0
+offset_bottom = 50.0
+accepted_kinds = Array[StringName]([&"ingredient"])
+priority = 1
+
+[node name="Machine" parent="Checks" instance=ExtResource("14_sm")]
+autostart = false
+
+[node name="Idle" parent="Checks/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Busy"])
+
+[node name="Busy" parent="Checks/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Done"])
+
+[node name="Done" parent="Checks/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Idle"])
+
+[node name="Timed" parent="Checks/Machine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Idle"])
+timeout_sec = 0.2
+timeout_to = &"Idle"
+
+[node name="PunchTarget" type="Node2D" parent="Checks"]
+
+[node name="Punch" parent="Checks" node_paths=PackedStringArray("target") instance=ExtResource("16_punch")]
+target = NodePath("../PunchTarget")
+
+[node name="SquashTarget" type="Node2D" parent="Checks"]
+
+[node name="Squash" parent="Checks" node_paths=PackedStringArray("target") instance=ExtResource("21_squash")]
+target = NodePath("../SquashTarget")
+
+[node name="Sfx" parent="Checks" instance=ExtResource("18_sfx")]
+streams = Array[AudioStream]([ExtResource("26_d1"), ExtResource("27_d2"), ExtResource("28_d3")])
+enabled = false
+
+[node name="LayoutMarks" type="Node2D" parent="."]
+
+[node name="CameraLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(960, 540)
+
+[node name="ClientLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(1480, 860)
+
+[node name="MortarLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(960, 850)
+
+[node name="ItemFireLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(330, 900)
+
+[node name="ItemMossLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(530, 900)
+
+[node name="ItemFlaskLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(730, 880)
+
+[node name="CoinLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(1800, 110)
+
+[node name="CameraPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(540, 960)
+
+[node name="ClientPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(330, 890)
+
+[node name="MortarPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(560, 1130)
+
+[node name="ItemFirePortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(240, 1650)
+
+[node name="ItemMossPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(540, 1650)
+
+[node name="ItemFlaskPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(840, 1640)
+
+[node name="CoinPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(980, 110)
+
+[node name="Layout" parent="." node_paths=PackedStringArray("landscape_only", "portrait_only", "movers", "landscape_marks", "portrait_marks") instance=ExtResource("23_layout")]
+drive_window = true
+landscape_only = [NodePath("../Background"), NodePath("../Bench")]
+portrait_only = [NodePath("../BackgroundPortrait"), NodePath("../BenchPortrait")]
+movers = [NodePath("../Camera"), NodePath("../Client"), NodePath("../Mortar"), NodePath("../ItemFire"), NodePath("../ItemMoss"), NodePath("../ItemFlask"), NodePath("../Coin")]
+landscape_marks = [NodePath("../LayoutMarks/CameraLandscape"), NodePath("../LayoutMarks/ClientLandscape"), NodePath("../LayoutMarks/MortarLandscape"), NodePath("../LayoutMarks/ItemFireLandscape"), NodePath("../LayoutMarks/ItemMossLandscape"), NodePath("../LayoutMarks/ItemFlaskLandscape"), NodePath("../LayoutMarks/CoinLandscape")]
+portrait_marks = [NodePath("../LayoutMarks/CameraPortrait"), NodePath("../LayoutMarks/ClientPortrait"), NodePath("../LayoutMarks/MortarPortrait"), NodePath("../LayoutMarks/ItemFirePortrait"), NodePath("../LayoutMarks/ItemMossPortrait"), NodePath("../LayoutMarks/ItemFlaskPortrait"), NodePath("../LayoutMarks/CoinPortrait")]
+copy_scale = false
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="CameraShake" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("22_shake")]
+camera = NodePath("../Camera")

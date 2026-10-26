@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ToolData" format=3]
+
+[ext_resource type="Script" path="res://data/equipment/tool_data.gd" id="1_tool_data"]
+
+[resource]
+script = ExtResource("1_tool_data")
+id = &"burner"
+kind = 0
+price = 350
+unlock_rank = 3
+name_key = &"TOOL_BURNER_NAME"
+desc_key = &"TOOL_BURNER_DESC"

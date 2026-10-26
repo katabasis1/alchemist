@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/blinker.gd" id="1_blink"]
+
+[node name="Blinker" type="Node"]
+script = ExtResource("1_blink")

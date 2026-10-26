@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RankData" format=3]
+
+[ext_resource type="Script" path="res://data/ranks/rank_data.gd" id="1_rank_data"]
+
+[resource]
+script = ExtResource("1_rank_data")
+index = 3
+name_key = &"RANK_3_NAME"
+threshold = 50
