@@ -1,30 +1,43 @@
-## Mortar — станция «ступка» (GDD §3.3, docs/gdd/STATIONS.md §1.1). На S2.1 — приём ингредиентов, вместимость,
-## цена при броске, возврат на полку (тап по ингредиенту, корзина). Жест помола и шкала появятся на S2.2.
-## Ингредиенты лежат в чаше: слой contents стоит между чашей и её передним краем (BowlFront).
-## Полная ступка не подсвечивается как цель; бросок в неё — отскок, и огоньки слотов мигают.
+## Mortar — станция «ступка» (GDD §3.3, docs/gdd/STATIONS.md §1.1): приём ингредиентов, вместимость, цена при броске,
+## возврат на полку (S2.1); жест помола, шкала с зоной «идеально», пестик (S2.2).
+## Ингредиенты лежат в чаше: слой contents стоит между чашей и её передним краем (BowlFront), пестик — там же.
+## Касания над чашей ловит одна зона grind_area (поверх ингредиентов): жест — помол; тап по ингредиенту в Loaded —
+## вернуть его на полку; тап мимо ингредиентов — ¼ круга (доступность). Тело чаши оставлено под перенос (S2.4).
+## Помол p (0…1) растёт на grind_per_circle самого твёрдого ингредиента за круг; извлечение — EconomyConfig.extraction.
+## Полная или молотая ступка не подсвечивается как цель; бросок в неё — отскок (&"full" — мигают огоньки, &"ground").
 ## Монет не хватает — отскок и drop_refused(&"coins"): HUD вздрогнет счётчиком (S2.4).
 ## Сигналы: item_released(item) — ингредиент отдан обратно (полка ловит его в take_back);
-##   contents_changed(ids) — что лежит в чаше; drop_refused(reason) — бросок отклонён (&"full", &"coins", &"kind").
-## Зависимости: DropTarget, StateMachine (Empty / Loaded), StationTrash, JuicePunch, SfxComponent, IngredientItem,
-##   EconomyConfig (вместимость), ToolData (улучшение «третий слот»), GameState (монеты, покупки).
+##   contents_changed(ids) — что лежит в чаше; drop_refused(reason) — бросок отклонён (&"full", &"coins", &"kind",
+##   &"ground"); grind_changed(grind) — помол изменился (0…1).
+## Зависимости: DropTarget, StateMachine (Empty / Loaded / Grinding / Ground), GrindGesture, HitArea (зона помола),
+##   ZoneGauge (шкала), Pestle, StationTrash, JuicePunch, SfxComponent, IngredientItem, EconomyConfig (вместимость,
+##   помол, извлечение), ToolData (улучшение «третий слот»), GameState (монеты, покупки), EventBus (пауза, поворот).
 class_name Mortar
 extends Node2D
 
 signal item_released(item: IngredientItem)
 signal contents_changed(ids: Array[StringName])
 signal drop_refused(reason: StringName)
+signal grind_changed(grind: float)
 
 const STATE_EMPTY: StringName = &"Empty"
 const STATE_LOADED: StringName = &"Loaded"
+const STATE_GRINDING: StringName = &"Grinding"
+const STATE_GROUND: StringName = &"Ground"
 const REASON_FULL: StringName = &"full"
 const REASON_COINS: StringName = &"coins"
 const REASON_KIND: StringName = &"kind"
+const REASON_GROUND: StringName = &"ground"
 
 @export var economy: EconomyConfig
 ## Купленное улучшение даёт economy.mortar_slots_upgraded мест вместо economy.mortar_slots.
 @export var third_slot_upgrade: ToolData
 ## Сила «подпрыгивания» чаши при приёме ингредиента.
 @export var receive_punch: float = 0.6
+## Тап ближе этого (мир) к ингредиенту в чаше — тап по нему (вернуть на полку), а не по чаше.
+@export var item_pick_radius: float = 56.0
+## Выброшенный помол исчезает за столько секунд.
+@export var discard_sec: float = 0.2
 @export_group("Огоньки слотов")
 @export var pip_empty: Color = Color(0.25, 0.16, 0.1, 0.55)
 @export var pip_full: Color = Color(1.0, 0.82, 0.35, 1.0)
@@ -43,6 +56,11 @@ const REASON_KIND: StringName = &"kind"
 ## Огоньки под чашей: сколько мест и сколько занято. pip_fills[i] — заливка огонька pips[i].
 @export var pips: Array[Node2D] = []
 @export var pip_fills: Array[Polygon2D] = []
+## Зона касаний над чашей и пестиком (помол, тапы по ингредиентам).
+@export var grind_area: HitArea
+@export var gesture: GrindGesture
+@export var gauge: ZoneGauge
+@export var pestle: Pestle
 @export var trash: StationTrash
 @export var punch: JuicePunch
 @export var sfx_accept: SfxComponent
@@ -50,6 +68,8 @@ const REASON_KIND: StringName = &"kind"
 
 var items: Array[IngredientItem] = []
 var capacity: int = 2
+## Степень помола p: 0 — целые, perfect_from…perfect_to — идеально, 1 — пыль.
+var grind: float = 0.0
 var _blink: Tween
 
 
@@ -58,6 +78,22 @@ func _ready() -> void:
 	drop_target.received.connect(_on_received)
 	drop_target.rejected.connect(_on_rejected)
 	trash.pressed.connect(empty_to_shelf)
+	state_machine.state_changed.connect(_on_state_changed)
+	gesture.started.connect(_on_gesture_started)
+	gesture.turned.connect(_on_gesture_turned)
+	gesture.ended.connect(_on_gesture_ended)
+	grind_area.pointer_moved.connect(_on_grind_pointer_moved)
+	grind_area.tapped.connect(_on_grind_area_tapped)
+	grind_area.long_pressed.connect(_on_grind_area_long_pressed)
+	grind_area.pointer_up.connect(_on_grind_area_released)
+	EventBus.layout_changed.connect(_on_layout_changed)
+	EventBus.pause_changed.connect(_on_pause_changed)
+	if economy != null:
+		gesture.taps_per_circle = economy.taps_per_circle
+		gauge.set_zone(economy.perfect_from, economy.perfect_to)
+	gauge.set_value(0.0, true)
+	gauge.visible = false
+	grind_area.enabled = false
 	refresh_capacity()
 
 
@@ -83,15 +119,60 @@ func is_full() -> bool:
 	return items.size() >= capacity
 
 
+## Молотое (Ground) или мелется прямо сейчас: ингредиенты уже не вернуть, новые не принять.
+func is_ground() -> bool:
+	return state_machine.is_in(STATE_GROUND) or state_machine.is_in(STATE_GRINDING)
+
+
+## Самый твёрдый ингредиент в чаше — по нему считается скорость помола (GDD §3.3).
+func hardest() -> IngredientData.Hardness:
+	var result: IngredientData.Hardness = IngredientData.Hardness.SOFT
+	for item: IngredientItem in items:
+		if item.data != null and item.data.hardness > result:
+			result = item.data.hardness
+	return result
+
+
+## Доля извлечения свойств при текущем помоле (GDD §3.3).
+func extraction() -> float:
+	return economy.extraction(grind) if economy != null else 1.0
+
+
+## Свойства смеси в ступке: сумма свойств ингредиентов × извлечение (GDD §3.2–3.3). Её понесут клиенту (S2.4).
+func mixture() -> Dictionary[StringName, float]:
+	var result: Dictionary[StringName, float] = {}
+	var k: float = extraction()
+	for item: IngredientItem in items:
+		if item.data == null:
+			continue
+		for property_id: StringName in item.data.properties:
+			result[property_id] = result.get(property_id, 0.0) + item.data.properties[property_id] * k
+	return result
+
+
+## Добавить помол в кругах (жест, тап, проверки). Шкала стоит на 1.
+func add_circles(circles: float) -> void:
+	if items.is_empty() or circles <= 0.0:
+		return
+	var per_circle: float = economy.grind_per_circle(hardest()) if economy != null else 0.0
+	set_grind(grind + circles * per_circle)
+
+
+func set_grind(value: float, instant: bool = false) -> void:
+	var new_grind: float = clampf(value, 0.0, 1.0)
+	if is_equal_approx(new_grind, grind) and not instant:
+		return
+	grind = new_grind
+	gauge.set_value(grind, instant)
+	grind_changed.emit(grind)
+
+
 ## Отдать ингредиент обратно на полку. refund — вернуть его цену (из Loaded — да, молотый — нет).
 func release(item: IngredientItem, refund: bool) -> void:
 	var index: int = items.find(item)
 	if index < 0:
 		return
-	items.remove_at(index)
-	var tap: Callable = _on_item_tapped.bind(item)
-	if item.hit_area.tapped.is_connected(tap):
-		item.hit_area.tapped.disconnect(tap)
+	_detach(item)
 	if refund and item.data.cost_per_use > 0:
 		GameState.add_coins(item.data.cost_per_use)
 	if item_released.get_connections().is_empty():
@@ -105,17 +186,47 @@ func release(item: IngredientItem, refund: bool) -> void:
 	contents_changed.emit(ids())
 
 
-## Корзина: всё из чаши — обратно на полку. Из Loaded цена возвращается (STATIONS §1.1).
+## Корзина. Из Loaded всё возвращается на полку с ценой (STATIONS §1.1); молотое выбрасывается без возврата.
 func empty_to_shelf() -> void:
+	if state_machine.is_in(STATE_GRINDING):
+		gesture.cancel()
+	if is_ground():
+		discard()
+		return
 	var refund: bool = state_machine.is_in(STATE_LOADED)
 	for item: IngredientItem in items.duplicate():
 		release(item, refund)
+
+
+## Выбросить содержимое: ингредиенты исчезают, помол сбрасывается, цена не возвращается.
+func discard() -> void:
+	if state_machine.is_in(STATE_GRINDING):
+		gesture.cancel()
+	for item: IngredientItem in items.duplicate():
+		_detach(item)
+		var tween: Tween = item.create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tween.tween_property(item, ^"scale", Vector2.ZERO, discard_sec)
+		tween.tween_callback(item.queue_free)
+	if not state_machine.is_in(STATE_EMPTY):
+		state_machine.transition_to(STATE_EMPTY)
+	_update_view()
+	contents_changed.emit(ids())
+
+
+func _detach(item: IngredientItem) -> void:
+	items.erase(item)
+	var tap: Callable = _on_item_tapped.bind(item)
+	if item.hit_area.tapped.is_connected(tap):
+		item.hit_area.tapped.disconnect(tap)
 
 
 func _on_drop_attempted(draggable: Draggable) -> void:
 	var item: IngredientItem = draggable.body as IngredientItem
 	if item == null or item.data == null:
 		drop_target.reject(REASON_KIND)
+		return
+	if is_ground():
+		drop_target.reject(REASON_GROUND)
 		return
 	if is_full():
 		drop_target.reject(REASON_FULL)
@@ -145,8 +256,11 @@ func _on_received(draggable: Draggable) -> void:
 
 func _on_rejected(_draggable: Draggable, reason: StringName) -> void:
 	var why: StringName = reason
-	if reason == DropTarget.REASON_DISABLED and is_full():
-		why = REASON_FULL
+	if reason == DropTarget.REASON_DISABLED:
+		if is_ground():
+			why = REASON_GROUND
+		elif is_full():
+			why = REASON_FULL
 	if why == REASON_FULL:
 		_blink_pips()
 	punch.wiggle()
@@ -158,6 +272,89 @@ func _on_item_tapped(_world: Vector2, item: IngredientItem) -> void:
 	if state_machine.is_in(STATE_LOADED):
 		# Кадром позже: полка переносит предмет к себе, а касание по нему ещё обрабатывается.
 		release.call_deferred(item, true)
+
+
+func _on_state_changed(_from: StringName, to: StringName) -> void:
+	match to:
+		STATE_EMPTY:
+			set_grind(0.0, true)
+			gauge.show_gauge(false)
+			grind_area.enabled = false
+			pestle.rest()
+		STATE_LOADED, STATE_GROUND:
+			if not gauge.visible:
+				gauge.show_gauge(true)
+			grind_area.enabled = true
+	_update_view()
+
+
+func _on_gesture_started() -> void:
+	if state_machine.is_in(STATE_LOADED) or state_machine.is_in(STATE_GROUND):
+		_hide_item_tips()
+		state_machine.transition_to(STATE_GRINDING)
+
+
+func _on_gesture_turned(circles: float) -> void:
+	if state_machine.is_in(STATE_GRINDING):
+		add_circles(circles)
+
+
+func _on_gesture_ended(_reason: StringName) -> void:
+	if not state_machine.is_in(STATE_GRINDING):
+		return
+	pestle.rest()
+	state_machine.transition_to(STATE_GROUND if grind > 0.0 else STATE_LOADED)
+
+
+func _on_grind_pointer_moved(world: Vector2) -> void:
+	if gesture.is_grinding:
+		pestle.follow(world)
+
+
+func _on_grind_area_tapped(world: Vector2) -> void:
+	if state_machine.is_in(STATE_LOADED):
+		var item: IngredientItem = _item_at(world)
+		if item != null:
+			release.call_deferred(item, true)
+			return
+	if (state_machine.is_in(STATE_LOADED) or state_machine.is_in(STATE_GROUND)) and gesture.tap_turn():
+		pestle.poke(world)
+
+
+func _on_grind_area_long_pressed(world: Vector2) -> void:
+	var item: IngredientItem = _item_at(world)
+	if item != null and not gesture.is_grinding:
+		item.tooltip.show_tip()
+
+
+func _on_grind_area_released(_world: Vector2, _inside: bool) -> void:
+	_hide_item_tips()
+
+
+func _on_layout_changed(_portrait: bool) -> void:
+	gesture.cancel()
+
+
+func _on_pause_changed(paused: bool) -> void:
+	if paused:
+		gesture.cancel()
+
+
+## Ингредиент в чаше под точкой мира (ближайший в пределах item_pick_radius).
+func _item_at(world: Vector2) -> IngredientItem:
+	var best: IngredientItem = null
+	var best_distance: float = item_pick_radius
+	for item: IngredientItem in items:
+		var distance: float = item.global_position.distance_to(world)
+		if distance <= best_distance:
+			best = item
+			best_distance = distance
+	return best
+
+
+func _hide_item_tips() -> void:
+	for item: IngredientItem in items:
+		item.tooltip.hide_tip()
 
 
 ## Ингредиент уже в ступке: кладём его между чашей и её передним краем, чтобы он лежал «внутри».
@@ -182,7 +379,7 @@ func _marks_for(count: int) -> Array[Marker2D]:
 func _update_view() -> void:
 	if drop_target == null:
 		return
-	drop_target.enabled = not is_full()
+	drop_target.enabled = not is_full() and not is_ground()
 	trash.set_active(not items.is_empty())
 	var first_x: float = -(capacity - 1) * pip_spacing * 0.5
 	for i: int in pips.size():

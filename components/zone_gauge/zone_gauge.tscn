@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/zone_gauge/zone_gauge.gd" id="1_gauge"]
+[ext_resource type="Material" path="res://components/zone_gauge/zone_gauge_material.tres" id="2_mat"]
+
+[node name="ZoneGauge" type="ColorRect"]
+material = ExtResource("2_mat")
+offset_left = -18.0
+offset_top = -240.0
+offset_right = 18.0
+mouse_filter = 2
+script = ExtResource("1_gauge")

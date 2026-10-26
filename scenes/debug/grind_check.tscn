@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/grind_check.gd" id="1_check"]
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="2_workshop"]
+[ext_resource type="PackedScene" path="res://scenes/shelf/shelf.tscn" id="3_shelf"]
+[ext_resource type="PackedScene" path="res://scenes/stations/mortar/mortar.tscn" id="4_mortar"]
+[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="5_layout"]
+
+[node name="GrindCheck" type="Node2D" node_paths=PackedStringArray("shelf", "mortar")]
+script = ExtResource("1_check")
+shelf = NodePath("Shelf")
+mortar = NodePath("Mortar")
+
+[node name="Workshop" parent="." instance=ExtResource("2_workshop")]
+
+[node name="Mortar" parent="." instance=ExtResource("4_mortar")]
+position = Vector2(900, 960)
+
+[node name="Shelf" parent="." instance=ExtResource("3_shelf")]
+position = Vector2(40, 360)
+ingredient_ids = Array[StringName]([&"ing_sage_bundle", &"ing_fire_bloom", &"ing_moon_moss", &"ing_rust_lichen", &"ing_sun_petal", &"ing_star_crystal"])
+
+[node name="LayoutMarks" type="Node2D" parent="."]
+
+[node name="ShelfLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(40, 360)
+
+[node name="ShelfPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(0, 1890)
+
+[node name="MortarLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(900, 960)
+
+[node name="MortarPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(560, 1480)
+
+[node name="Layout" parent="." node_paths=PackedStringArray("movers", "landscape_marks", "portrait_marks") instance=ExtResource("5_layout")]
+drive_window = true
+movers = [NodePath("../Shelf"), NodePath("../Mortar")]
+landscape_marks = [NodePath("../LayoutMarks/ShelfLandscape"), NodePath("../LayoutMarks/MortarLandscape")]
+portrait_marks = [NodePath("../LayoutMarks/ShelfPortrait"), NodePath("../LayoutMarks/MortarPortrait")]
+copy_scale = false
+
+[connection signal="item_released" from="Mortar" to="Shelf" method="take_back"]

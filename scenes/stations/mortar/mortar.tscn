@@ -15,8 +15,12 @@
 [ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="13_sfx"]
 [ext_resource type="AudioStream" path="res://audio/sfx/sfx_accept.ogg" id="14_accept"]
 [ext_resource type="AudioStream" path="res://audio/sfx/sfx_reject.ogg" id="15_reject"]
+[ext_resource type="Script" path="res://scenes/stations/mortar/pestle.gd" id="16_pestle"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="17_hit"]
+[ext_resource type="PackedScene" path="res://components/grind_gesture/grind_gesture.tscn" id="18_gesture"]
+[ext_resource type="PackedScene" path="res://components/zone_gauge/zone_gauge.tscn" id="19_gauge"]
 
-[node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "trash", "punch", "sfx_accept", "sfx_reject")]
+[node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "grind_area", "gesture", "gauge", "pestle", "trash", "punch", "sfx_accept", "sfx_reject")]
 script = ExtResource("1_mortar")
 economy = ExtResource("2_economy")
 third_slot_upgrade = ExtResource("3_upgrade")
@@ -27,6 +31,10 @@ slots_two = [NodePath("Slots/Two1"), NodePath("Slots/Two2")]
 slots_three = [NodePath("Slots/Three1"), NodePath("Slots/Three2"), NodePath("Slots/Three3")]
 pips = [NodePath("Pips/Pip1"), NodePath("Pips/Pip2"), NodePath("Pips/Pip3")]
 pip_fills = [NodePath("Pips/Pip1/Fill"), NodePath("Pips/Pip2/Fill"), NodePath("Pips/Pip3/Fill")]
+grind_area = NodePath("GrindArea")
+gesture = NodePath("GrindGesture")
+gauge = NodePath("Gauge")
+pestle = NodePath("Visual/Pestle")
 trash = NodePath("Trash")
 punch = NodePath("JuicePunch")
 sfx_accept = NodePath("SfxAccept")
@@ -38,12 +46,6 @@ offset_top = -400.0
 offset_right = 240.0
 offset_bottom = 40.0
 
-[node name="Pestle" type="Sprite2D" parent="."]
-position = Vector2(150, -250)
-rotation = 0.42
-scale = Vector2(0.55, 0.55)
-texture = ExtResource("6_pestle")
-
 [node name="Visual" type="Node2D" parent="."]
 
 [node name="Bowl" type="Sprite2D" parent="Visual"]
@@ -51,7 +53,21 @@ scale = Vector2(0.7, 0.7)
 texture = ExtResource("4_bowl")
 offset = Vector2(0, -256)
 
+[node name="GrindCenter" type="Marker2D" parent="Visual"]
+position = Vector2(0, -262)
+
 [node name="Contents" type="Node2D" parent="Visual"]
+
+[node name="Pestle" type="Node2D" parent="Visual" node_paths=PackedStringArray("center")]
+position = Vector2(72, -256)
+rotation = 0.58
+script = ExtResource("16_pestle")
+center = NodePath("../GrindCenter")
+
+[node name="Sprite" type="Sprite2D" parent="Visual/Pestle"]
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("6_pestle")
+offset = Vector2(0, -248)
 
 [node name="BowlFront" type="Sprite2D" parent="Visual"]
 scale = Vector2(0.7, 0.7)
@@ -111,6 +127,13 @@ polygon = PackedVector2Array(12, 0, 11.1, 4.6, 8.5, 8.5, 4.6, 11.1, 0, 12, -4.6,
 color = Color(0.25, 0.16, 0.1, 0.55)
 polygon = PackedVector2Array(8, 0, 7.4, 3.1, 5.7, 5.7, 3.1, 7.4, 0, 8, -3.1, 7.4, -5.7, 5.7, -7.4, 3.1, -8, 0, -7.4, -3.1, -5.7, -5.7, -3.1, -7.4, -0, -8, 3.1, -7.4, 5.7, -5.7, 7.4, -3.1)
 
+[node name="Gauge" parent="." instance=ExtResource("19_gauge")]
+visible = false
+offset_left = -262.0
+offset_top = -350.0
+offset_right = -226.0
+offset_bottom = -110.0
+
 [node name="DropTarget" parent="." node_paths=PackedStringArray("highlight", "snap_point") instance=ExtResource("8_drop")]
 offset_left = -190.0
 offset_top = -380.0
@@ -123,6 +146,18 @@ snap_point = NodePath("../Slots/Two1")
 [node name="Trash" parent="." instance=ExtResource("9_trash")]
 position = Vector2(-235, -46)
 
+[node name="GrindArea" parent="." instance=ExtResource("17_hit")]
+offset_left = -185.0
+offset_top = -480.0
+offset_right = 215.0
+offset_bottom = -200.0
+pivot_offset = Vector2(200, 140)
+enabled = false
+
+[node name="GrindGesture" parent="." node_paths=PackedStringArray("hit_area", "center") instance=ExtResource("18_gesture")]
+hit_area = NodePath("../GrindArea")
+center = NodePath("../Visual/GrindCenter")
+
 [node name="StateMachine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("10_sm")]
 initial_state = NodePath("Empty")
 
@@ -130,7 +165,13 @@ initial_state = NodePath("Empty")
 next_states = Array[StringName]([&"Loaded"])
 
 [node name="Loaded" parent="StateMachine" instance=ExtResource("11_state")]
-next_states = Array[StringName]([&"Empty"])
+next_states = Array[StringName]([&"Empty", &"Grinding"])
+
+[node name="Grinding" parent="StateMachine" instance=ExtResource("11_state")]
+next_states = Array[StringName]([&"Ground", &"Loaded"])
+
+[node name="Ground" parent="StateMachine" instance=ExtResource("11_state")]
+next_states = Array[StringName]([&"Grinding", &"Empty"])
 
 [node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("12_punch")]
 target = NodePath("../Visual")
