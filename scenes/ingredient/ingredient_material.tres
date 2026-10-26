@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scenes/ingredient/ingredient.gdshader" id="1_shader"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_shader")
+shader_parameter/flash_color = Color(1, 1, 1, 1)
+shader_parameter/flash_amount = 0.0
+shader_parameter/crumble = 0.0
+shader_parameter/crumb_color = Color(0.82, 0.72, 0.52, 1)
+shader_parameter/cells = 7.0
+shader_parameter/noise_scale = 22.0
+shader_parameter/edge_width = 0.12
+shader_parameter/dust_tint = 0.35

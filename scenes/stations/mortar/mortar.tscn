@@ -19,6 +19,22 @@
 [ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="17_hit"]
 [ext_resource type="PackedScene" path="res://components/grind_gesture/grind_gesture.tscn" id="18_gesture"]
 [ext_resource type="PackedScene" path="res://components/zone_gauge/zone_gauge.tscn" id="19_gauge"]
+[ext_resource type="Script" path="res://scenes/stations/mortar/mortar_juice.gd" id="20_juice"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="21_catalog"]
+[ext_resource type="Material" path="res://scenes/stations/mortar/powder_material.tres" id="22_powder"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_crumbs.tscn" id="23_crumbs"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_dust.tscn" id="24_dust"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_ring.tscn" id="25_ring"]
+[ext_resource type="PackedScene" path="res://components/squash_stretch/squash_stretch.tscn" id="26_squash"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_crunch_1.ogg" id="27_crunch1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_crunch_2.ogg" id="28_crunch2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_crunch_3.ogg" id="29_crunch3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_crunch_4.ogg" id="30_crunch4"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_crunch_5.ogg" id="31_crunch5"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_dull_1.ogg" id="32_dull1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_dull_2.ogg" id="33_dull2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_perfect.ogg" id="34_perfect"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_overgrind.ogg" id="35_overgrind"]
 
 [node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "grind_area", "gesture", "gauge", "pestle", "trash", "punch", "sfx_accept", "sfx_reject")]
 script = ExtResource("1_mortar")
@@ -56,6 +72,14 @@ offset = Vector2(0, -256)
 [node name="GrindCenter" type="Marker2D" parent="Visual"]
 position = Vector2(0, -262)
 
+[node name="Powder" type="ColorRect" parent="Visual"]
+material = ExtResource("22_powder")
+offset_left = -112.0
+offset_top = -318.0
+offset_right = 112.0
+offset_bottom = -262.0
+mouse_filter = 2
+
 [node name="Contents" type="Node2D" parent="Visual"]
 
 [node name="Pestle" type="Node2D" parent="Visual" node_paths=PackedStringArray("center")]
@@ -69,10 +93,20 @@ scale = Vector2(0.55, 0.55)
 texture = ExtResource("6_pestle")
 offset = Vector2(0, -248)
 
+[node name="Crumbs" parent="Visual" instance=ExtResource("23_crumbs")]
+
 [node name="BowlFront" type="Sprite2D" parent="Visual"]
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("5_front")
 offset = Vector2(0, -256)
+
+[node name="Ring" parent="." instance=ExtResource("25_ring")]
+offset_left = -230.0
+offset_top = -359.0
+offset_right = 230.0
+offset_bottom = -227.0
+
+[node name="Dust" parent="." instance=ExtResource("24_dust")]
 
 [node name="Slots" type="Node2D" parent="."]
 
@@ -181,3 +215,45 @@ streams = Array[AudioStream]([ExtResource("14_accept")])
 
 [node name="SfxReject" parent="." instance=ExtResource("13_sfx")]
 streams = Array[AudioStream]([ExtResource("15_reject")])
+
+[node name="PestleSquash" parent="." node_paths=PackedStringArray("target") instance=ExtResource("26_squash")]
+target = NodePath("../Visual/Pestle/Sprite")
+amount = 0.18
+recover_sec = 0.22
+
+[node name="SfxCrunch" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("27_crunch1"), ExtResource("28_crunch2"), ExtResource("29_crunch3"), ExtResource("30_crunch4"), ExtResource("31_crunch5")])
+pitch_jitter = 0.12
+min_interval_sec = 0.04
+
+[node name="SfxDull" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("32_dull1"), ExtResource("33_dull2")])
+pitch_jitter = 0.06
+min_interval_sec = 0.04
+
+[node name="SfxPerfect" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("34_perfect")])
+vary_pitch = false
+
+[node name="SfxOvergrind" parent="." instance=ExtResource("13_sfx")]
+streams = Array[AudioStream]([ExtResource("35_overgrind")])
+vary_pitch = false
+
+[node name="Juice" type="Node" parent="." node_paths=PackedStringArray("mortar", "drop_target", "gesture", "gauge", "pestle", "pestle_squash", "crumbs", "dust", "ring", "bowl_center", "powder", "sfx_crunch", "sfx_dull", "sfx_perfect", "sfx_overgrind")]
+script = ExtResource("20_juice")
+catalog = ExtResource("21_catalog")
+mortar = NodePath("..")
+drop_target = NodePath("../DropTarget")
+gesture = NodePath("../GrindGesture")
+gauge = NodePath("../Gauge")
+pestle = NodePath("../Visual/Pestle")
+pestle_squash = NodePath("../PestleSquash")
+crumbs = NodePath("../Visual/Crumbs")
+dust = NodePath("../Dust")
+ring = NodePath("../Ring")
+bowl_center = NodePath("../Visual/GrindCenter")
+powder = NodePath("../Visual/Powder")
+sfx_crunch = NodePath("../SfxCrunch")
+sfx_dull = NodePath("../SfxDull")
+sfx_perfect = NodePath("../SfxPerfect")
+sfx_overgrind = NodePath("../SfxOvergrind")

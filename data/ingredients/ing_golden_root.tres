@@ -9,6 +9,7 @@ id = &"ing_golden_root"
 name_key = &"ING_GOLDEN_ROOT_NAME"
 texture = ExtResource("2_ing_golden_root")
 properties = Dictionary[StringName, float]({&"light": 2.0, &"life": 1.0})
+crumb_color = Color(0.816, 0.471, 0.106, 1)
 hardness = 2
 cost_per_use = 6
 unlock_rank = 2

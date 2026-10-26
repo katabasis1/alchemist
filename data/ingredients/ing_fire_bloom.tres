@@ -9,6 +9,7 @@ id = &"ing_fire_bloom"
 name_key = &"ING_FIRE_BLOOM_NAME"
 texture = ExtResource("2_ing_fire_bloom")
 properties = Dictionary[StringName, float]({&"heat": 2.0, &"acid": 1.0})
+crumb_color = Color(0.773, 0.271, 0.086, 1)
 hardness = 0
 cost_per_use = 0
 unlock_rank = 1

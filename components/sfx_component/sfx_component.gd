@@ -16,6 +16,8 @@ const MSEC_PER_SEC: float = 1000.0
 @export var volume_db: float = 0.0
 ## Разброс высоты тона (только для шины SFX).
 @export var vary_pitch: bool = true
+## Свой разброс высоты (±доля). Меньше нуля — общий AudioDirector.pitch_jitter.
+@export var pitch_jitter: float = -1.0
 ## Не играть чаще, чем раз в столько секунд.
 @export var min_interval_sec: float = 0.05
 ## Не повторять один и тот же вариант два раза подряд.
@@ -43,7 +45,7 @@ func play_index(index: int) -> void:
 	if ui_bus:
 		AudioDirector.play_ui(streams[index], volume_db)
 	else:
-		AudioDirector.play_sfx(streams[index], vary_pitch, volume_db)
+		AudioDirector.play_sfx(streams[index], vary_pitch, volume_db, pitch_jitter)
 
 
 func _pick_index() -> int:

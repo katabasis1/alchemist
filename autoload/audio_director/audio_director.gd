@@ -44,14 +44,16 @@ func apply_settings() -> void:
 	_update_master_mute()
 
 
-func play_sfx(stream: AudioStream, vary_pitch: bool = true, volume_db: float = 0.0) -> void:
+## jitter < 0 — разброс высоты по умолчанию (pitch_jitter); иначе свой (хруст помола: «случайная высота», STATIONS §2).
+func play_sfx(stream: AudioStream, vary_pitch: bool = true, volume_db: float = 0.0, jitter: float = -1.0) -> void:
 	if stream == null or _sfx_players.is_empty():
 		return
 	var player: AudioStreamPlayer = _sfx_players[_next_sfx]
 	_next_sfx = (_next_sfx + 1) % _sfx_players.size()
 	player.stream = stream
 	player.volume_db = volume_db
-	player.pitch_scale = 1.0 + (randf_range(-pitch_jitter, pitch_jitter) if vary_pitch else 0.0)
+	var spread: float = pitch_jitter if jitter < 0.0 else jitter
+	player.pitch_scale = 1.0 + (randf_range(-spread, spread) if vary_pitch else 0.0)
 	player.play()
 
 

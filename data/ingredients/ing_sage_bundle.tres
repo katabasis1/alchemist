@@ -9,6 +9,7 @@ id = &"ing_sage_bundle"
 name_key = &"ING_SAGE_BUNDLE_NAME"
 texture = ExtResource("2_ing_sage_bundle")
 properties = Dictionary[StringName, float]({&"life": 2.0})
+crumb_color = Color(0.498, 0.478, 0.275, 1)
 hardness = 0
 cost_per_use = 0
 unlock_rank = 1

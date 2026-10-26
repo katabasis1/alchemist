@@ -6,24 +6,20 @@
 > Ответ агента может оборваться в любой момент. Чего нет в Pod, следующий агент не увидит.
 
 ## Сейчас
-- **Сессия 14 (2026-10-26), Pod «новая игра» снова пуст** (bundle, HANDOFF, архивов нет). Рабочая копия восстановлена **целиком** из ZIP ветки `main` (`codeload.github.com/.../zip/refs/heads/main` через `files__upload_from_url` с `content_type=application/octet-stream` — так приходят и бинарники, **PNG и TTF настоящие**). База — коммит `sync: GitHub 9888a1e`, теги `gh-9888a1e`, `v0.1.1`.
-- На GitHub `9888a1e` = v0.1.1 + `*.uid`/`*.import` Godot для S2.1, `shelf_check.tscn` пересохранён Godot (пользователь открывал). Output проверки не присылался.
-- На GitHub пропал `tools/.gdignore` → Godot импортировал бы фикстуры валидатора (сломанные сцены), валидатор давал 58 ошибок. Восстановлен.
-- **S2.2 закрыт (v0.1.2), выдан** `outbox/alchemist_update_gh-9888a1e_to_v0.1.2.zip`. Ждём от пользователя: распаковать, открыть в Godot, запушить, `grind_check.tscn` → `GRIND: 31/31 OK`.
-- Дальше: сверка GitHub → **S2.3** Juice v1 (PLAN). Чек-лист S2.3 вписать сюда перед началом.
+- **Сессия 16 (2026-10-26), Pod «новая игра» снова пуст.** Агент «па» (сессия 16a) восстановил рабочую копию из ZIP GitHub `0203552` («0.1.2» — пользователь поставил v0.1.2 и запушил `*.uid` Godot для S2.2) → коммит `sync: GitHub 0203552 (0.1.2)`, теги `gh-0203552`, `v0.1.2`; валидатор 0 ошибок. Его ответ оборвался до сохранения в Pod.
+- Сессия 16c (агент «rt», 20:11 UTC): нашёл несохранённые IngredientItem.set_crumble, ZoneGauge.shake, mortar_juice.gd → сохранил; подключил MortarJuice в mortar.tscn; PIL-макет порошка/кольца — ок; grind_check 44 проверки; документы; **S2.3 закрыт — v0.1.3**, полная выдача `outbox/alchemist_update_gh-0203552_to_v0.1.3.zip`. Следующий агент: ждать проверки пользователем (PROGRESS «Ждём»), затем S2.4.
+- Сессия 16b: продолжала с той же `/tmp/work/repo`. Output проверочных сцен (`grind_check`, `shelf_check`) пользователь не присылал, замечаний по скорости помола нет → начинаем **S2.3 Juice v1**.
 
-## Чек-лист S2.2 (v0.1.2)
-- [x] восстановление с GitHub `9888a1e`, `tools/.gdignore`
-- [x] прочитать STATIONS §1.1, GDD (помол), код ступки/компонентов
-  Решения S2.2: (1) прогресс помола = **длина пути пальца** внутри зоны (`circle_length_px` = один круг) — работают и круги, и свайпы (PLAN); потолок `max_circles_per_sec`, телепорт отсекает `max_step_px`; (2) компонент `components/grind_gesture/` (жест → `started/turned(circles)/ended(reason)`, тапы — `tap_turn()`, ≤12/с); (3) у ступки одна зона касания `GrindArea` **поверх** ингредиентов, только над чашей и пестиком (верх); **тело чаши оставлено под перенос содержимого (S2.4)**; тап по ингредиенту в Loaded — вернуть (ищем ближайший в `item_pick_radius`), иначе тап = ¼ круга; долгое нажатие — подсказка ингредиента; (4) шкала — `components/zone_gauge/` (шейдер, без PNG), слева над корзиной; (5) пестик — `scenes/stations/mortar/pestle.gd`, внутри чаши (между Contents и BowlFront), начало узла = кончик; (6) Ground: бросок — отказ `&"ground"`, корзина — `discard()` без возврата цены; Grinding → Loaded, если p осталось 0.
-- [x] данные: параметры помола уже в EconomyConfig (grind_per_circle_*, perfect_from/to, extraction_*, taps_per_circle); настройки жеста — @export компонентов
-- [x] жест кругами/свайпами пестиком → прогресс помола; шкала с идеальной зоной (grind_gesture, zone_gauge, pestle.gd)
-- [x] StateMachine: Empty → Loaded → Grinding ⇄ Ground; у ступки grind, hardest(), extraction(), mixture(), discard()
-- [x] проверить позу пестика и место шкалы картинкой (PIL-макет): покой (72,-256, 0.58) и 5 поз помола — головка в чаше, шкала слева над корзиной свободна
-- [x] тексты: новых строк для игрока нет (бросок в Ground — иконка, S2.4)
-- [x] проверочная сцена `scenes/debug/grind_check.tscn` (31 автопроверка → «GRIND: x/y OK» + памятка)
-- [x] документы: PROGRESS, DEVLOG (сессии 14–15), PLAN, COMPONENTS, README, версия 0.1.2
-- [x] коммит `S2.2: …`, тег `v0.1.2`, `pod_sync --id S2.2 --slug grind --base gh-9888a1e --base-label github_9888a1e`
+## Чек-лист S2.3 (v0.1.3) — Juice v1 ступки
+- [x] сохранить базу в Pod (bundle + HANDOFF)
+- [x] прочитать код ступки/пестика/жеста/шкалы, SfxComponent, AudioDirector, Platform, настройки
+- [x] звуки: хруст ×4+ (`sfx_grind_crunch_*`), звон «идеально» (`sfx_perfect`), «пфф» перетёр (`sfx_overgrind`) — synth_sfx.py, AUDIO.md
+- [x] крошки-частицы на каждую ¼ круга (CPUParticles2D, цвет смеси), облако пыли при p = 1
+- [x] squash пестика на ¼ круга (SquashStretch)
+- [x] шейдер распада ингредиентов по помолу + горка порошка (шейдер, цвет смеси)
+- [x] вибрация на ¼ круга через Platform (настройка «вибрация»), шкала трясётся при p = 1, кольцо/звон при входе в «идеально»
+- [x] проверочная сцена: дополнить `grind_check` (juice-проверки)
+- [x] документы: PROGRESS, DEVLOG, PLAN, COMPONENTS, AUDIO, README; версия 0.1.3; коммит/тег; полная выдача `--base gh-0203552`
 
 ## Журнал (новое — внизу; пишется через --note)
 - 2026-10-26 07:50–08:02 UTC — агент 1 (сессия 9a): сверка с GitHub `355ab53` = v0.0.4 → коммит `835f1ff` (тег v0.0.4); правка `tools/placeholder_pngs.py` (`54a7f3c`); bundle. Начал S1.7 (сбор ключей из данных). Ответ оборвался; PROGRESS не обновлён.
@@ -60,3 +56,14 @@
 - 2026-10-26 18:08 UTC — S2.2: PIL-макет позы пестика (покой + 5 поз помола) и места шкалы — ок, правок не нужно. Дальше: тексты S2.2, затем grind_check.tscn
 - 2026-10-26 18:10 UTC — S2.2: scenes/debug/grind_check.tscn/.gd — автопроверки помола (скачок, круг, Ground-отказ, тапы и шквал, потолок скорости, уход пальца, пауза, шкала/извлечение/смесь, корзина). Дальше: документы S2.2
 - 2026-10-26 18:12 UTC — S2.2: документы (PROGRESS, DEVLOG, PLAN, COMPONENTS, README), версия 0.1.2. Дальше: коммит S2.2, тег v0.1.2, полная выдача
+- 2026-10-26 20:00 UTC — сессия 16b: база gh-0203552 (v0.1.2 у пользователя), начат S2.3 Juice v1 — чек-лист в HANDOFF
+- 2026-10-26 20:04 UTC — S2.3: звуки помола (хруст ×5, глухой ×2, звон «идеально», «пфф») + восстановлен tools/audio/synth_sfx.py, AUDIO.md. Дальше: шейдеры распада и порошка
+- 2026-10-26 20:05 UTC — S2.3: Platform.vibrate (настройка shake, пауза, троттлинг, сигнал vibrated), SfxComponent.pitch_jitter + AudioDirector.play_sfx(jitter). Дальше: шейдеры распада и порошка
+- 2026-10-26 20:07 UTC — S2.3: шейдеры — ingredient.gdshader (вспышка + распад crumble), powder.gdshader (горка порошка), fx_ring.gdshader (кольцо «идеально») + материалы. Дальше: FxRing, BurstParticles, fx_crumbs/fx_dust
+- 2026-10-26 20:08 UTC — S2.3: компонент BurstParticles (пул CPUParticles2D), сцены scenes/fx/fx_crumbs.tscn, fx_dust.tscn, FxRing (fx_ring.tscn/gd). Дальше: IngredientItem.set_crumble, ZoneGauge.shake, MortarJuice
+- 2026-10-26 20:11 UTC — сессия 16c: найдена несохранённая работа — IngredientItem.set_crumble (+ingredient_material), ZoneGauge.shake, mortar_juice.gd. Дальше: проверка API, подключение MortarJuice в mortar.tscn
+- 2026-10-26 20:15 UTC — S2.3: MortarJuice подключён в mortar.tscn (Powder, Crumbs, Dust, Ring, PestleSquash, Sfx×4, Juice); облачко пыли — по приземлению ингредиента; G009 в mortar_juice; починен битый символ в комментарии grind_gesture.gd. Дальше: PIL-макет порошка/кольца
+- 2026-10-26 20:16 UTC — S2.3: PIL-макет (порошок по горлышку, распад, кольцо по краю чаши) — правок не нужно; чек-лист HANDOFF обновлён. Дальше: juice-проверки в grind_check
+- 2026-10-26 20:18 UTC — S2.3: grind_check — 12 juice-проверок (облачко при приземлении, крошки на каждую ¼, squash, вибрация и её выключение, распад/порошок, кольцо, перетёр, глухой помол на p=1, сброс распада) + памятка 9–12. Дальше: документы, версия 0.1.3, выдача
+- 2026-10-26 20:20 UTC — S2.3: документы — COMPONENTS (BurstParticles, ZoneGauge.shake, Flash/ingredient.gdshader, SfxComponent.pitch_jitter, MortarJuice, FxRing), PLAN S2.3 [x], README GRIND 44/44, версия 0.1.3. Дальше: PROGRESS, DEVLOG, коммит/тег, полная выдача
+- 2026-10-26 20:21 UTC — S2.3: PROGRESS (v0.1.3, ждём GRIND 44/44, следующий шаг S2.4), DEVLOG сессия 16. Дальше: коммит S2.3, тег v0.1.3, полная выдача --base gh-0203552

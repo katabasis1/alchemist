@@ -11,6 +11,8 @@ enum Hardness { SOFT, MEDIUM, HARD }
 @export var texture: Texture2D
 ## Свойства в долях, например {&"life": 2.0}.
 @export var properties: Dictionary[StringName, float] = {}
+## Цвет крошек и порошка в ступке (S2.3). Подобран по картинке: медиана непрозрачных пикселей.
+@export var crumb_color: Color = Color(0.6, 0.5, 0.35, 1.0)
 @export var hardness: Hardness = Hardness.SOFT
 ## Цена за штуку: списывается, когда ингредиент брошен в ступку. 0 — бесплатно.
 @export var cost_per_use: int = 0

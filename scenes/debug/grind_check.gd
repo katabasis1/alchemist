@@ -1,11 +1,14 @@
-## GrindCheck — проверочная сцена S2.2 (F6 на этой сцене): мастерская, полка, ступка с шкалой и пестиком.
+## GrindCheck — проверочная сцена S2.2–S2.3 (F6 на этой сцене): мастерская, полка, ступка с шкалой и пестиком.
+## S2.3: отклик ступки (MortarJuice) — крошки, пыль, сплющивание пестика, распад ингредиентов, порошок, кольцо, вибрация.
 ## Автопроверки помола при запуске → Output, итог строкой «GRIND: x/y OK», потом памятка для ручной проверки.
 ## Касания проверки подают прямо сигналами зоны помола (HitArea), с настоящими паузами между событиями:
 ## жест считает скорость по времени. Проверка идёт пару секунд — экран в это время не трогайте.
 ## Монеты и покупки GameState проверки меняют и в конце возвращают. SaveService пишет в Output
-## «запись до загрузки пропущена» — так и должно быть. Тексты на экран не выводятся.
+## «запись до загрузки пропущена» — так и должно быть. Настройку вибрации проверка тоже меняет и возвращает.
+## Тексты на экран не выводятся.
 ## Сигналы: нет.
-## Зависимости: GameState (монеты), EventBus (pause_changed), EconomyConfig ступки, узлы сцены через @export.
+## Зависимости: GameState (монеты, настройка вибрации), Platform (vibrated), EventBus (pause_changed), EconomyConfig
+##   ступки, узлы сцены через @export (MortarJuice — внутри сцены ступки).
 extends Node2D
 
 ## Монет на время проверок: хватает на любые два ингредиента полки.
@@ -39,18 +42,24 @@ const LEAVE_MARGIN: float = 0.1
 
 @export var shelf: Shelf
 @export var mortar: Mortar
+@export var juice: MortarJuice
 
 var _passed: int = 0
 var _total: int = 0
 var _refusals: Array[StringName] = []
 var _turned: float = 0.0
 var _ended: Array[StringName] = []
+var _quarters: int = 0
+var _vibrations: int = 0
+var _squashed: bool = false
 
 
 func _ready() -> void:
 	mortar.drop_refused.connect(_on_drop_refused)
 	mortar.gesture.turned.connect(_on_turned)
 	mortar.gesture.ended.connect(_on_ended)
+	mortar.gesture.quarter_passed.connect(_on_quarter_passed)
+	Platform.vibrated.connect(_on_vibrated)
 	_run_checks.call_deferred()
 
 
@@ -58,10 +67,14 @@ func _run_checks() -> void:
 	# Кадр на запуск машины состояний и раскладку.
 	await get_tree().process_frame
 	var saved_coins: int = GameState.coins
+	var saved_shake: Variant = GameState.get_setting(GameState.SETTING_SHAKE)
 	GameState.coins = CHECK_COINS
-	print("--- S2.2: помол в ступке ---")
+	GameState.set_setting(GameState.SETTING_SHAKE, true)
+	print("--- S2.2: помол в ступке; S2.3: отклик ---")
 	_check_empty()
+	var dust_before: int = juice.dust.bursts
 	await _check_loaded()
+	_check_juice_loaded(dust_before)
 	await _check_jump()
 	await _check_circle()
 	await _check_ground_drop()
@@ -70,8 +83,11 @@ func _run_checks() -> void:
 	await _check_leave()
 	await _check_pause()
 	_check_gauge_and_extraction()
+	await _check_dull_and_vibration()
 	await _check_trash()
+	_check_crumble_reset()
 	GameState.coins = saved_coins
+	GameState.set_setting(GameState.SETTING_SHAKE, saved_shake)
 	print("GRIND: %d/%d OK" % [_passed, _total])
 	_print_manual()
 
@@ -112,6 +128,12 @@ func _check_circle() -> void:
 	var center: Vector2 = _center()
 	var per_circle: float = mortar.economy.grind_per_circle(mortar.hardest())
 	_turned = 0.0
+	_quarters = 0
+	_vibrations = 0
+	_squashed = false
+	var crumbs_before: int = juice.crumbs.bursts
+	var sprite: Node2D = juice.pestle_squash.target
+	var sprite_scale: Vector2 = sprite.scale
 	var path: float = 0.0
 	var previous: Vector2 = center + Vector2(CIRCLE_RADIUS, 0.0)
 	var followed: bool = false
@@ -124,12 +146,21 @@ func _check_circle() -> void:
 		previous = point
 		mortar.grind_area.pointer_moved.emit(point)
 		followed = followed or mortar.pestle.is_following
+		_squashed = _squashed or not sprite.scale.is_equal_approx(sprite_scale)
 	var expected: float = path / mortar.gesture.circle_length_px * per_circle
 	_check("круг пальцем: Grinding, пестик идёт за пальцем", followed
 			and mortar.state_machine.is_in(Mortar.STATE_GRINDING))
 	_check("круг дал помол ≈ путь / circle_length_px × grind_hard (%.3f при ожидании %.3f)" % [mortar.grind, expected],
 			absf(mortar.grind - expected) <= expected * CIRCLE_TOLERANCE)
 	_check("шкала показывает помол", is_equal_approx(mortar.gauge.value, mortar.grind))
+	_check("каждая ¼ круга — выброс крошек (четвертей %d, выбросов %d)" % [_quarters, juice.crumbs.bursts - crumbs_before],
+			_quarters > 0 and juice.crumbs.bursts - crumbs_before == _quarters)
+	_check("пестик сплющивается на ¼ круга", _squashed)
+	_check("на ¼ круга запрошена вибрация (%d раз, не чаще ограничителя)" % _vibrations,
+			_vibrations > 0 and _vibrations <= _quarters)
+	var crumble: float = juice.crumble_for(mortar.grind)
+	_check("ингредиенты крошатся по помолу (%.2f), горка порошка растёт" % crumble, crumble > 0.0
+			and _items_crumble(crumble) and is_equal_approx(_powder(MortarJuice.PARAM_FILL), crumble))
 	mortar.grind_area.pointer_up.emit(previous, true)
 	await _wait_step()
 	_check("отпустили — Ground, пестик лёг", mortar.state_machine.is_in(Mortar.STATE_GROUND)
@@ -216,16 +247,23 @@ func _check_gauge_and_extraction() -> void:
 	_check("крупно: извлечение по формуле", is_equal_approx(mortar.extraction(),
 			economy.extraction_floor + (1.0 - economy.extraction_floor) * GRIND_BELOW / economy.perfect_from))
 	var perfect: float = (economy.perfect_from + economy.perfect_to) * 0.5
+	var ring_before: int = juice.ring.plays
 	mortar.set_grind(perfect, true)
 	_check("идеально: шкала в зоне, извлечение 1", mortar.gauge.zone == ZoneGauge.Zone.INSIDE
 			and is_equal_approx(mortar.extraction(), 1.0))
+	_check("идеально: кольцо света, ингредиенты рассыпались целиком, порошок — полная горка",
+			juice.ring.plays == ring_before + 1 and _items_crumble(1.0)
+			and is_equal_approx(_powder(MortarJuice.PARAM_FILL), 1.0) and is_zero_approx(_powder(MortarJuice.PARAM_DUST)))
 	var mixture: Dictionary[StringName, float] = mortar.mixture()
 	var expected: Dictionary[StringName, float] = {}
 	for item: IngredientItem in mortar.items:
 		for property_id: StringName in item.data.properties:
 			expected[property_id] = expected.get(property_id, 0.0) + item.data.properties[property_id]
 	_check("смесь = сумма свойств × извлечение", mixture == expected)
+	var dust_before: int = juice.dust.bursts
 	mortar.set_grind(1.0, true)
+	_check("перетёр: облако пыли, шкала трясётся, порошок ушёл в пыль", juice.dust.bursts == dust_before + 1
+			and mortar.gauge.is_shaking() and is_equal_approx(_powder(MortarJuice.PARAM_DUST), 1.0))
 	mortar.add_circles(1.0)
 	_check("пыль: помол стоит на 1, шкала выше зоны", is_equal_approx(mortar.grind, 1.0)
 			and mortar.gauge.zone == ZoneGauge.Zone.ABOVE)
@@ -239,6 +277,7 @@ func _check_trash() -> void:
 	_check("корзина в Ground: пусто, Empty, помол 0", mortar.items.is_empty()
 			and mortar.state_machine.is_in(Mortar.STATE_EMPTY) and is_zero_approx(mortar.grind))
 	_check("молотое выброшено без возврата цены", GameState.coins == coins_before)
+	_check("корзина: порошка в чаше нет", is_zero_approx(_powder(MortarJuice.PARAM_FILL)))
 	await _wait(maxf(mortar.discard_sec, mortar.gauge.fade_sec))
 	var freed: bool = true
 	for item: IngredientItem in gone:
@@ -246,6 +285,51 @@ func _check_trash() -> void:
 	_check("ингредиенты исчезли, шкала спряталась", freed and not mortar.gauge.visible)
 	_check("зона помола выключена, ступка снова принимает", not mortar.grind_area.enabled
 			and mortar.drop_target.enabled)
+
+
+func _check_juice_loaded(dust_before: int) -> void:
+	_check("ингредиент лёг в чашу — облачко пыли (бросков 2, облачков %d)" % (juice.dust.bursts - dust_before),
+			juice.dust.bursts - dust_before == 2)
+	_check("до помола ингредиенты целые, порошка нет", _items_crumble(0.0)
+			and is_zero_approx(_powder(MortarJuice.PARAM_FILL)))
+	_check("цвет порошка подмешан из свойств смеси", not juice.mixture_color.is_equal_approx(juice.powder_base))
+
+
+func _check_dull_and_vibration() -> void:
+	var dust_before: int = juice.dust.bursts
+	var crumbs_before: int = juice.crumbs.bursts
+	await _wait(1.0 / mortar.gesture.max_taps_per_sec)
+	mortar.grind_area.tapped.emit(_center() + TAP_OFFSET)
+	_check("p = 1: на ¼ круга облачко пыли вместо крошек", juice.dust.bursts == dust_before + 1
+			and juice.crumbs.bursts == crumbs_before)
+	GameState.set_setting(GameState.SETTING_SHAKE, false)
+	_vibrations = 0
+	await _wait(1.0 / mortar.gesture.max_taps_per_sec)
+	mortar.grind_area.tapped.emit(_center() + TAP_OFFSET)
+	_check("вибрация выключена в настройках — не вибрирует", _vibrations == 0)
+	GameState.set_setting(GameState.SETTING_SHAKE, true)
+
+
+## Ингредиент вернулся на полку — снова целый.
+func _check_crumble_reset() -> void:
+	var item: IngredientItem = _slot(EXTRA).item
+	item.set_crumble(0.5, juice.mixture_color)
+	item.set_in_station(false)
+	_check("ингредиент вне станции — распад сброшен", is_zero_approx(item.get_crumble()))
+
+
+func _items_crumble(expected: float) -> bool:
+	if mortar.items.is_empty():
+		return false
+	for item: IngredientItem in mortar.items:
+		if absf(item.get_crumble() - expected) > EPSILON:
+			return false
+	return true
+
+
+func _powder(param: StringName) -> float:
+	var mat: ShaderMaterial = juice.powder.material as ShaderMaterial
+	return float(mat.get_shader_parameter(param)) if mat != null else -1.0
 
 
 func _center() -> Vector2:
@@ -281,6 +365,14 @@ func _on_ended(reason: StringName) -> void:
 	_ended.append(reason)
 
 
+func _on_quarter_passed() -> void:
+	_quarters += 1
+
+
+func _on_vibrated(_duration_ms: int) -> void:
+	_vibrations += 1
+
+
 func _check(title: String, ok: bool) -> void:
 	_total += 1
 	if ok:
@@ -302,3 +394,9 @@ func _print_manual() -> void:
 	print("6. В молотую ступку новый ингредиент не берётся: отскок, чаша вздрагивает.")
 	print("7. Корзина у молотой ступки: всё исчезает, монеты не возвращаются, шкала гаснет.")
 	print("8. Сузьте окно: ступка уезжает, помол продолжается там же.")
+	print("--- Отклик (S2.3) ---")
+	print("9. Ингредиент ложится в чашу — бледное облачко. На каждую четверть круга: хруст (каждый раз чуть другой),")
+	print("   крошки цвета смеси из-под пестика, пестик сплющивается. На телефоне с Android — лёгкая вибрация.")
+	print("10. По мере помола ингредиенты крошатся, на дне растёт горка порошка; к зелёной зоне — одна горка.")
+	print("11. Вход в зелёную зону: зелёное кольцо по краю чаши и звон. Перетёр: «пфф», облако пыли, шкала трясётся.")
+	print("12. На самом верху шкалы пестик трёт пыль: глухой звук, без крошек. Вибрация выключается в настройках.")

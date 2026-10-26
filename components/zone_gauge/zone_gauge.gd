@@ -2,6 +2,7 @@
 ## Рисует её шейдер zone_gauge.gdshader на этом же ColorRect; скрипт только передаёт значения.
 ## Цвет заливки зависит от положения: ниже зоны, в зоне, выше зоны — цвет никогда не единственный признак:
 ## зона ещё и обведена, а у значения есть риска. Касания не ловит (mouse_filter = IGNORE).
+## shake() — шкала коротко трясётся вбок (перетёр, STATIONS §2); владельцы позицией шкалы во время тряски не двигают.
 ## Сигналы: zone_changed(zone) — заливка перешла в другую часть шкалы (Zone.BELOW / INSIDE / ABOVE).
 ## Зависимости: ShaderMaterial с zone_gauge.gdshader (local to scene: у каждого экземпляра свой).
 class_name ZoneGauge
@@ -20,6 +21,10 @@ enum Zone { BELOW, INSIDE, ABOVE }
 @export var fill_sec: float = 0.12
 @export var color_sec: float = 0.18
 @export var fade_sec: float = 0.2
+## Тряска: размах в пикселях, длительность, сколько качаний туда-обратно.
+@export var shake_px: float = 6.0
+@export var shake_sec: float = 0.3
+@export var shake_swings: float = 4.0
 
 var value: float = 0.0
 var zone: Zone = Zone.BELOW
@@ -28,6 +33,9 @@ var _shown_value: float = 0.0
 var _fill_tween: Tween
 var _color_tween: Tween
 var _fade_tween: Tween
+var _shake_tween: Tween
+var _shake_base: Vector2 = Vector2.ZERO
+var _shake_strength: float = 1.0
 
 
 func _ready() -> void:
@@ -88,6 +96,26 @@ func show_gauge(on: bool) -> void:
 	_fade_tween.tween_property(self, ^"modulate:a", to_alpha, fade_sec)
 	if not on:
 		_fade_tween.tween_callback(hide)
+
+
+## Короткая тряска вбок с затуханием. Повторный вызов во время тряски начинает её заново от той же точки.
+func shake(strength: float = 1.0) -> void:
+	if _shake_tween != null and _shake_tween.is_valid():
+		_shake_tween.kill()
+	else:
+		_shake_base = position
+	_shake_strength = strength
+	_shake_tween = create_tween()
+	_shake_tween.tween_method(_apply_shake, 0.0, 1.0, shake_sec)
+
+
+func is_shaking() -> bool:
+	return _shake_tween != null and _shake_tween.is_valid()
+
+
+func _apply_shake(t: float) -> void:
+	var offset: float = sin(t * TAU * shake_swings) * shake_px * _shake_strength * (1.0 - t)
+	position = _shake_base + Vector2(offset, 0.0)
 
 
 func _apply_value(v: float) -> void:

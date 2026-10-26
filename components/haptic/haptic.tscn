@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/haptic/haptic.gd" id="1_haptic"]
+
+[node name="Haptic" type="Node"]
+script = ExtResource("1_haptic")

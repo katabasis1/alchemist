@@ -7,6 +7,7 @@ script = ExtResource("1_ingredient_data")
 id = &"ing_glow_flower"
 name_key = &"ING_GLOW_FLOWER_NAME"
 properties = Dictionary[StringName, float]({&"light": 2.0, &"sleep": 1.0})
+crumb_color = Color(0.85, 0.9, 0.45, 1)
 hardness = 0
 cost_per_use = 7
 unlock_rank = 3

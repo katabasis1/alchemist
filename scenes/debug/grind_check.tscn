@@ -6,10 +6,11 @@
 [ext_resource type="PackedScene" path="res://scenes/stations/mortar/mortar.tscn" id="4_mortar"]
 [ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="5_layout"]
 
-[node name="GrindCheck" type="Node2D" node_paths=PackedStringArray("shelf", "mortar")]
+[node name="GrindCheck" type="Node2D" node_paths=PackedStringArray("shelf", "mortar", "juice")]
 script = ExtResource("1_check")
 shelf = NodePath("Shelf")
 mortar = NodePath("Mortar")
+juice = NodePath("Mortar/Juice")
 
 [node name="Workshop" parent="." instance=ExtResource("2_workshop")]
 

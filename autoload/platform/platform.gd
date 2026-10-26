@@ -1,14 +1,18 @@
-## Platform — адаптер платформы: готовность, язык, время сервера, сохранения, реклама, пауза.
+## Platform — адаптер платформы: готовность, язык, время сервера, сохранения, реклама, пауза, вибрация.
 ## Игра обращается только к Platform. Бэкенд — дочерний узел с тем же набором методов:
 ## PlatformMock (редактор и ПК) сейчас, PlatformYandex (плагин YandexGamesSDK4Godot) — на S10.
 ## На время рекламы и при потере фокуса ставит дерево на паузу и сообщает EventBus.pause_changed,
 ## AudioDirector глушит звук (Яндекс 1.3, 4.7).
-## Сигналы: fullscreen_closed(shown), rewarded_finished(placement, rewarded).
-## Зависимости: EventBus; бэкенды задаются через @export.
+## Вибрация — Input.vibrate_handheld (в браузере это navigator.vibrate: Android да, iOS молча нет). Выключается той же
+## настройкой, что и тряска камеры (GameState.SETTING_SHAKE, STATIONS §2); на паузе и во время рекламы молчит.
+## Сигналы: fullscreen_closed(shown), rewarded_finished(placement, rewarded); vibrated(duration_ms) — вибрация запрошена
+##   у устройства (для проверочных сцен: на ПК самого дрожания нет).
+## Зависимости: EventBus, GameState (настройка вибрации); бэкенды задаются через @export.
 extends Node
 
 signal fullscreen_closed(shown: bool)
 signal rewarded_finished(placement: StringName, rewarded: bool)
+signal vibrated(duration_ms: int)
 
 const PAUSE_AD: StringName = &"ad"
 const PAUSE_FOCUS: StringName = &"focus"
@@ -19,12 +23,17 @@ const PAUSE_FOCUS: StringName = &"focus"
 @export var yandex_backend: Node
 ## Пауза при потере фокуса окна/вкладки. В редакторе можно выключить, чтобы игра не замирала.
 @export var pause_on_focus_loss: bool = true
+## Вибрация не чаще, чем раз в столько миллисекунд (помол даёт до 12 четвертей круга в секунду).
+@export var vibrate_min_interval_msec: int = 60
+## Сила вибрации 0…1 там, где устройство это умеет (Android); на остальных — игнорируется.
+@export_range(0.0, 1.0) var vibrate_amplitude: float = 0.5
 
 var is_initialized: bool = false
 var is_ad_showing: bool = false
 
 var _backend: Node
 var _pause_reasons: Dictionary = {}
+var _last_vibrate_msec: int = -1
 
 
 func _ready() -> void:
@@ -101,6 +110,19 @@ func show_rewarded_ad(placement: StringName) -> bool:
 	_end_ad()
 	rewarded_finished.emit(placement, rewarded)
 	return rewarded
+
+
+## Короткая вибрация телефона. false — не вибрировали (выключено в настройках, пауза, слишком часто).
+func vibrate(duration_ms: int) -> bool:
+	if duration_ms <= 0 or is_paused() or not bool(GameState.get_setting(GameState.SETTING_SHAKE)):
+		return false
+	var now: int = Time.get_ticks_msec()
+	if _last_vibrate_msec >= 0 and now - _last_vibrate_msec < vibrate_min_interval_msec:
+		return false
+	_last_vibrate_msec = now
+	Input.vibrate_handheld(duration_ms, vibrate_amplitude)
+	vibrated.emit(duration_ms)
+	return true
 
 
 func is_paused() -> bool:
