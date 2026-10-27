@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/grimoire_check.gd" id="1_check"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
+[ext_resource type="Script" path="res://scenes/client/order_judge.gd" id="3_judge"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="4_economy"]
+
+[node name="GrimoireCheck" type="Node" node_paths=PackedStringArray("judge")]
+script = ExtResource("1_check")
+catalog = ExtResource("2_catalog")
+judge = NodePath("Judge")
+
+[node name="Judge" type="Node" parent="."]
+script = ExtResource("3_judge")
+economy = ExtResource("4_economy")

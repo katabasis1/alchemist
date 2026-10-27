@@ -8,10 +8,12 @@
 ##   Полный генератор с проверкой решаемости — S5.2, подсказки обучения — S9.
 ## Клиент принял верное зелье → OrderJudge: оплата (серия 3★, множитель клиента) и репутация → GameState.finish_order
 ## одной записью → монеты летят из руки клиента в счётчик (Hud.fly_coins). Клиент ушёл → через next_delay_sec следующий.
+## Клиент взял баночку (верную или нет) → GameState.record_brew: рецепт узнан, страница Гримуара (GDD §3.5).
 ## Сигналы: order_started(client, order); order_paid(order, verdict, pay).
 ## Методы: start() — первый клиент; started, served_count — для проверочной сцены; pick() — кто придёт следующим
 ##   (без побочных эффектов, кроме случайности).
-## Зависимости: Client, OrderJudge, Hud, GameState (current_order, ftue_step, rank, streak_3star, unlocked_ingredients),
+## Зависимости: Client, OrderJudge, Hud, GameState (current_order, ftue_step, rank, streak_3star, unlocked_ingredients,
+##   record_brew),
 ##   DataCatalog (через GameState.catalog), EventBus.game_ready, SaveService.is_loaded (сцену открыли после загрузки).
 class_name OrderDesk
 extends Node
@@ -46,6 +48,7 @@ var _last_order_id: StringName = &""
 
 
 func _ready() -> void:
+	client.potion_received.connect(_on_potion_received)
 	client.served.connect(_on_served)
 	client.left.connect(_on_left)
 	GameState.state_reset.connect(_on_state_reset)
@@ -92,6 +95,11 @@ func _call_next() -> void:
 	GameState.start_order(who.id, order.id)
 	client.arrive(who, order)
 	order_started.emit(who, order)
+
+
+## Зелье отдано — в Гримуар, даже если клиент сейчас откажется (GDD §3.5).
+func _on_potion_received(mixture: Dictionary) -> void:
+	GameState.record_brew(mixture)
 
 
 func _on_served(verdict: Dictionary) -> void:

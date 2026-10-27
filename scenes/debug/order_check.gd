@@ -1,5 +1,6 @@
 ## OrderCheck — проверочная сцена S2.4 (F6 на этой сцене): вся лавка (Workshop) — клиент с заказом, баночка из ступки,
-## оценка, оплата, полёт монет в счётчик, очередь заказов.
+## оценка, оплата, полёт монет в счётчик, очередь заказов; с S3.2 — запись отданных зелий в Гримуар (OrderDesk →
+## GameState.record_brew), и верных, и отвергнутых.
 ## Автопроверки при запуске → Output, итог строкой «ORDER: x/y OK», потом памятка для ручной проверки.
 ## Перед проверками — новая игра (GameState.new_game): первым придёт обучающий заказ пекарши. Ингредиенты проверки
 ## бросают в ступку через Draggable.drop_on, помол ставят сигналами жеста и Mortar.set_grind, баночку берут тапом
@@ -10,8 +11,8 @@
 ## заказ — его можно сыграть руками. Сохранение не загружено, поэтому SaveService пишет в Output «запись до загрузки
 ## пропущена» — так и должно быть. Тексты на экран не выводятся.
 ## Сигналы: нет.
-## Зависимости: GameState (новая игра, монеты, репутация, заказ, шаг обучения, серия), DataCatalog (через
-##   GameState.catalog), узлы лавки через @export.
+## Зависимости: GameState (новая игра, монеты, репутация, заказ, шаг обучения, серия, Гримуар), DataCatalog (через
+##   GameState.catalog), GrimoireRules (рецепт смеси, страница), EventBus.recipe_discovered, узлы лавки через @export.
 extends Node2D
 
 ## Запас ко времени анимации при ожидании её конца, секунды.
@@ -31,6 +32,8 @@ const ORDER_FTUE_2: StringName = &"ftue_2"
 const ORDER_FTUE_4: StringName = &"ftue_4"
 const ORDER_FTUE_5: StringName = &"ftue_5"
 const ORDER_FREE: StringName = &"healing_balm_s1_p2"
+## Рецепт обучающих заказов 1–2 (одна Жизнь) — его страница Гримуара открывается первой.
+const BALM: StringName = &"healing_balm"
 const LIFE: StringName = &"life"
 const ACID: StringName = &"acid"
 ## Миллисекунд в секунде (Time.get_ticks_msec).
@@ -56,6 +59,7 @@ var _refused: Array[Dictionary] = []
 var _paid: Array[int] = []
 var _handed: Array[Dictionary] = []
 var _client_refusals: Array[StringName] = []
+var _discovered: Array[StringName] = []
 ## Место баночки в ступке (локально): раскладка двигает ступку, а не баночку внутри неё.
 var _vessel_home: Vector2 = Vector2.ZERO
 
@@ -69,6 +73,7 @@ func _ready() -> void:
 	desk.order_started.connect(_on_order_started)
 	desk.order_paid.connect(_on_order_paid)
 	mortar.handed_off.connect(_on_handed_off)
+	EventBus.recipe_discovered.connect(_on_recipe_discovered)
 	_run_checks.call_deferred()
 
 
@@ -237,6 +242,8 @@ func _check_serve_first() -> void:
 	mortar.vessel_drag.drop_on(client.drop_target)
 	_check("помол идеальный — клиент взял баночку с той же смесью", _handed.size() == 1 and _handed[0] == mixture
 			and client.state_machine.is_in(Client.STATE_REACTING))
+	_check("Гримуар: отданное зелье записано — Целебный бальзам открыт, варка 1 (грубую баночку не брали — её нет)",
+			_discovered == [BALM] and _page_value(BALM, GrimoireRules.KEY_BREWS) == 1)
 	_check("ступка опустела (Empty), монеты пока те же", mortar.items.is_empty()
 			and mortar.state_machine.is_in(Mortar.STATE_EMPTY) and GameState.coins == coins_before)
 	_check("пока реагирует — второй баночки не берёт (busy)", not client.drop_target.enabled
@@ -264,6 +271,7 @@ func _check_serve_first() -> void:
 func _check_wrong_effect() -> void:
 	await _drop_from_shelf(HEAT_FLOWER)
 	_grind_to(_perfect())
+	var wrong: RecipeData = GrimoireRules.recognize(mortar.mixture(), GameState.catalog)
 	var coins_before: int = GameState.coins
 	var step_before: int = GameState.ftue_step
 	mortar.vessel_drag.select()
@@ -275,6 +283,8 @@ func _check_wrong_effect() -> void:
 			and _paid.size() == 1 and GameState.coins == coins_before)
 	_check("заказ не закрыт: шаг обучения и заказ те же", GameState.ftue_step == step_before
 			and _saved_order_id() == ORDER_FTUE_2)
+	_check("Гримуар: отвергнутое зелье тоже записано — открыт %s" % (wrong.id if wrong != null else &"?"),
+			wrong != null and _discovered == [BALM, wrong.id] and _page_value(wrong.id, GrimoireRules.KEY_BREWS) == 1)
 	var waiting: bool = await _wait_until(client.is_waiting, client.react_sec + WAIT_SLACK_SEC)
 	_check("клиент не ушёл и снова ждёт тот же заказ", waiting and _left_count == 1 and client.order.id == ORDER_FTUE_2
 			and client.drop_target.enabled)
@@ -291,6 +301,7 @@ func _check_serve_flawless() -> void:
 	var reputation: int = client.judge.reputation_for(verdict)
 	var coins_before: int = GameState.coins
 	var reputation_before: int = GameState.reputation
+	var flawless_before: int = _page_value(BALM, GrimoireRules.KEY_FLAWLESS)
 	_check("смесь двух шалфеев — безупречно", bool(verdict[OrderJudge.KEY_FLAWLESS]))
 	mortar.vessel_drag.select()
 	mortar.vessel_drag.drop_on(client.drop_target)
@@ -299,6 +310,9 @@ func _check_serve_flawless() -> void:
 			and _paid[1] == pay and pay > order.base_pay and GameState.coins == coins_before + pay)
 	_check("репутация +%d (звёзды и бонус)" % reputation, GameState.reputation == reputation_before + reputation)
 	_check("обучение пройдено, серия 3 ★ = 2", GameState.ftue_step == desk.ftue_limit and GameState.streak_3star == 2)
+	_check("Гримуар: бальзам — варка 2, «безупречных» +1, новых рецептов нет", _discovered.size() == 2
+			and _page_value(BALM, GrimoireRules.KEY_BREWS) == 2
+			and _page_value(BALM, GrimoireRules.KEY_FLAWLESS) == flawless_before + 1)
 	var next_arrived: bool = await _wait_until(client.is_waiting, _next_client_sec())
 	_check("дальше — обычный заказ пекарши", next_arrived and client.data == desk.free_client
 			and _is_free_order(client.order) and _saved_order_id() == client.order.id)
@@ -364,6 +378,11 @@ func _order(id: StringName) -> OrderTemplate:
 
 func _saved_order_id() -> StringName:
 	return StringName(str(GameState.current_order.get(GameState.ORDER_TEMPLATE, "")))
+
+
+## Счётчик страницы Гримуара (GrimoireRules.KEY_*); рецепт не открыт — 0.
+func _page_value(recipe_id: StringName, key: String) -> int:
+	return int(GrimoireRules.parse_page(GameState.grimoire.get(String(recipe_id)))[key])
 
 
 func _effect(verdict: Dictionary) -> bool:
@@ -449,6 +468,10 @@ func _on_order_paid(_order: OrderTemplate, _verdict: Dictionary, pay: int) -> vo
 
 func _on_handed_off(mixture: Dictionary[StringName, float]) -> void:
 	_handed.append(mixture)
+
+
+func _on_recipe_discovered(recipe_id: StringName) -> void:
+	_discovered.append(recipe_id)
 
 
 func _check(title: String, ok: bool) -> void:

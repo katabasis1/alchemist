@@ -1,7 +1,7 @@
 ## EventBus — только глобальные события, которые слушают несвязанные системы (AGENTS.md §3, п. 4).
 ## Локальные связи — сигналами компонентов и ссылками через @export, не через шину.
 ## Сигналы: save_requested, coins_changed, settings_changed, pause_changed, scene_changed, game_ready,
-## drag_started, drag_ended, camera_shake_requested, layout_changed.
+## drag_started, drag_ended, camera_shake_requested, layout_changed, recipe_discovered, grimoire_page_golden.
 ## Зависимости: нет. Сам ничего не испускает — только объявляет сигналы.
 extends Node
 
@@ -44,3 +44,11 @@ signal camera_shake_requested(strength: float)
 ## Сменилась раскладка экрана: портрет (телефон) или ландшафт (компонент LayoutSwitcher).
 @warning_ignore("unused_signal")
 signal layout_changed(portrait: bool)
+
+## В Гримуаре открылась страница: зелье этого рецепта впервые отдали клиенту (GDD §3.5; GameState.record_brew).
+@warning_ignore("unused_signal")
+signal recipe_discovered(recipe_id: StringName)
+
+## Страница Гримуара стала золотой: набралось EconomyConfig.golden_page_flawless «безупречных» варок (GDD §3.5).
+@warning_ignore("unused_signal")
+signal grimoire_page_golden(recipe_id: StringName)

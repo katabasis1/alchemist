@@ -8,7 +8,8 @@
 ## refused(verdict), клиент ждёт дальше — можно переделать (GDD §5.3).
 ## StateMachine: Away → Arriving → Waiting → Reacting → Waiting (неверный эффект) / Leaving → Away.
 ## Методы: arrive(client, order), leave(), is_present(), is_waiting(), refusal_for(vessel), coin_point().
-## Сигналы: arrived; served(verdict); refused(verdict); left; drop_refused(reason) — баночку не взял:
+## Сигналы: arrived; potion_received(mixture) — баночку взял, копия смеси на момент приёма (в Гримуар и при верном,
+##   и при неверном эффекте — GDD §3.5); served(verdict); refused(verdict); left; drop_refused(reason) — баночку не взял:
 ##   &"busy" — сейчас не ждёт заказ, &"kind" — пустой сосуд, &"grind" — FTUE 1–3, помол не дошёл до «идеально».
 ## Зависимости: OrderJudge, DropTarget (kind &"potion"), CarryVessel (смесь, помол), StateMachine, JuicePunch,
 ##   SfxComponent ×3, DataCatalog (свойства), EconomyConfig через OrderJudge (зона «идеально»), order_icon.tscn,
@@ -17,6 +18,7 @@ class_name Client
 extends Node2D
 
 signal arrived
+signal potion_received(mixture: Dictionary)
 signal served(verdict: Dictionary)
 signal refused(verdict: Dictionary)
 signal left
@@ -181,6 +183,7 @@ func _on_received(draggable: Draggable) -> void:
 	# Смесь читаем сейчас: станция опустошит сосуд, как только узнает, что его приняли.
 	var vessel: CarryVessel = draggable.body as CarryVessel
 	var verdict: Dictionary = judge.judge(order, vessel.mixture)
+	potion_received.emit(vessel.mixture.duplicate())
 	state_machine.transition_to(STATE_REACTING)
 	drop_target.enabled = false
 	sfx_receive.play()

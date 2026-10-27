@@ -10,7 +10,7 @@
 ## высоты: сколькими удержаниями её слили — неважно.
 ## Горелка: температура растёт на heat_rate, пока огонь держат, и падает на cool_rate до room_temp, когда отпустили;
 ## пока T не ниже точки свойства, оно уходит паром (evaporate_rate доли/с) или сгорает (burn_rate доли/с).
-## Кто пользуется: ступка (помол и смесь), OrderJudge (значимость, сила, чистота), отстойник и горелка (S4),
+## Кто пользуется: ступка (помол и смесь), OrderJudge (значимость, сила, чистота, «безупречно»), отстойник и горелка (S4),
 ## распознавание рецептов (S3.2), стенд проверок (S3.3). Эталон на Python — tools/alchemy/rules_model.py:
 ## правило меняется в обоих местах сразу.
 ## Сигналы: нет. Зависимости: EconomyConfig (порог значимости, звёзды, помол, извлечение, слив, горелка),
@@ -111,6 +111,24 @@ static func purity(mixture: Dictionary, wanted: Array[StringName]) -> float:
 ## Звёзды чистоты (0…3).
 static func purity_stars(value: float, economy: EconomyConfig) -> int:
 	return economy.purity_stars(value + EPSILON)
+
+
+## Звёзды силы самого слабого из нужных свойств (0…3): по нему судят «Силу» (GDD §5.3). Нужного нет — 0; пустой
+## список — 0 (нечего оценивать).
+static func weakest_stars(mixture: Dictionary, wanted: Array[StringName], economy: EconomyConfig) -> int:
+	if wanted.is_empty():
+		return 0
+	var weakest: int = economy.max_stars()
+	for property_id: StringName in wanted:
+		weakest = mini(weakest, strength_stars(amount(mixture, property_id), economy))
+	return weakest
+
+
+## «Безупречно» (GDD §5.3): сила ★★★ у всех нужных свойств и чистота ★★★ (≥ 95 %). Одно определение на всю игру:
+## им пользуются и оценка заказа (OrderJudge), и Гримуар (GrimoireRules, золотая страница).
+static func is_flawless(weakest: int, purity_stars_value: int, economy: EconomyConfig) -> bool:
+	var top: int = economy.max_stars()
+	return weakest >= top and purity_stars_value >= top
 
 
 # --- Помол (GDD §3.3, Ступка) -------------------------------------------------------------------------------------

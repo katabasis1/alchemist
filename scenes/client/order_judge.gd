@@ -4,7 +4,7 @@
 ## Первая версия (S2.4): зелье несут прямо из ступки. S5.3 добавит репутацию в разбор, Гримуар и экран итога.
 ## Сигналы: нет. Методы: judge(order, mixture) → словарь-вердикт (ключи KEY_*); pay_for(order, verdict, streak, multiplier);
 ##   reputation_for(verdict) — звёзды + бонус за «безупречно» (GDD §5.3, репутацию не отнимаем).
-## Зависимости: AlchemyRules (значимость, сила, чистота — GDD §3.2), EconomyConfig (звёзды, оплата), OrderTemplate.
+## Зависимости: AlchemyRules (значимость, сила, чистота — GDD §3.2; «безупречно» — is_flawless), EconomyConfig (звёзды, оплата), OrderTemplate.
 class_name OrderJudge
 extends Node
 
@@ -26,12 +26,10 @@ const KEY_MISSING: StringName = &"missing"
 
 func judge(order: OrderTemplate, mixture: Dictionary) -> Dictionary:
 	var missing: Array[StringName] = []
-	var weakest: int = economy.max_stars()
 	for property_id: StringName in order.required:
-		var amount: float = AlchemyRules.amount(mixture, property_id)
-		if not AlchemyRules.is_present(amount, economy):
+		if not AlchemyRules.is_present(AlchemyRules.amount(mixture, property_id), economy):
 			missing.append(property_id)
-		weakest = mini(weakest, AlchemyRules.strength_stars(amount, economy))
+	var weakest: int = AlchemyRules.weakest_stars(mixture, order.required, economy)
 	var purity: float = AlchemyRules.purity(mixture, order.required)
 	var purity_stars: int = AlchemyRules.purity_stars(purity, economy)
 	var effect: bool = missing.is_empty() and not order.required.is_empty()
@@ -40,7 +38,6 @@ func judge(order: OrderTemplate, mixture: Dictionary) -> Dictionary:
 	var stars: int = 0
 	if effect:
 		stars = 1 + int(strength_ok) + int(purity_ok)
-	var top: int = economy.max_stars()
 	return {
 		KEY_EFFECT: effect,
 		KEY_STRENGTH_OK: strength_ok,
@@ -49,7 +46,7 @@ func judge(order: OrderTemplate, mixture: Dictionary) -> Dictionary:
 		KEY_PURITY: purity,
 		KEY_PURITY_STARS: purity_stars,
 		KEY_STARS: stars,
-		KEY_FLAWLESS: effect and weakest >= top and purity_stars >= top,
+		KEY_FLAWLESS: effect and AlchemyRules.is_flawless(weakest, purity_stars, economy),
 		KEY_MISSING: missing,
 	}
 

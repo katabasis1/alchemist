@@ -212,6 +212,20 @@ def purity_stars(value: float, economy: EconomyConfig) -> int:
     return economy.purity_stars(value + EPSILON)
 
 
+def weakest_stars(mixture: dict, wanted: list, economy: EconomyConfig) -> int:
+    if not wanted:
+        return 0
+    weakest = economy.max_stars()
+    for property_id in wanted:
+        weakest = min(weakest, strength_stars(amount(mixture, property_id), economy))
+    return weakest
+
+
+def is_flawless(weakest: int, purity_stars_: int, economy: EconomyConfig) -> bool:
+    top = economy.max_stars()
+    return weakest >= top and purity_stars_ >= top
+
+
 # --- AlchemyRules: помол (GDD §3.3) --------------------------------------------------------------------------------
 def hardest(ingredients: list) -> int:
     result = SOFT
@@ -413,7 +427,7 @@ def burning(mixture: dict, temp: float, catalog: DataCatalog) -> list:
 
 RULE_FUNCTIONS = [
     "total", "amount", "cleaned", "combine", "scaled", "is_present", "significant", "traces", "strength_stars",
-    "purity", "purity_stars", "hardest", "grind_per_circle", "grind_after", "extraction", "extract", "ground",
+    "purity", "purity_stars", "weakest_stars", "is_flawless", "hardest", "grind_per_circle", "grind_after", "extraction", "extract", "ground",
     "layers", "layer_heights", "pour_top", "height_above_layer", "pour_rate", "pour_height", "pour_tail",
     "temp_after", "time_at_or_above", "heat", "steaming", "burning", "_lies_below",
 ]
@@ -737,6 +751,24 @@ def check_numbers(c: Checks, catalog: DataCatalog) -> None:
             and burning({"life": 1.0}, 89.9, catalog) == [])
 
 
+def check_quality(c: Checks, catalog: DataCatalog) -> None:
+    """GDD §5.3: сила — по самому слабому нужному свойству; «безупречно» — ★★★ силы у всех нужных и ★★★ чистоты."""
+    e = catalog.economy
+    c.check("слабейшее: {Жизнь 3, Жар 2} → ★★", weakest_stars({"life": 3.0, "heat": 2.0}, ["life", "heat"], e) == 2)
+    c.check("слабейшее: нужного свойства нет → 0", weakest_stars({"life": 3.0}, ["life", "heat"], e) == 0)
+    c.check("слабейшее: ничего не нужно → 0", weakest_stars({"life": 3.0}, [], e) == 0)
+    c.check("слабейшее: 2,99995 → ★★★ (допуск EPSILON)", weakest_stars({"life": 2.99995}, ["life"], e) == 3)
+    c.check("безупречно: ★★★ и ★★★", is_flawless(3, 3, e))
+    c.check("не безупречно: ★★★ силы, ★★ чистоты", not is_flawless(3, 2, e))
+    c.check("не безупречно: ★★ силы, ★★★ чистоты", not is_flawless(2, 3, e))
+    near = {"life": 3.0, "heat": 0.15}
+    c.check("Жизнь 3 + Жар 0,15: чистота 95,2 % → безупречно",
+            is_flawless(weakest_stars(near, ["life"], e), purity_stars(purity(near, ["life"]), e), e))
+    far = {"life": 3.0, "heat": 0.2}
+    c.check("Жизнь 3 + Жар 0,2: чистота 93,75 % → нет",
+            not is_flawless(weakest_stars(far, ["life"], e), purity_stars(purity(far, ["life"]), e), e))
+
+
 def check_gdd_3_4(c: Checks, catalog: DataCatalog) -> None:
     volatile = sorted((p for p in catalog.properties if p.evaporate_temp >= 0.0), key=lambda p: p.evaporate_temp)
     c.check("GDD §3.4: летучие по возрастанию точки — Холод, Сон, Едкость",
@@ -860,6 +892,7 @@ def check_sync(c: Checks) -> None:
 def self_test(catalog: DataCatalog) -> int:
     c = Checks()
     check_numbers(c, catalog)
+    check_quality(c, catalog)
     check_gdd_3_4(c, catalog)
     check_paths(c, catalog)
     check_dt(c, catalog)

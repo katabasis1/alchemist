@@ -6,6 +6,19 @@
 > Ответ агента может оборваться в любой момент. Чего нет в Pod, следующий агент не увидит.
 
 ## Сейчас
+- **Сессия 33 (2026-10-27, 22:15 UTC): S3.2 распознавание рецептов + данные Гримуара, будет v0.2.2.** Пользователь: «продолжи проект, следующий этап». **GitHub HEAD = `ee79284` «0.2.1»** (пользователь запушил v0.2.1 вместе с `alchemy_rules.gd.uid`). Pod снова новый и пустой. Рабочая копия — из архива GitHub `codeload …/tar.gz/refs/heads/main` (скачан инструментом файлов вне Computer, 13 МБ, `git get-tar-commit-id` = `ee79284`): **настоящие** PNG/OGG/TTF/translation на диске, в истории их нет (82 файла в `.git/info/exclude`, §2.3). Коммит `sync: GitHub ee79284 (0.2.1)`, теги `gh-ee79284`, `v0.2.1`. Валидатор 0/0, `RULES: 77/77 OK`. Выдача будет `--base gh-ee79284`.
+
+- **Сессия 34 (2026-10-27, 22:35 UTC): продолжение S3.2.** Другой участник Pod: «продолжи». Рабочая копия цела (HEAD `b3dcfdf` = LAST_SYNC) + несохранённый черновик `grimoire_check` (сохранён `948be31`). GitHub HEAD всё ещё `ee79284`, inbox нет.
+
+## Чек-лист S3.2 (v0.2.2) — распознавание рецептов и данные Гримуара
+Решения (GDD §3.5 уточнить): зелье оценивается **по своему рецепту**, а не по заказу — так одна функция годится и для клиента, и для Ростка (S4+). Страница: `{"brews", "best_strength", "best_purity", "flawless"}` (целые); открыта = ключ есть; «золотая» не хранится — `flawless ≥ EconomyConfig.golden_page_flawless`. Определение «безупречно» (GDD §5.3) — одно место: `AlchemyRules.is_flawless`, им пользуются и OrderJudge, и Гримуар.
+- [x] TDD: `rules_model.py --self-test` ждёт `weakest_stars`/`is_flawless` → падал (NameError); затем Python + `alchemy_rules.gd` → `RULES: 86/86 OK`; OrderJudge — через них: старый и новый `judge` на Python-правилах совпали на 44 заказах × 4000 смесей (535 «безупречных»)
+- [x] TDD: `tools/alchemy/grimoire_model.py --self-test` — сначала падал (NotImplementedError), потом `GRIMOIRE: 132/132 OK`; `data/alchemy/grimoire_rules.gd` (`class_name GrimoireRules`: recognize, brew, parse_page, parse_grimoire, after_brew, is_golden, _count). Мутации вручную: 14/14 в модели Гримуара и 4/4 в weakest_stars/is_flawless убиты
+- [x] `GameState.record_brew(mixture)` + разбор Гримуара в `from_dict`; `EventBus.recipe_discovered`, `grimoire_page_golden`; Client — сигнал `potion_received(mixture)`, OrderDesk пишет в GameState (и при отказе клиента)
+- [x] `scenes/debug/grimoire_check.tscn` — те же случаи в Godot + путь через GameState и сохранение (сессия 34: ревью черновика 33, + случаи эталона, итог `GRIMOIRE CHECK: 31/31 OK`); order_check +3 — OrderDesk пишет в Гримуар и верное, и отвергнутое зелье (`ORDER: 64/64 OK`). Ожидания сверены на Python-правилах
+- [x] валидатор 0/0; документы (GDD §3.5, PLAN, PROGRESS, DEVLOG, COMPONENTS, README), версия 0.2.2; выдача `--base gh-ee79284` → `outbox/alchemist_update_gh-ee79284_to_v0.2.2.zip`
+- [ ] приёмка: `GRIMOIRE CHECK: 31/31 OK`, `ORDER: 64/64 OK` у пользователя (вместе с S3.3)
+
 - **Сессия 31 (2026-10-27, 21:31 UTC): S3.1 `AlchemyRules`, будет v0.2.1.** Пользователь: «продолжи проект. плейтесты потом. приступай к этапу S3.1» — приёмка M2 (плейтест) отложена, S3 начат без неё. Pod снова новый и пустой: рабочая копия восстановлена с GitHub `c217638` («0.2.0») по §2.3 — 477 текстовых файлов через `dsbx … webbrowser`, hash-object совпали все (кроме двух бинарных `strings.*.translation` — в заглушки); коммит `sync: GitHub c217638 (0.2.0)`, теги `gh-c217638`, `v0.2.0`; бинарники — пустые заглушки в `.git/info/exclude`. Валидатор 0/0. Выдача будет `--base gh-c217638`.
 
 - **Сессия 32 (2026-10-27, 21:48 UTC): продолжение S3.1.** Другой участник Pod: «продолжи работу предыдущего агента». Рабочая копия цела (HEAD `7f23fe1` = LAST_SYNC), GitHub HEAD всё ещё `c217638`, inbox нет. Первый пункт чек-листа (AlchemyRules + ступка/OrderJudge) сделан в сессии 31, но не отмечен — ревью, затем эталон `tools/alchemy/rules_model.py`.
@@ -15,7 +28,7 @@
 - [x] ступка и OrderJudge считают через AlchemyRules (поведение то же, арифметика та же) — ревью сессии 32: формулы сверены с GDD §3.2–3.3, `grind_check` «смесь = сумма × извлечение» не ломается (cleaned убирает только ≤ 0,0001)
 - [x] `tools/alchemy/rules_model.py` — эталон правил на Python + самопроверка: пути GDD §5.1 дают свой рецепт, шаг dt не меняет итог — `RULES: 77/77 OK`; мутации (наивное испарение по кадрам, неверный путь, слои без плотности, рассинхрон имён) ловятся
 - [x] валидатор 0/0; документы (PLAN, PROGRESS, DEVLOG, COMPONENTS, GDD §3.3 — уточнения правил), версия 0.2.1
-- [ ] выдача `--base gh-c217638` → `outbox/alchemist_update_gh-c217638_to_v0.2.1.zip`
+- [x] выдача `--base gh-c217638` → `outbox/alchemist_update_gh-c217638_to_v0.2.1.zip` (пользователь запушил: GitHub `ee79284` «0.2.1», с `alchemy_rules.gd.uid`)
 - [ ] приёмка (после S3.3 — стенд проверок в Godot) + отложенный плейтест M2
 
 - **Сессия 30 (2026-10-27, 21:13 UTC): завершение S2.5 (выдача v0.2.0).** Пользователь (четвёртый участник Pod): «продолжи». Рабочая копия цела: коммит S2.5 `e5e83b0` и тег `v0.2.0` есть, полная выдача не сделана (LAST_SYNC = wip `8fd2067`). **GitHub HEAD = `ac6d37a` «0.1.9»** (пользователь запушил v0.1.9): текстовые файлы совпадают с нашим `v0.1.9` один в один (550 файлов, новых `*.uid` нет) → тег `gh-ac6d37a` на `v0.1.9`, sync-коммит не нужен. Выдача теперь `--base gh-ac6d37a` (только S2.5). Валидатор 0/0.
@@ -224,3 +237,12 @@
 - 2026-10-27 21:56 UTC — tools/alchemy/rules_model.py: эталон AlchemyRules на Python, --self-test 77/77 (числа GDD §3.2–3.4, 21 путь рецептов, dt-инвариантность горелки/слива/помола, детерминизм, сверка имён с .gd); дальше документы и v0.2.1
 - 2026-10-27 21:57 UTC — GDD §3.3: блок «Как это считается» (минимум 10 %, слив по всей высоте и хвост струи, точное время пара, допуск 0,0001); COMPONENTS: строка AlchemyRules, ступка/OrderJudge через правила; дальше PLAN/PROGRESS/DEVLOG, v0.2.1
 - 2026-10-27 21:57 UTC — PLAN S3.1 [x], PROGRESS (S3, ждём от пользователя, долг), project.godot 0.2.1; дальше DEVLOG, валидатор, коммит S3.1, выдача --base gh-c217638
+- 2026-10-27 22:19 UTC — сессия 33: рабочая копия из архива GitHub ee79284 (0.2.1, с настоящими бинарниками вне истории), план и чек-лист S3.2. Дальше: TDD weakest_stars/is_flawless
+- 2026-10-27 22:20 UTC — AlchemyRules.weakest_stars/is_flawless (+9 проверок, RULES 86/86), OrderJudge через них — вывод тот же. Дальше: TDD grimoire_model.py
+- 2026-10-27 22:24 UTC — GrimoireRules (data/alchemy/grimoire_rules.gd) + эталон grimoire_model.py: GRIMOIRE 132/132, мутации 18/18 убиты. Дальше: GameState.record_brew, сигналы, Client/OrderDesk
+- 2026-10-27 22:25 UTC — GameState.record_brew + parse_grimoire в from_dict, EventBus.recipe_discovered/grimoire_page_golden, Client.potion_received → OrderDesk. Дальше: grimoire_check.tscn
+- 2026-10-27 22:35 UTC — сессия 34: найдена несохранённая работа 33 — scenes/debug/grimoire_check.tscn/.gd (черновик, 277 строк). Дальше: ревью и доводка grimoire_check
+- 2026-10-27 22:40 UTC — grimoire_check: ревью черновика (API GrimoireRules/GameState/EventBus/OrderJudge сверены, SaveService в F6 не пишет), + случаи эталона: допуск EPSILON 0,2999, порядок ключей, неповторяющиеся наборы, пустая страница не золотая; сверка OrderJudge↔Гримуар на Python-правилах 688/688. Дальше: Гримуар в order_check (OrderDesk → record_brew)
+- 2026-10-27 22:41 UTC — order_check +3 проверки Гримуара (OrderDesk → record_brew: открыт бальзам; отвергнутое зелье Огнецвета тоже записано; вторая варка, «безупречных» +1) → ORDER 64/64; grimoire_check 31 проверка. Дальше: документы S3.2, версия 0.2.2
+- 2026-10-27 22:41 UTC — документы S3.2: GDD §3.5 «Как это считается», COMPONENTS (GrimoireRules, Client.potion_received, OrderDesk → record_brew), README (grimoire_check 31/31, ORDER 64/64). Дальше: PLAN/PROGRESS/DEVLOG, версия 0.2.2, коммит, выдача
+- 2026-10-27 22:43 UTC — PLAN/PROGRESS/DEVLOG S3.2, версия 0.2.2. Дальше: коммит S3.2 + тег v0.2.2 + выдача --base gh-ee79284

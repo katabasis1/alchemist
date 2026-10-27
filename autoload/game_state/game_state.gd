@@ -1,7 +1,8 @@
 ## GameState — сохраняемое состояние игрока (GDD §11) и единственное место, где оно меняется.
 ## Каждое изменение, которое надо записать, просит SaveService через EventBus.save_requested.
 ## Сигналы: state_reset() — состояние заменено целиком (новая игра или загрузка).
-## Зависимости: EventBus, DataCatalog (@export: стартовые значения новой игры; сцены берут данные через GameState.catalog).
+## Зависимости: EventBus, DataCatalog (@export: стартовые значения новой игры; сцены берут данные через GameState.catalog),
+##   GrimoireRules (рецепт зелья, страницы Гримуара, разбор Гримуара из сохранения).
 ## На диск не пишет — это делает SaveService.
 extends Node
 
@@ -26,6 +27,7 @@ const REASON_COINS: StringName = &"coins"
 const REASON_SETTINGS: StringName = &"settings"
 const REASON_RESET: StringName = &"reset"
 const REASON_ORDER: StringName = &"order"
+const REASON_GRIMOIRE: StringName = &"grimoire"
 
 ## Ключи текущего заказа (current_order): id клиента и шаблона заказа.
 const ORDER_CLIENT: String = "client"
@@ -42,7 +44,8 @@ var rank: int = 0
 var purchases: Array[StringName] = []
 ## Открытые ингредиенты (id из IngredientData).
 var unlocked_ingredients: Array[StringName] = []
-## Гримуар: recipe_id → {"best_stars": int, "flawless": int}.
+## Гримуар (GDD §3.5): id рецепта (строка) → страница GrimoireRules — целые KEY_BREWS, KEY_BEST_STRENGTH,
+## KEY_BEST_PURITY, KEY_FLAWLESS. Рецепт открыт — страница есть. Меняется только в record_brew.
 var grimoire: Dictionary = {}
 var day: int = 1
 var order_in_day: int = 0
@@ -114,6 +117,27 @@ func finish_order(pay: int, reputation_gain: int, three_stars: bool, ftue_done: 
 	request_save(REASON_ORDER)
 
 
+## Зелье отдали клиенту, даже если он отказался (GDD §3.5): рецепт узнаётся по значимым свойствам смеси, его страница
+## открывается (EventBus.recipe_discovered), варок +1, рекорды силы и чистоты и счёт «безупречных» обновляются;
+## страница, которая только что стала золотой, — EventBus.grimoire_page_golden. «Странная смесь» страницы не даёт
+## и ничего не пишет. Возвращает id узнанного рецепта, &"" — «Странная смесь».
+func record_brew(mixture: Dictionary) -> StringName:
+	var recipe: RecipeData = GrimoireRules.recognize(mixture, catalog)
+	if recipe == null:
+		return &""
+	var key: String = String(recipe.id)
+	var discovered: bool = not grimoire.has(key)
+	var before: Dictionary = GrimoireRules.parse_page(grimoire.get(key))
+	var page: Dictionary = GrimoireRules.after_brew(before, GrimoireRules.brew(mixture, recipe, catalog.economy))
+	grimoire[key] = page
+	if discovered:
+		EventBus.recipe_discovered.emit(recipe.id)
+	if GrimoireRules.is_golden(page, catalog.economy) and not GrimoireRules.is_golden(before, catalog.economy):
+		EventBus.grimoire_page_golden.emit(recipe.id)
+	request_save(REASON_GRIMOIRE)
+	return recipe.id
+
+
 func get_setting(key: String) -> Variant:
 	return settings.get(key)
 
@@ -165,7 +189,7 @@ func from_dict(data: Dictionary) -> bool:
 	rank = int(d.get("rank", rank))
 	purchases = _strings_to_ids(d.get("purchases", []))
 	unlocked_ingredients = _strings_to_ids(d.get("unlocked_ingredients", []))
-	grimoire = _as_dict(d.get("grimoire", {}))
+	grimoire = GrimoireRules.parse_grimoire(d.get("grimoire", {}))
 	day = int(d.get("day", day))
 	order_in_day = int(d.get("order_in_day", order_in_day))
 	streak_3star = int(d.get("streak_3star", streak_3star))
