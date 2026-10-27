@@ -1,6 +1,6 @@
 # ASSET_REGISTRY — контракт ассетов
 
-Статусы: `probe` — только пробник стиля · `planned (S…)` — промпт готов, временная версия появится на указанном подэтапе · `temp` — временная графика агента · `final` — финальная (ChatGPT Image).
+Статусы: `probe` — только пробник стиля · `planned (S…)` — промпт готов, временная версия появится на указанном подэтапе · `temp` — временная графика агента · `final` — финальная (ChatGPT Image) · `proc` — процедурная: файл пишет скрипт (`tools/art/fx_textures.py`), промпт не нужен, правится код.
 Правило: финальная картинка заменяет временную **под тем же именем и с тем же холстом**. Пути — от корня проекта Godot (`res://`).
 Исходники пробников: `art_probes/style_A/source/`, вырезка: `art_probes/style_A/cutouts/` (в проект переносятся на S1.2).
 
@@ -11,9 +11,13 @@
 | bg_workshop_portrait | assets/backgrounds/bg_workshop_portrait.png | 1080×1920 | top-left | — | temp | P-BG-02 | Портрет (телефон, GDD §10). Край прилавка y≈781: верх — клиент и заказ, прилавок — станции, ящики внизу — полка-лента |
 | bg_workshop_portrait_bench | assets/backgrounds/bg_workshop_portrait_bench.png | 1080×1139 | top-left, узел в (0, 781) | — | temp | P-BG-02 | Производный слой: `python tools/art/derive.py bench --bg assets/backgrounds/bg_workshop_portrait.png --top 781 --out assets/backgrounds/bg_workshop_portrait_bench.png`. Отдельно не генерировать |
 | prop_mortar_full | art_probes/style_A/cutouts/prop_mortar_full.png | 512×512 | bottom | #FF00FF | probe | — | Только пробник; в игре — две части ниже |
-| prop_mortar_bowl | assets/props/prop_mortar_bowl.png | 512×512 | bottom | #FF00FF | temp | P-PROP-01 | Чаша; порошок — шейдер. Временная — S2.1 (лист вместе с пестиком, `cutout.py --split`) |
-| prop_pestle | assets/props/prop_pestle.png | 256×512 | center | #FF00FF | temp | P-PROP-02 | Пестик; точка вращения задаётся в сцене |
-| prop_mortar_bowl_front | assets/props/prop_mortar_bowl_front.png | 512×512 | bottom | — | temp | P-PROP-01 | Производный слой: передний край чаши поверх содержимого (ингредиенты «внутри»). `python tools/art/derive.py front assets/props/prop_mortar_bowl.png assets/props/prop_mortar_bowl_front.png --ellipse 256,94,180,52` (эллипс — внутренний край горлышка). Отдельно не генерировать; после финальной чаши проверить эллипс и пересобрать |
+| prop_mortar_bowl | assets/props/prop_mortar_bowl.png | 512×512 | bottom | — | final | P-PROP-01 | Чаша; порошок — шейдер. Финальная от пользователя (S2.3a): `python tools/art/fit_final.py <png> assets/props/prop_mortar_bowl.png --canvas 512x512 --pivot bottom`. Горлышко на холсте: центр 252.5,114.5, полуоси 174.6×80.5 (в сцене — MOUTH_C/MOUTH_R, масштаб 0.7) |
+| prop_pestle | assets/props/prop_pestle.png | 256×512 | center | — | final | P-PROP-02 | Пестик, головка внизу. Финальный от пользователя (S2.3a): `fit_final.py <png> assets/props/prop_pestle.png --canvas 256x512 --pivot center --upright`; кончик в сцене — offset (0,-248) |
+| prop_mortar_bowl_front | assets/props/prop_mortar_bowl_front.png | 512×512 | bottom | — | final | P-PROP-01 | Производный слой финальной чаши: передний край по **нижней дуге горлышка** — всё, что ниже дуги, рисуется поверх содержимого (ингредиенты, порошок, головка пестика). `python tools/art/derive.py front assets/props/prop_mortar_bowl.png assets/props/prop_mortar_bowl_front.png --ellipse 252.5,114.5,174.6,80.5`. Отдельно не генерировать |
+| fx_spark | assets/fx/fx_spark.png | 64×64 | center | — | proc | — | Искра-звёздочка: ядро + 4 луча. Белая, цвет — частица; смешивание «сложение» |
+| fx_glow | assets/fx/fx_glow.png | 64×64 | center | — | proc | — | Мягкий ореол: светлячки над порошком, отсветы |
+| fx_puff | assets/fx/fx_puff.png | 64×64 | center | — | proc | — | Облачко пыли (перетёр, бросок в чашу, «пфф» на ¼ круга по пыли) |
+| fx_flakes | assets/fx/fx_flakes.png | 128×32 | center | — | proc | — | Обломки трав, 4 кадра 32×32 (`particles_anim_h_frames = 4`); заливка белая, цвет — смесь в ступке |
 | prop_shelf_slot | assets/props/prop_shelf_slot.png | 256×192 | bottom | #FF00FF | temp | P-PROP-04 | Ячейка полки под один ингредиент; в сетке и в ленте одна и та же. В GDD §14 — «prop_shelf» |
 | prop_flask_round | assets/props/prop_flask_round.png | 384×512 | bottom | #FF00FF (global) | temp | P-PROP-03 | Стекло прозрачное, жидкость — шейдер |
 | ing_fire_bloom | assets/ingredients/ing_fire_bloom.png | 256×256 | center | #FF00FF | temp | P-ING-01 |  |

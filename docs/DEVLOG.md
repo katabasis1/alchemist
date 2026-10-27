@@ -117,3 +117,20 @@
 - Архив: `outbox/alchemist_update_gh-0203552_to_v0.1.3.zip`, `outbox/patches/v0.1.3/`, `archive/history/alchemist_v0.1.3_S2.3_juice.zip`.
 - Следующий шаг: проверка S2.2–S2.3 пользователем → S2.4 мини-заказ.
 
+
+## 2026-10-27 — сессия 17 — S2.3a Правки ступки по замечаниям — v0.1.4
+- Замечания пользователя к v0.1.3: пестик «в ободке» и сливается с чашей; передний край обрезан выше горлышка; частицы и шейдеры примитивны, порошок — овал в воздухе; сначала нарисовать референсы; посмотреть godotshaders.com; заменить временные чашу и пестик финальными. До приёмки к S2.4 не переходим.
+- Сделано (агенты 17g–17j, сессия обрывалась несколько раз, каждый шаг — в журнале HANDOFF): база — GitHub `0ee28a7` (тег `gh-0ee28a7`); финальные `prop_mortar_bowl.png` и `prop_pestle.png` вписаны в холсты `tools/art/fit_final.py` (чистка альфы, обрезка по силуэту, пестик вертикально); передний край `prop_mortar_bowl_front.png` — по нижней дуге горлышка (центр 252.5,114.5, полуоси 174.6×80.5 на холсте).
+- Референсы содержимого: `docs/art/refs/ref_mortar_herbs_whole|herbs_crushed|powder_heap.jpg` — по ним шейдеры.
+- Пестик: кончик ходит у дна полости (`Pestle.tip_center`), головка прячется за передним краем, ручка выходит через задний; поза покоя (44,-214)/0.55.
+- Порошок (`powder.gdshader`): ColorRect `Visual/Powder` = горлышко; луч идёт в полуэллипсоид полости, горка — поле высот (растёт с помолом), три тона, зерно и закрутка от кругов пестика (`spin`), кусочки трав тают к «идеально», налёт на стенках, мерцающие искры, тёплый свет «идеально». Перетёр — цвет пыли, без искр.
+- Травы (`ingredient.gdshader`): распад на куски Вороного с трещинами и оседанием, по краю — искристая каёмка цвета смеси; места `Slots` — в полости.
+- Частицы: процедурные текстуры `tools/art/fx_textures.py` (`fx_spark`, `fx_glow`, `fx_puff`, `fx_flakes` 4 кадра; статус `proc`, промпт не нужен); `BurstParticles` — дочерние CPUParticles2D как слои (`tint_layers`); `fx_crumbs` (обломки цвета смеси + искры + пыльца), `fx_dust` (облака), `fx_sparkle_burst` (звёзды, вспышка, золотые искры), `fx_motes` (Idle — светлячки цвета смеси над горкой, Perfect — золотые).
+- «Идеально»: `fx_ring.gdshader` — волна по горлышку (белое ядро, ореол, след, рябь, мерцающие искры, вспышка заливки, `blend_add`, гаснет к краям прямоугольника); `fx_rays.*` — веер лучей из чаши; `FxRing.extras` ведёт лучи тем же progress; всплеск звёзд и свет горки.
+- godotshaders.com: код там грузится скриптом, поэтому взяты только приёмы (glitter, sun pulse glow, dissolve with burn edge, shockwave, god rays) — свои реализации, строка в `docs/THIRD_PARTY.md`.
+- Проверка: `tools/art/mortar_preview.py` — numpy-копии шейдеров и простая симуляция CPUParticles2D прямо из .tscn; кадры rest/land/grind/heap/perfect/overgrind (`--sheet`). По макету: лучи и волна обрезались краями ColorRect — добавлены `side_fade`/`edge_fade`, убрано белое ядро лучей, вспышка звёзд 0.75→0.5. `grind_check` — 47 проверок (+ лучи вместе с волной). Валидатор: 0 ошибок, 0 предупреждений.
+- Файлы: assets/props/prop_mortar_bowl*.png, prop_pestle.png, assets/fx/*.png, components/burst_particles/burst_particles.gd, scenes/fx/*, scenes/ingredient/ingredient.gdshader, ingredient_material.tres, scenes/stations/mortar/mortar.tscn, mortar_juice.gd, pestle.gd, powder.gdshader, powder_material.tres, scenes/debug/grind_check.gd, tools/art/fit_final.py, fx_textures.py, mortar_preview.py, docs/art/refs/*, docs/art/ASSET_REGISTRY.md, docs/THIRD_PARTY.md, docs/PLAN.md, docs/PROGRESS.md, docs/HANDOFF.md, README.md, project.godot (0.1.4)
+- Новых текстов игрока нет.
+- Проблемы/долг: код и шейдеры не запускались (только макет); яркость «идеально» и количество частиц проверить на ощупь.
+- Архив: `outbox/alchemist_update_gh-0ee28a7_to_v0.1.4.zip`, `outbox/patches/v0.1.4/`, `archive/history/alchemist_v0.1.4_S2.3a_mortar_fix.zip`.
+- Следующий шаг: приёмка S2.3a пользователем; до неё S2.4 не начинаем.

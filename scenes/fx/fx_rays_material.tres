@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://scenes/fx/fx_rays.gdshader" id="1_shader"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_shader")
+shader_parameter/progress = 0.0
+shader_parameter/ring_color = Color(1, 0.9, 0.55, 1)
+shader_parameter/ray_count = 9.0
+shader_parameter/origin_below = 0.4
+shader_parameter/base_width = 0.7
+shader_parameter/intensity = 0.6
+shader_parameter/speed = 0.6
+shader_parameter/side_fade = 0.18

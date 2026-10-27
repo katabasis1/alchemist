@@ -160,7 +160,7 @@ func _check_circle() -> void:
 			_vibrations > 0 and _vibrations <= _quarters)
 	var crumble: float = juice.crumble_for(mortar.grind)
 	_check("ингредиенты крошатся по помолу (%.2f), горка порошка растёт" % crumble, crumble > 0.0
-			and _items_crumble(crumble) and is_equal_approx(_powder(MortarJuice.PARAM_FILL), crumble))
+			and _items_crumble(crumble) and is_equal_approx(_powder(MortarJuice.PARAM_AMOUNT), crumble))
 	mortar.grind_area.pointer_up.emit(previous, true)
 	await _wait_step()
 	_check("отпустили — Ground, пестик лёг", mortar.state_machine.is_in(Mortar.STATE_GROUND)
@@ -248,12 +248,19 @@ func _check_gauge_and_extraction() -> void:
 			economy.extraction_floor + (1.0 - economy.extraction_floor) * GRIND_BELOW / economy.perfect_from))
 	var perfect: float = (economy.perfect_from + economy.perfect_to) * 0.5
 	var ring_before: int = juice.ring.plays
+	var sparkle_before: int = juice.sparkle_burst.bursts
 	mortar.set_grind(perfect, true)
 	_check("идеально: шкала в зоне, извлечение 1", mortar.gauge.zone == ZoneGauge.Zone.INSIDE
 			and is_equal_approx(mortar.extraction(), 1.0))
 	_check("идеально: кольцо света, ингредиенты рассыпались целиком, порошок — полная горка",
 			juice.ring.plays == ring_before + 1 and _items_crumble(1.0)
-			and is_equal_approx(_powder(MortarJuice.PARAM_FILL), 1.0) and is_zero_approx(_powder(MortarJuice.PARAM_DUST)))
+			and is_equal_approx(_powder(MortarJuice.PARAM_AMOUNT), 1.0)
+			and _powder_color().is_equal_approx(juice.mixture_color)
+			and is_equal_approx(_powder(MortarJuice.PARAM_SPARKLE), juice.sparkle_perfect))
+	_check("идеально: всплеск звёздочек, золотые искры над горкой, светлячки смеси погасли",
+			juice.sparkle_burst.bursts == sparkle_before + 1 and juice.motes_perfect.emitting
+			and not juice.motes_idle.emitting)
+	_check("идеально: лучи из чаши показаны вместе с волной (спутники FxRing)", _ring_extras_visible())
 	var mixture: Dictionary[StringName, float] = mortar.mixture()
 	var expected: Dictionary[StringName, float] = {}
 	for item: IngredientItem in mortar.items:
@@ -263,7 +270,9 @@ func _check_gauge_and_extraction() -> void:
 	var dust_before: int = juice.dust.bursts
 	mortar.set_grind(1.0, true)
 	_check("перетёр: облако пыли, шкала трясётся, порошок ушёл в пыль", juice.dust.bursts == dust_before + 1
-			and mortar.gauge.is_shaking() and is_equal_approx(_powder(MortarJuice.PARAM_DUST), 1.0))
+			and mortar.gauge.is_shaking() and _powder_color().is_equal_approx(juice.dust_color)
+			and is_equal_approx(_powder(MortarJuice.PARAM_SPARKLE), juice.sparkle_dust))
+	_check("перетёр: светлячков нет", not juice.motes_idle.emitting and not juice.motes_perfect.emitting)
 	mortar.add_circles(1.0)
 	_check("пыль: помол стоит на 1, шкала выше зоны", is_equal_approx(mortar.grind, 1.0)
 			and mortar.gauge.zone == ZoneGauge.Zone.ABOVE)
@@ -277,7 +286,7 @@ func _check_trash() -> void:
 	_check("корзина в Ground: пусто, Empty, помол 0", mortar.items.is_empty()
 			and mortar.state_machine.is_in(Mortar.STATE_EMPTY) and is_zero_approx(mortar.grind))
 	_check("молотое выброшено без возврата цены", GameState.coins == coins_before)
-	_check("корзина: порошка в чаше нет", is_zero_approx(_powder(MortarJuice.PARAM_FILL)))
+	_check("корзина: порошка в чаше нет", is_zero_approx(_powder(MortarJuice.PARAM_AMOUNT)))
 	await _wait(maxf(mortar.discard_sec, mortar.gauge.fade_sec))
 	var freed: bool = true
 	for item: IngredientItem in gone:
@@ -291,7 +300,7 @@ func _check_juice_loaded(dust_before: int) -> void:
 	_check("ингредиент лёг в чашу — облачко пыли (бросков 2, облачков %d)" % (juice.dust.bursts - dust_before),
 			juice.dust.bursts - dust_before == 2)
 	_check("до помола ингредиенты целые, порошка нет", _items_crumble(0.0)
-			and is_zero_approx(_powder(MortarJuice.PARAM_FILL)))
+			and is_zero_approx(_powder(MortarJuice.PARAM_AMOUNT)))
 	_check("цвет порошка подмешан из свойств смеси", not juice.mixture_color.is_equal_approx(juice.powder_base))
 
 
@@ -318,6 +327,15 @@ func _check_crumble_reset() -> void:
 	_check("ингредиент вне станции — распад сброшен", is_zero_approx(item.get_crumble()))
 
 
+func _ring_extras_visible() -> bool:
+	if juice.ring.extras.is_empty():
+		return false
+	for extra: CanvasItem in juice.ring.extras:
+		if extra == null or not extra.visible:
+			return false
+	return true
+
+
 func _items_crumble(expected: float) -> bool:
 	if mortar.items.is_empty():
 		return false
@@ -330,6 +348,11 @@ func _items_crumble(expected: float) -> bool:
 func _powder(param: StringName) -> float:
 	var mat: ShaderMaterial = juice.powder.material as ShaderMaterial
 	return float(mat.get_shader_parameter(param)) if mat != null else -1.0
+
+
+func _powder_color() -> Color:
+	var mat: ShaderMaterial = juice.powder.material as ShaderMaterial
+	return mat.get_shader_parameter(MortarJuice.PARAM_POWDER_COLOR) if mat != null else Color.BLACK
 
 
 func _center() -> Vector2:

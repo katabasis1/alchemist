@@ -1,26 +1,15 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://components/burst_particles/burst_particles.gd" id="1_burst"]
-
-[sub_resource type="Gradient" id="Gradient_puff"]
-offsets = PackedFloat32Array(0, 0.4, 1)
-colors = PackedColorArray(1, 1, 1, 0.75, 1, 1, 1, 0.45, 1, 1, 1, 0)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_puff"]
-gradient = SubResource("Gradient_puff")
-width = 32
-height = 32
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
+[ext_resource type="Texture2D" path="res://assets/fx/fx_puff.png" id="2_puff"]
 
 [sub_resource type="Curve" id="Curve_grow"]
-_data = [Vector2(0, 0.6), 0.0, 1.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
-point_count = 2
+_data = [Vector2(0, 0.45), 0.0, 0.0, 0, 0, Vector2(0.4, 0.95), 0.0, 0.0, 0, 0, Vector2(1, 1.3), 0.0, 0.0, 0, 0]
+point_count = 3
 
 [sub_resource type="Gradient" id="Gradient_puff_fade"]
-offsets = PackedFloat32Array(0, 0.15, 0.6, 1)
-colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.9, 1, 1, 1, 0.6, 1, 1, 1, 0)
+offsets = PackedFloat32Array(0, 0.12, 0.55, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.85, 1, 1, 1, 0.55, 1, 1, 1, 0)
 
 [node name="FxDust" type="Node2D" node_paths=PackedStringArray("emitters")]
 script = ExtResource("1_burst")
@@ -28,69 +17,81 @@ emitters = [NodePath("Emitter1"), NodePath("Emitter2"), NodePath("Emitter3")]
 
 [node name="Emitter1" type="CPUParticles2D" parent="."]
 emitting = false
-amount = 10
-lifetime = 0.9
+amount = 9
+lifetime = 1.1
 one_shot = true
 explosiveness = 0.85
 randomness = 0.4
 local_coords = false
-texture = SubResource("GradientTexture2D_puff")
+texture = ExtResource("2_puff")
 emission_shape = 1
-emission_sphere_radius = 40.0
+emission_sphere_radius = 34.0
 direction = Vector2(0, -1)
-spread = 110.0
-gravity = Vector2(0, -40)
+spread = 180.0
+gravity = Vector2(0, -25)
 initial_velocity_min = 30.0
-initial_velocity_max = 90.0
-damping_min = 30.0
-damping_max = 60.0
-scale_amount_min = 2.4
-scale_amount_max = 4.2
+initial_velocity_max = 110.0
+damping_min = 40.0
+damping_max = 70.0
+angle_min = -180.0
+angle_max = 180.0
+angular_velocity_min = -40.0
+angular_velocity_max = 40.0
+scale_amount_min = 0.9
+scale_amount_max = 1.6
 scale_amount_curve = SubResource("Curve_grow")
 color_ramp = SubResource("Gradient_puff_fade")
 
 [node name="Emitter2" type="CPUParticles2D" parent="."]
 emitting = false
-amount = 10
-lifetime = 0.9
+amount = 9
+lifetime = 1.1
 one_shot = true
 explosiveness = 0.85
 randomness = 0.4
 local_coords = false
-texture = SubResource("GradientTexture2D_puff")
+texture = ExtResource("2_puff")
 emission_shape = 1
-emission_sphere_radius = 40.0
+emission_sphere_radius = 34.0
 direction = Vector2(0, -1)
-spread = 110.0
-gravity = Vector2(0, -40)
+spread = 180.0
+gravity = Vector2(0, -25)
 initial_velocity_min = 30.0
-initial_velocity_max = 90.0
-damping_min = 30.0
-damping_max = 60.0
-scale_amount_min = 2.4
-scale_amount_max = 4.2
+initial_velocity_max = 110.0
+damping_min = 40.0
+damping_max = 70.0
+angle_min = -180.0
+angle_max = 180.0
+angular_velocity_min = -40.0
+angular_velocity_max = 40.0
+scale_amount_min = 0.9
+scale_amount_max = 1.6
 scale_amount_curve = SubResource("Curve_grow")
 color_ramp = SubResource("Gradient_puff_fade")
 
 [node name="Emitter3" type="CPUParticles2D" parent="."]
 emitting = false
-amount = 10
-lifetime = 0.9
+amount = 9
+lifetime = 1.1
 one_shot = true
 explosiveness = 0.85
 randomness = 0.4
 local_coords = false
-texture = SubResource("GradientTexture2D_puff")
+texture = ExtResource("2_puff")
 emission_shape = 1
-emission_sphere_radius = 40.0
+emission_sphere_radius = 34.0
 direction = Vector2(0, -1)
-spread = 110.0
-gravity = Vector2(0, -40)
+spread = 180.0
+gravity = Vector2(0, -25)
 initial_velocity_min = 30.0
-initial_velocity_max = 90.0
-damping_min = 30.0
-damping_max = 60.0
-scale_amount_min = 2.4
-scale_amount_max = 4.2
+initial_velocity_max = 110.0
+damping_min = 40.0
+damping_max = 70.0
+angle_min = -180.0
+angle_max = 180.0
+angular_velocity_min = -40.0
+angular_velocity_max = 40.0
+scale_amount_min = 0.9
+scale_amount_max = 1.6
 scale_amount_curve = SubResource("Curve_grow")
 color_ramp = SubResource("Gradient_puff_fade")

@@ -35,6 +35,9 @@
 [ext_resource type="AudioStream" path="res://audio/sfx/sfx_grind_dull_2.ogg" id="33_dull2"]
 [ext_resource type="AudioStream" path="res://audio/sfx/sfx_perfect.ogg" id="34_perfect"]
 [ext_resource type="AudioStream" path="res://audio/sfx/sfx_overgrind.ogg" id="35_overgrind"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_sparkle_burst.tscn" id="36_sparkle"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_motes.tscn" id="37_motes"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_rays.tscn" id="38_rays"]
 
 [node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "grind_area", "gesture", "gauge", "pestle", "trash", "punch", "sfx_accept", "sfx_reject")]
 script = ExtResource("1_mortar")
@@ -70,23 +73,29 @@ texture = ExtResource("4_bowl")
 offset = Vector2(0, -256)
 
 [node name="GrindCenter" type="Marker2D" parent="Visual"]
-position = Vector2(0, -262)
+position = Vector2(-2, -272)
+
+[node name="BowlBottom" type="Marker2D" parent="Visual"]
+position = Vector2(-2, -207)
 
 [node name="Powder" type="ColorRect" parent="Visual"]
 material = ExtResource("22_powder")
-offset_left = -112.0
-offset_top = -318.0
-offset_right = 112.0
-offset_bottom = -262.0
+offset_left = -124.65
+offset_top = -334.6
+offset_right = 119.75
+offset_bottom = -221.9
 mouse_filter = 2
 
 [node name="Contents" type="Node2D" parent="Visual"]
 
-[node name="Pestle" type="Node2D" parent="Visual" node_paths=PackedStringArray("center")]
-position = Vector2(72, -256)
-rotation = 0.58
+[node name="Pestle" type="Node2D" parent="Visual" node_paths=PackedStringArray("center", "tip_center")]
+position = Vector2(44, -214)
+rotation = 0.55
 script = ExtResource("16_pestle")
 center = NodePath("../GrindCenter")
+tip_center = NodePath("../BowlBottom")
+tip_reach = Vector2(48, 9)
+max_lean = 0.5
 
 [node name="Sprite" type="Sprite2D" parent="Visual/Pestle"]
 scale = Vector2(0.55, 0.55)
@@ -100,30 +109,42 @@ scale = Vector2(0.7, 0.7)
 texture = ExtResource("5_front")
 offset = Vector2(0, -256)
 
-[node name="Ring" parent="." instance=ExtResource("25_ring")]
-offset_left = -230.0
-offset_top = -359.0
-offset_right = 230.0
-offset_bottom = -227.0
+[node name="Motes" parent="." instance=ExtResource("37_motes")]
+position = Vector2(-2.45, -262)
+
+[node name="Rays" parent="." instance=ExtResource("38_rays")]
+offset_left = -202.45
+offset_top = -560.0
+offset_right = 197.55
+offset_bottom = -258.0
+
+[node name="Ring" parent="." node_paths=PackedStringArray("extras") instance=ExtResource("25_ring")]
+offset_left = -197.95
+offset_top = -368.45
+offset_right = 193.05
+offset_bottom = -188.05
+extras = [NodePath("../Rays")]
+
+[node name="SparkleBurst" parent="." instance=ExtResource("36_sparkle")]
 
 [node name="Dust" parent="." instance=ExtResource("24_dust")]
 
 [node name="Slots" type="Node2D" parent="."]
 
 [node name="Two1" type="Marker2D" parent="Slots"]
-position = Vector2(-50, -272)
+position = Vector2(-56, -254)
 
 [node name="Two2" type="Marker2D" parent="Slots"]
-position = Vector2(50, -272)
+position = Vector2(32, -256)
 
 [node name="Three1" type="Marker2D" parent="Slots"]
-position = Vector2(-70, -266)
+position = Vector2(-76, -250)
 
 [node name="Three2" type="Marker2D" parent="Slots"]
-position = Vector2(0, -286)
+position = Vector2(-16, -268)
 
 [node name="Three3" type="Marker2D" parent="Slots"]
-position = Vector2(70, -266)
+position = Vector2(46, -250)
 
 [node name="Pips" type="Node2D" parent="."]
 position = Vector2(0, 26)
@@ -239,7 +260,7 @@ vary_pitch = false
 streams = Array[AudioStream]([ExtResource("35_overgrind")])
 vary_pitch = false
 
-[node name="Juice" type="Node" parent="." node_paths=PackedStringArray("mortar", "drop_target", "gesture", "gauge", "pestle", "pestle_squash", "crumbs", "dust", "ring", "bowl_center", "powder", "sfx_crunch", "sfx_dull", "sfx_perfect", "sfx_overgrind")]
+[node name="Juice" type="Node" parent="." node_paths=PackedStringArray("mortar", "drop_target", "gesture", "gauge", "pestle", "pestle_squash", "crumbs", "dust", "ring", "sparkle_burst", "motes_idle", "motes_perfect", "bowl_center", "powder", "sfx_crunch", "sfx_dull", "sfx_perfect", "sfx_overgrind")]
 script = ExtResource("20_juice")
 catalog = ExtResource("21_catalog")
 mortar = NodePath("..")
@@ -251,6 +272,9 @@ pestle_squash = NodePath("../PestleSquash")
 crumbs = NodePath("../Visual/Crumbs")
 dust = NodePath("../Dust")
 ring = NodePath("../Ring")
+sparkle_burst = NodePath("../SparkleBurst")
+motes_idle = NodePath("../Motes/Idle")
+motes_perfect = NodePath("../Motes/Perfect")
 bowl_center = NodePath("../Visual/GrindCenter")
 powder = NodePath("../Visual/Powder")
 sfx_crunch = NodePath("../SfxCrunch")

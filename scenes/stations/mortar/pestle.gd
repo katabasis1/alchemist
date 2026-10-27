@@ -1,16 +1,20 @@
 ## Pestle — пестик ступки: лежит в чаше, во время помола ходит за пальцем (docs/gdd/STATIONS.md §1.1).
 ## Начало узла — кончик пестика (картинка сдвинута в сцене), поэтому поворот — наклон вокруг кончика.
-## Поза покоя — та, в которой узел стоит в сцене. Во время помола кончик гуляет по маленькому эллипсу
-## у центра чаши, а ручка наклоняется в сторону пальца; движение сглажено (follow_rate).
+## Поза покоя — та, в которой узел стоит в сцене: головка в полости (низ прячет передний край BowlFront),
+## ручка выходит через задний край горлышка. Во время помола кончик гуляет по маленькому эллипсу у дна
+## (tip_center), а ручка наклоняется в сторону пальца; движение сглажено (follow_rate).
 ## Позицией и поворотом этого узла владеет только он сам (JuicePunch ступки качает слой Visual выше).
 ## Сигналы: нет.
-## Зависимости: center — Marker2D в центре чаши, у того же родителя (@export).
+## Зависимости: center — Marker2D в центре чаши (от него меряется палец), tip_center — Marker2D у дна полости
+## (вокруг него ходит кончик; пусто — тот же center). Оба у того же родителя (@export).
 class_name Pestle
 extends Node2D
 
 const FRAME_SEC: float = 1.0 / 60.0
 
 @export var center: Node2D
+## Дно полости: вокруг этой точки ходит кончик. Пусто — center.
+@export var tip_center: Node2D
 ## Полуоси эллипса, по которому ходит кончик (локальные пиксели родителя).
 @export var tip_reach: Vector2 = Vector2(60.0, 14.0)
 ## На этом расстоянии пальца от центра (мир) кончик доходит до края эллипса и наклон максимален.
@@ -86,7 +90,8 @@ func _aim(world_pos: Vector2) -> bool:
 		return false
 	var offset: Vector2 = (world_pos - center.global_position) / maxf(reach_px, 1.0)
 	offset = offset.limit_length(1.0)
-	var center_local: Vector2 = parent.to_local(center.global_position)
+	var anchor: Node2D = tip_center if tip_center != null else center
+	var center_local: Vector2 = parent.to_local(anchor.global_position)
 	_target_position = center_local + Vector2(offset.x * tip_reach.x, offset.y * tip_reach.y)
 	_target_rotation = offset.x * max_lean
 	return true

@@ -1,155 +1,507 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://components/burst_particles/burst_particles.gd" id="1_burst"]
+[ext_resource type="Texture2D" path="res://assets/fx/fx_flakes.png" id="2_flakes"]
+[ext_resource type="Texture2D" path="res://assets/fx/fx_spark.png" id="3_spark"]
+[ext_resource type="Texture2D" path="res://assets/fx/fx_glow.png" id="4_glow"]
 
-[sub_resource type="Gradient" id="Gradient_dot"]
-offsets = PackedFloat32Array(0, 0.65, 1)
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+[sub_resource type="CanvasItemMaterial" id="Mat_flakes"]
+particles_animation = true
+particles_anim_h_frames = 4
+particles_anim_v_frames = 1
+particles_anim_loop = false
 
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_dot"]
-gradient = SubResource("Gradient_dot")
-width = 16
-height = 16
-fill = 1
-fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(1, 0.5)
+[sub_resource type="CanvasItemMaterial" id="Mat_add"]
+blend_mode = 1
 
 [sub_resource type="Gradient" id="Gradient_fade"]
-offsets = PackedFloat32Array(0, 0.7, 1)
+offsets = PackedFloat32Array(0, 0.75, 1)
 colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="Curve" id="Curve_shrink"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(0.7, 0.9), 0.0, 0.0, 0, 0, Vector2(1, 0.4), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Curve" id="Curve_pop"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.15, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Gradient" id="Gradient_twinkle"]
+offsets = PackedFloat32Array(0, 0.08, 0.2, 0.32, 0.46, 0.6, 0.78, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0.45, 1, 1, 1, 1, 1, 1, 1, 0.5, 1, 1, 1, 0.95, 1, 1, 1, 0.35, 1, 1, 1, 0)
+
+[sub_resource type="Gradient" id="Gradient_pollen"]
+offsets = PackedFloat32Array(0, 0.2, 1)
+colors = PackedColorArray(1, 1, 1, 0, 1, 1, 1, 0.8, 1, 1, 1, 0)
 
 [node name="FxCrumbs" type="Node2D" node_paths=PackedStringArray("emitters")]
 script = ExtResource("1_burst")
 emitters = [NodePath("Emitter1"), NodePath("Emitter2"), NodePath("Emitter3"), NodePath("Emitter4"), NodePath("Emitter5"), NodePath("Emitter6")]
 
 [node name="Emitter1" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter1"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter1"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
 
 [node name="Emitter2" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter2"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter2"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
 
 [node name="Emitter3" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter3"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter3"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
 
 [node name="Emitter4" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter4"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter4"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
 
 [node name="Emitter5" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter5"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter5"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
 
 [node name="Emitter6" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_flakes")
 emitting = false
-amount = 8
-lifetime = 0.5
+amount = 9
+lifetime = 0.6
 one_shot = true
 explosiveness = 1.0
 randomness = 0.3
 local_coords = false
-texture = SubResource("GradientTexture2D_dot")
+texture = ExtResource("2_flakes")
 emission_shape = 1
-emission_sphere_radius = 18.0
+emission_sphere_radius = 16.0
 direction = Vector2(0, -1)
-spread = 70.0
-gravity = Vector2(0, 900)
-initial_velocity_min = 140.0
-initial_velocity_max = 280.0
-angular_velocity_min = -360.0
-angular_velocity_max = 360.0
-scale_amount_min = 0.45
-scale_amount_max = 0.9
+spread = 65.0
+gravity = Vector2(0, 980)
+initial_velocity_min = 150.0
+initial_velocity_max = 300.0
+angular_velocity_min = -540.0
+angular_velocity_max = 540.0
+angle_min = -180.0
+angle_max = 180.0
+scale_amount_min = 0.55
+scale_amount_max = 1.1
+scale_amount_curve = SubResource("Curve_shrink")
 color_ramp = SubResource("Gradient_fade")
+anim_offset_max = 1.0
+
+[node name="Sparks" type="CPUParticles2D" parent="Emitter6"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 5
+lifetime = 0.5
+one_shot = true
+explosiveness = 0.9
+randomness = 0.4
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 14.0
+direction = Vector2(0, -1)
+spread = 80.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 90.0
+initial_velocity_max = 220.0
+damping_min = 160.0
+damping_max = 260.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.75
+scale_amount_curve = SubResource("Curve_pop")
+color = Color(1, 0.93, 0.62, 1)
+color_ramp = SubResource("Gradient_twinkle")
+
+[node name="Pollen" type="CPUParticles2D" parent="Emitter6"]
+material = SubResource("Mat_add")
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+randomness = 0.5
+local_coords = false
+texture = ExtResource("4_glow")
+emission_shape = 1
+emission_sphere_radius = 22.0
+direction = Vector2(0, -1)
+spread = 120.0
+gravity = Vector2(0, -40)
+initial_velocity_min = 20.0
+initial_velocity_max = 70.0
+damping_min = 20.0
+damping_max = 40.0
+scale_amount_min = 0.12
+scale_amount_max = 0.28
+color = Color(1, 0.97, 0.82, 0.7)
+color_ramp = SubResource("Gradient_pollen")
