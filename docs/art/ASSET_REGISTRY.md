@@ -33,7 +33,7 @@
 | ing_sun_petal | assets/ingredients/ing_sun_petal.png | 256×256 | center | #FF00FF | planned (S6.1) | P-ING-10 |  |
 | ing_snow_lotus | assets/ingredients/ing_snow_lotus.png | 256×256 | center | #FF00FF | planned (S6.1) | P-ING-11 |  |
 | ing_star_crystal | assets/ingredients/ing_star_crystal.png | 256×256 | center | #FF00FF | planned (S6.1) | P-ING-12 | Свечение и искры — шейдер/частицы |
-| client_baker_neutral | assets/characters/client_baker_neutral.png | 768×768 | bottom | #00FF00 | temp | P-CHR-01 |  |
+| client_baker_neutral | assets/characters/client_baker_neutral.png | 768×768 | bottom | #00FF00 | temp | P-CHR-01 | Фигура обрезана снизу. В `client.tscn` портрет опущен (`Portrait.offset.y = -344` при высоте 768): низ фигуры уходит за прилавок ≈26 px экрана — запас на скруглённые углы контура и дыхание. Новый портрет — проверить, что по бокам у прилавка не видно фона |
 | client_baker_happy | assets/characters/client_baker_happy.png | 768×768 | bottom | #00FF00 | planned (S5.1) | P-CHR-02 | Приложить нейтральный портрет |
 | client_baker_upset | assets/characters/client_baker_upset.png | 768×768 | bottom | #00FF00 | planned (S5.1) | P-CHR-03 | Приложить нейтральный портрет |
 | ui_button_wood | assets/ui/ui_button_wood.png | по содержимому | — | #FF00FF | temp | P-UI-01 | Поля 9-slice задаются на S1.5 |

@@ -62,7 +62,7 @@ offset_bottom = -60.0
 material = SubResource("ShaderMaterial_breathe")
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("5_portrait")
-offset = Vector2(0, -384)
+offset = Vector2(0, -344)
 
 [node name="HandPoint" type="Marker2D" parent="Body"]
 position = Vector2(0, -250)
