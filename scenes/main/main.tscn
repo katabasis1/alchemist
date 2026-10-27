@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="3_layout"]
 [ext_resource type="PackedScene" path="res://components/camera_shake/camera_shake.tscn" id="4_shake"]
 [ext_resource type="PackedScene" path="res://scenes/loading/loading_screen.tscn" id="5_loading"]
+[ext_resource type="PackedScene" path="res://scenes/playtest/playtest_recorder.tscn" id="6_playtest"]
 
 [node name="Main" type="Node" node_paths=PackedStringArray("loading_screen")]
 script = ExtResource("1_main")
@@ -32,5 +33,10 @@ position = Vector2(960, 540)
 camera = NodePath("../Camera")
 
 [node name="Workshop" parent="." instance=ExtResource("2_workshop")]
+
+[node name="PlaytestRecorder" parent="." node_paths=PackedStringArray("desk", "client", "mortar") instance=ExtResource("6_playtest")]
+desk = NodePath("../Workshop/OrderDesk")
+client = NodePath("../Workshop/Room/ClientSpot/Client")
+mortar = NodePath("../Workshop/Mortar")
 
 [node name="LoadingScreen" parent="." instance=ExtResource("5_loading")]

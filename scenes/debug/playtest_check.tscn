@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/playtest_check.gd" id="1_check"]
+[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="2_layout"]
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="3_workshop"]
+[ext_resource type="PackedScene" path="res://scenes/playtest/playtest_recorder.tscn" id="4_recorder"]
+
+[node name="PlaytestCheck" type="Node2D" node_paths=PackedStringArray("desk", "client", "mortar", "shelf", "recorder")]
+script = ExtResource("1_check")
+desk = NodePath("Workshop/OrderDesk")
+client = NodePath("Workshop/Room/ClientSpot/Client")
+mortar = NodePath("Workshop/Mortar")
+shelf = NodePath("Workshop/Shelf")
+recorder = NodePath("PlaytestRecorder")
+
+[node name="LayoutMarks" type="Node2D" parent="."]
+
+[node name="CameraLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(960, 540)
+
+[node name="CameraPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(540, 960)
+
+[node name="Layout" parent="." node_paths=PackedStringArray("movers", "landscape_marks", "portrait_marks") instance=ExtResource("2_layout")]
+drive_window = true
+movers = [NodePath("../Camera")]
+landscape_marks = [NodePath("../LayoutMarks/CameraLandscape")]
+portrait_marks = [NodePath("../LayoutMarks/CameraPortrait")]
+copy_scale = false
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+
+[node name="Workshop" parent="." instance=ExtResource("3_workshop")]
+
+[node name="PlaytestRecorder" parent="." node_paths=PackedStringArray("desk", "client", "mortar") instance=ExtResource("4_recorder")]
+desk = NodePath("../Workshop/OrderDesk")
+client = NodePath("../Workshop/Room/ClientSpot/Client")
+mortar = NodePath("../Workshop/Mortar")
+folder = "user://playtest_check"
+print_records = false
