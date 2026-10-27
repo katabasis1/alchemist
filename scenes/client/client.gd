@@ -254,13 +254,15 @@ func _clear(row: Node) -> void:
 
 
 func _show_bubble(on: bool) -> void:
+	if not on and not bubble.visible:
+		return  # уже спрятан; пустой твин Godot считает ошибкой («started with no Tweeners»)
 	_bubble_tween = _restart(_bubble_tween)
 	if on:
 		bubble.visible = true
 		bubble.scale = Vector2.ZERO
 		_bubble_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_bubble_tween.tween_property(bubble, ^"scale", Vector2.ONE, bubble_pop_sec)
-	elif bubble.visible:
+	else:
 		_bubble_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 		_bubble_tween.tween_property(bubble, ^"scale", Vector2.ZERO, bubble_pop_sec)
 		_bubble_tween.tween_callback(bubble.hide)

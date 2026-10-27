@@ -12,6 +12,9 @@
 - Чек-лист S2.4 — ниже. Сессия 19 (2026-10-27, вечер): продолжение — прошлый агент только прочитал код, файлов не менял; GitHub HEAD всё ещё `776c702`.
 - Сессия 20 (2026-10-27, вечер): продолжение 19 (у неё остались несохранённые PNG баночки и пузыря — сохранены). GitHub HEAD `776c702`, inbox пуст.
 - Сессия 21 (2026-10-27, 16:32 UTC): продолжение 20; рабочая копия цела (HEAD f88c351 = LAST_SYNC), GitHub HEAD `776c702`, inbox нет. Дальше HUD: CoinCounter + полёт монет.
+- Сессия 22 (2026-10-27, 18:30 UTC): **снова новый Pod** («новая игра», пустой). Пользователь запушил незаконченный S2.4 из прошлого Pod (GitHub `b8b2a80` «c213766»: код S2.4 + `*.uid`/`*.import` от Godot + PNG/OGG). Рабочая копия восстановлена с `b8b2a80` (461 текстовый файл, hash-object совпали все), коммит `sync: GitHub b8b2a80`, тег `gh-b8b2a80`; бинарники — заглушки (`placeholder_pngs.py`, `fx_textures.py`, `synth_sfx.py`, тихие ogg для звуков S1, пустые ttf/translation), все в `.git/info/exclude`. Валидатор 0/0. Осталось: order_check, документы, v0.1.6, выдача `--base gh-b8b2a80`.
+- Сессия 23 (2026-10-27, 18:40 UTC): продолжение 22; рабочая копия цела (HEAD 39a58e6 = LAST_SYNC), GitHub HEAD `b8b2a80`, inbox нет. Дальше: order_check.
+- Сессия 24 (2026-10-27, 19:00 UTC): продолжение 23; GitHub HEAD `b8b2a80` (API `commits/main` отдаёт кэш `776c702` — брать `commits?sha=main&nc=…`). Ревью order_check, документы, **v0.1.6 выдан**. Ждём приёмку S2.4.
 
 ## Чек-лист S2.4 (v0.1.6) — мини-заказ
 - [x] план и чек-лист
@@ -22,7 +25,9 @@
 - [x] OrderDesk — очередь заказов S2.4 (FTUE 1–2 + заказы пекарши), текущий заказ в сохранении — `scenes/client/order_desk.*`
 - [x] Workshop — полка + ступка + клиент + HUD в лавке, ландшафт и портрет; main без изменений. Фон вынесен в `workshop_room.tscn` (его берут grind/juice/shelf_check), клиент — дочерний `Room/ClientSpot` (за прилавком)
 - [x] графика: баночка, пузырь, кристалл чистоты — временные + промпты; звуки: монеты, «вжух», «уф» (+ sfx_happy)
-- [ ] order_check (проверочная сцена), валидатор, документы, v0.1.6, выдача `--base gh-776c702`
+- [x] order_check (57 проверок; ревью: API сверены скриптом, оценка пересчитана на данных), валидатор, документы, v0.1.6
+- [x] выдача `--base gh-b8b2a80` → `outbox/alchemist_update_gh-b8b2a80_to_v0.1.6.zip`
+- [ ] приёмка S2.4 пользователем (`ORDER: 57/57 OK` + на глаз) — до неё S2.5 не начинаем
 
 ## Чек-лист S2.3a (v0.1.4) — правки ступки
 - [x] база с GitHub `0ee28a7`; финальные ступка и пестик в холсты (`tools/art/fit_final.py`); передний край по нижней дуге горлышка
@@ -131,3 +136,10 @@
 - 2026-10-27 16:39 UTC — HUD: flying_coin (шлейф CPUParticles2D, поворот ребром), coin_flight (пул, веер, дуга Безье, coin_landed), hud.tscn (CanvasLayer 10, fly_coins/deny_coins); дальше OrderDesk
 - 2026-10-27 16:42 UTC — OrderDesk (scenes/client/order_desk.gd+.tscn): сохранённый заказ → FTUE 1–2 (ftue_limit) → заказы пекарши по весу и открытым свойствам; оплата+репутация → finish_order(ftue_done) → Hud.fly_coins. Client: coin_point, is_present, безопасный уход после радости. DataCatalog.order(id), OrderJudge.reputation_for. Дальше Workshop
 - 2026-10-27 16:45 UTC — Workshop собран: workshop_room.tscn (фон, прилавок, ClientSpot) + workshop.tscn (Client в Room/ClientSpot, Mortar, Shelf, OrderDesk, Hud, LayoutSwitcher), workshop.gd (item_released→take_back, coins→deny). Debug-сцены берут workshop_room. Shelf перестраивается на state_reset. Дальше order_check
+- 2026-10-27 18:31 UTC — сессия 22: новый Pod «новая игра»; рабочая копия восстановлена с GitHub b8b2a80 (WIP S2.4 от пользователя), тег gh-b8b2a80, валидатор OK. Дальше: order_check
+- 2026-10-27 18:40 UTC — сессия 23: старт, рабочая копия цела (39a58e6), GitHub b8b2a80, inbox нет; дальше order_check
+- 2026-10-27 18:46 UTC — client.gd: пустой твин в _show_bubble (leave после радости — «started with no Tweeners»); дальше order_check
+- 2026-10-27 18:51 UTC — order_check.gd/.tscn: проверочная сцена S2.4 (оценка, pick, живой заказ, отказы, оплата, монеты, сброс), валидатор OK; дальше — ревью сцены и документы
+- 2026-10-27 19:00 UTC — сессия 24: старт, рабочая копия цела (90736a0); сохранена правка 23 — order_check сравнивает место баночки в координатах ступки (раскладка двигает ступку). Дальше: ревью order_check, документы
+- 2026-10-27 19:03 UTC — ревью order_check: все обращения к API сверены скриптом с кодом, 10 проверок оценки пересчитаны на данных .tres (Python-копия OrderJudge) — сходятся; комментарий OrderDesk.start_on_game_ready уточнён. Дальше: документы, v0.1.6
+- 2026-10-27 19:04 UTC — документы S2.4: PLAN [x], COMPONENTS (баночка, оценка, клиент, очередь, HUD, лавка; ступка — hand_off), README (ORDER 57/57), версия 0.1.6. Дальше: PROGRESS, DEVLOG, коммит/тег, выдача --base gh-b8b2a80

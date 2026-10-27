@@ -35,7 +35,8 @@ const PICK_FTUE: StringName = &"ftue"
 @export var free_client: ClientData
 ## Пауза между уходом клиента и приходом следующего.
 @export var next_delay_sec: float = 1.0
-## Начать по EventBus.game_ready (в лавке). Проверочная сцена ставит false и вызывает start() сама.
+## Начать по EventBus.game_ready (в лавке) или сразу, если сохранение уже загружено. Проверочные сцены (F6) сохранение
+## не грузят и game_ready не шлют — там start() вызывают сами.
 @export var start_on_game_ready: bool = true
 
 var started: bool = false
