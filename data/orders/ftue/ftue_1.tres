@@ -12,3 +12,4 @@ base_pay = 30
 min_rank = 1
 weight = 0.0
 line_key = &"ORDER_FTUE_1_LINE"
+needs_perfect_grind = true

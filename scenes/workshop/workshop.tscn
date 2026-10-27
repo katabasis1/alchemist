@@ -1,54 +1,53 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop.png" id="1_bg"]
-[ext_resource type="Texture2D" path="res://assets/characters/client_baker_neutral.png" id="2_client"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_bench.png" id="3_bench"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_portrait.png" id="4_bg_portrait"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/bg_workshop_portrait_bench.png" id="5_bench_portrait"]
-[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="6_layout"]
+[ext_resource type="Script" path="res://scenes/workshop/workshop.gd" id="1_workshop"]
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop_room.tscn" id="2_room"]
+[ext_resource type="PackedScene" path="res://scenes/client/client.tscn" id="3_client"]
+[ext_resource type="PackedScene" path="res://scenes/stations/mortar/mortar.tscn" id="4_mortar"]
+[ext_resource type="PackedScene" path="res://scenes/shelf/shelf.tscn" id="5_shelf"]
+[ext_resource type="PackedScene" path="res://scenes/client/order_desk.tscn" id="6_desk"]
+[ext_resource type="PackedScene" path="res://scenes/hud/hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="8_layout"]
 
-[node name="Workshop" type="Node2D"]
+[node name="Workshop" type="Node2D" node_paths=PackedStringArray("shelf", "mortar", "hud")]
+script = ExtResource("1_workshop")
+shelf = NodePath("Shelf")
+mortar = NodePath("Mortar")
+hud = NodePath("Hud")
 
-[node name="Background" type="Sprite2D" parent="."]
-texture = ExtResource("1_bg")
-centered = false
+[node name="Room" parent="." instance=ExtResource("2_room")]
 
-[node name="BackgroundPortrait" type="Sprite2D" parent="."]
-visible = false
-texture = ExtResource("4_bg_portrait")
-centered = false
+[node name="Client" parent="Room/ClientSpot" instance=ExtResource("3_client")]
 
-[node name="ClientSpot" type="Marker2D" parent="."]
-position = Vector2(1440, 860)
+[node name="Mortar" parent="." instance=ExtResource("4_mortar")]
+position = Vector2(900, 960)
 
-[node name="Client" type="Sprite2D" parent="ClientSpot"]
-scale = Vector2(0.8, 0.8)
-texture = ExtResource("2_client")
-offset = Vector2(0, -384)
+[node name="Shelf" parent="." instance=ExtResource("5_shelf")]
+position = Vector2(40, 360)
 
-[node name="Bench" type="Sprite2D" parent="."]
-position = Vector2(0, 756)
-texture = ExtResource("3_bench")
-centered = false
+[node name="OrderDesk" parent="." node_paths=PackedStringArray("client", "judge", "hud") instance=ExtResource("6_desk")]
+client = NodePath("../Room/ClientSpot/Client")
+judge = NodePath("../Room/ClientSpot/Client/OrderJudge")
+hud = NodePath("../Hud")
 
-[node name="BenchPortrait" type="Sprite2D" parent="."]
-visible = false
-position = Vector2(0, 781)
-texture = ExtResource("5_bench_portrait")
-centered = false
+[node name="Hud" parent="." instance=ExtResource("7_hud")]
 
 [node name="LayoutMarks" type="Node2D" parent="."]
 
-[node name="ClientLandscape" type="Marker2D" parent="LayoutMarks"]
-position = Vector2(1440, 860)
+[node name="ShelfLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(40, 360)
 
-[node name="ClientPortrait" type="Marker2D" parent="LayoutMarks"]
-position = Vector2(330, 890)
-scale = Vector2(0.85, 0.85)
+[node name="ShelfPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(0, 1890)
 
-[node name="Layout" parent="." node_paths=PackedStringArray("landscape_only", "portrait_only", "movers", "landscape_marks", "portrait_marks") instance=ExtResource("6_layout")]
-landscape_only = [NodePath("../Background"), NodePath("../Bench")]
-portrait_only = [NodePath("../BackgroundPortrait"), NodePath("../BenchPortrait")]
-movers = [NodePath("../ClientSpot")]
-landscape_marks = [NodePath("../LayoutMarks/ClientLandscape")]
-portrait_marks = [NodePath("../LayoutMarks/ClientPortrait")]
+[node name="MortarLandscape" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(900, 960)
+
+[node name="MortarPortrait" type="Marker2D" parent="LayoutMarks"]
+position = Vector2(560, 1480)
+
+[node name="Layout" parent="." node_paths=PackedStringArray("movers", "landscape_marks", "portrait_marks") instance=ExtResource("8_layout")]
+movers = [NodePath("../Shelf"), NodePath("../Mortar")]
+landscape_marks = [NodePath("../LayoutMarks/ShelfLandscape"), NodePath("../LayoutMarks/MortarLandscape")]
+portrait_marks = [NodePath("../LayoutMarks/ShelfPortrait"), NodePath("../LayoutMarks/MortarPortrait")]
+copy_scale = false

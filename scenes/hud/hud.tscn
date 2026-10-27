@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/hud/hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://scenes/hud/coin_counter.tscn" id="2_counter"]
+[ext_resource type="Script" path="res://scenes/hud/coin_flight.gd" id="3_flight"]
+[ext_resource type="PackedScene" path="res://scenes/hud/flying_coin.tscn" id="4_coin"]
+
+[node name="Hud" type="CanvasLayer" node_paths=PackedStringArray("counter", "flight")]
+layer = 10
+script = ExtResource("1_hud")
+counter = NodePath("Root/CoinCounter")
+flight = NodePath("CoinFlight")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CoinCounter" parent="Root" instance=ExtResource("2_counter")]
+layout_mode = 1
+
+[node name="CoinFlight" type="Node2D" parent="."]
+script = ExtResource("3_flight")
+coin_scene = ExtResource("4_coin")

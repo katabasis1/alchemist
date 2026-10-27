@@ -113,6 +113,56 @@ def dull(seed: int) -> np.ndarray:
     return _norm(_fade(out, 0.002, 0.03), -12.0)
 
 
+def coin(seed: int) -> np.ndarray:
+    """Монета долетела до счётчика: короткий металлический «дзинь» (негармоничные обертоны), чуть разный по высоте."""
+    rng = np.random.default_rng(seed)
+    t = _t(0.32)
+    base = 2350.0 * (1.0 + rng.uniform(-0.06, 0.06))
+    out = np.zeros_like(t)
+    for ratio, amp, decay in ((1.0, 1.0, 0.09), (1.51, 0.6, 0.07), (2.43, 0.35, 0.05), (3.9, 0.2, 0.03)):
+        out += amp * np.sin(2 * np.pi * base * ratio * t + rng.uniform(0, np.pi)) * np.exp(-t / decay)
+    click = _band(rng.standard_normal(t.size), 3000.0, 9000.0) * np.exp(-t / 0.004) * 0.6
+    return _norm(_fade(out + click, 0.001, 0.04), -11.0)
+
+
+def whoosh() -> np.ndarray:
+    """«Вжух» — сосуд полетел к клиенту: шум, полоса скользит вверх и обратно, мягкий подъём и спад."""
+    rng = np.random.default_rng(41)
+    t = _t(0.36)
+    noise = rng.standard_normal(t.size)
+    env = np.sin(np.pi * np.clip(t / 0.36, 0.0, 1.0)) ** 1.5
+    low = _band(noise, 250.0, 900.0)
+    high = _band(noise, 900.0, 3200.0)
+    k = np.sin(np.pi * np.clip(t / 0.36, 0.0, 1.0))
+    out = (low * (1.0 - k) + high * k) * env
+    return _norm(_fade(out, 0.005, 0.03), -12.0)
+
+
+def oof() -> np.ndarray:
+    """«Уф» — клиент недоволен: мягкий низкий выдох с голосовым тоном, высота сползает вниз (не обидно, без резкости)."""
+    rng = np.random.default_rng(52)
+    t = _t(0.42)
+    f0 = 210.0 - 70.0 * np.clip(t / 0.42, 0.0, 1.0)
+    phase = 2 * np.pi * np.cumsum(f0) / RATE
+    voice = sum(np.sin(phase * h) / h for h in range(1, 7))
+    voice = _band(voice, 180.0, 1100.0)
+    breath = _band(rng.standard_normal(t.size), 300.0, 1500.0) * 0.35
+    env = np.minimum(t / 0.03, 1.0) * np.exp(-t / 0.16)
+    return _norm(_fade((voice + breath) * env, 0.004, 0.06), -10.0)
+
+
+def happy() -> np.ndarray:
+    """Клиент доволен: три восходящие ноты колокольчика (до — ми — соль), быстро и светло."""
+    t = _t(0.6)
+    out = np.zeros_like(t)
+    for delay, base in ((0.0, 1046.5), (0.07, 1318.5), (0.14, 1568.0)):
+        tt = np.clip(t - delay, 0.0, None)
+        on = (t >= delay).astype(float)
+        for ratio, amp, decay in ((1.0, 1.0, 0.18), (2.0, 0.25, 0.08), (3.01, 0.12, 0.04)):
+            out += on * amp * np.sin(2 * np.pi * base * ratio * tt) * np.exp(-tt / decay)
+    return _norm(_fade(out, 0.003, 0.05), -10.0)
+
+
 SOUNDS = {
     "sfx_grind_crunch_1.ogg": lambda: crunch(101),
     "sfx_grind_crunch_2.ogg": lambda: crunch(202),
@@ -123,6 +173,12 @@ SOUNDS = {
     "sfx_grind_dull_2.ogg": lambda: dull(22),
     "sfx_perfect.ogg": perfect,
     "sfx_overgrind.ogg": overgrind,
+    "sfx_coin_1.ogg": lambda: coin(61),
+    "sfx_coin_2.ogg": lambda: coin(62),
+    "sfx_coin_3.ogg": lambda: coin(63),
+    "sfx_whoosh.ogg": whoosh,
+    "sfx_oof.ogg": oof,
+    "sfx_happy.ogg": happy,
 }
 
 

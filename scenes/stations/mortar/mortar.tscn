@@ -38,8 +38,10 @@
 [ext_resource type="PackedScene" path="res://scenes/fx/fx_sparkle_burst.tscn" id="36_sparkle"]
 [ext_resource type="PackedScene" path="res://scenes/fx/fx_motes.tscn" id="37_motes"]
 [ext_resource type="PackedScene" path="res://scenes/fx/fx_rays.tscn" id="38_rays"]
+[ext_resource type="PackedScene" path="res://scenes/vessel/carry_vessel.tscn" id="39_vessel"]
+[ext_resource type="PackedScene" path="res://components/draggable/draggable.tscn" id="40_drag"]
 
-[node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "grind_area", "gesture", "gauge", "pestle", "trash", "punch", "sfx_accept", "sfx_reject")]
+[node name="Mortar" type="Node2D" node_paths=PackedStringArray("drop_target", "state_machine", "contents", "slots_two", "slots_three", "pips", "pip_fills", "grind_area", "gesture", "gauge", "pestle", "trash", "punch", "sfx_accept", "sfx_reject", "vessel", "vessel_drag", "body_area")]
 script = ExtResource("1_mortar")
 economy = ExtResource("2_economy")
 third_slot_upgrade = ExtResource("3_upgrade")
@@ -58,6 +60,9 @@ trash = NodePath("Trash")
 punch = NodePath("JuicePunch")
 sfx_accept = NodePath("SfxAccept")
 sfx_reject = NodePath("SfxReject")
+vessel = NodePath("Vessel")
+vessel_drag = NodePath("VesselDrag")
+body_area = NodePath("BodyArea")
 
 [node name="Glow" parent="." instance=ExtResource("7_glow")]
 offset_left = -240.0
@@ -198,8 +203,26 @@ accepted_kinds = Array[StringName]([&"ingredient"])
 highlight = NodePath("../Glow")
 snap_point = NodePath("../Slots/Two1")
 
+[node name="Vessel" parent="." instance=ExtResource("39_vessel")]
+position = Vector2(0, -190)
+
 [node name="Trash" parent="." instance=ExtResource("9_trash")]
 position = Vector2(-235, -46)
+
+[node name="BodyArea" parent="." instance=ExtResource("17_hit")]
+offset_left = -165.0
+offset_top = -200.0
+offset_right = 165.0
+offset_bottom = -8.0
+pivot_offset = Vector2(165, 96)
+enabled = false
+
+[node name="VesselDrag" parent="." node_paths=PackedStringArray("hit_area", "body", "lift_node", "shadow") instance=ExtResource("40_drag")]
+hit_area = NodePath("../BodyArea")
+body = NodePath("../Vessel")
+lift_node = NodePath("../Vessel/Lift")
+shadow = NodePath("../Vessel/Shadow")
+kind = &"potion"
 
 [node name="GrindArea" parent="." instance=ExtResource("17_hit")]
 offset_left = -185.0

@@ -330,3 +330,39 @@ No colour fills other than white and light grey, no frames, no badges.
 
 Flat front view, all six icons fully visible with generous empty margin. Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Landscape 1536x1024.
 ```
+
+## P-PROP-05 — Баночка мази → `prop_jar_ointment.png`
+
+Так выглядит зелье, отданное клиенту прямо из ступки. Холст 256×256, опора по центру: агент уменьшает и вырезает фон (`tools/art/cutout.py`).
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+A small round glazed ceramic ointment jar, cream-white with a wide sage-green painted band and a simple light leaf pattern on it, a short neck covered with a cream cloth cap tied with a twisted jute rope bow, a small blank parchment tag hanging from the rope. Plump, cosy and handmade, slightly wider than tall, a little copper-brown foot ring at the bottom.
+
+Single isolated game asset, centered, three-quarter front view seen slightly from above, the whole object fully visible with generous empty margin. Transparent background (PNG with alpha). If transparency is not possible: perfectly flat solid pure magenta #FF00FF background, no gradient. No cast shadow, no floor, no other objects. Square 1024x1024.
+```
+
+## P-UI-08 — Пузырь заказа → `ui_order_bubble.png`
+
+Пустой пузырь: иконки заказа игра кладёт поверх. Хвостик — справа внизу, к клиенту. Холст 512×320.
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+An empty speech bubble for a game order panel: a wide rounded rectangle of warm parchment cream with a soft painted paper texture, slightly darker toasted edges, a clean thick dark warm-brown outline, and a small rounded tail at the bottom right edge pointing down and to the right. The inside is completely empty and evenly lit so icons placed on it stay readable.
+
+Flat front view game UI element, centered, fully visible with generous empty margin, blank (no text, no icons). Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Landscape 1536x1024.
+```
+
+## P-UI-09 — Кристалл чистоты → `icon_purity.png`
+
+В пузыре заказа столько кристаллов, сколько звёзд чистоты требуется (GDD §5.2). Холст 128×128, должен читаться в 48 px.
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+A single bright clear crystal gem icon for purity: an upright faceted crystal shard, pale teal and aqua with white highlights on the upper left facets and a small sparkle, chunky rounded silhouette, thick clean dark warm-brown outline, readable at 48 pixels.
+
+Flat front view game UI icon, centered, fully visible with generous empty margin, no frame, no badge, no text. Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Square 1024x1024.
+```

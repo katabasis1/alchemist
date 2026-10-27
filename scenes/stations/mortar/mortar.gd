@@ -2,15 +2,18 @@
 ## возврат на полку (S2.1); жест помола, шкала с зоной «идеально», пестик (S2.2).
 ## Ингредиенты лежат в чаше: слой contents стоит между чашей и её передним краем (BowlFront), пестик — там же.
 ## Касания над чашей ловит одна зона grind_area (поверх ингредиентов): жест — помол; тап по ингредиенту в Loaded —
-## вернуть его на полку; тап мимо ингредиентов — ¼ круга (доступность). Тело чаши оставлено под перенос (S2.4).
+## вернуть его на полку; тап мимо ингредиентов — ¼ круга (доступность).
+## Перенос (S2.4): тело чаши — своя зона body_area. Потянул за неё или тапнул — из чаши появляется баночка (CarryVessel)
+## со смесью, её несут клиенту (или тапом выбирают цель). Принята — hand_off: ступка пустеет. Не принята — баночка
+## возвращается и прячется. Пока мелется (Grinding) или пусто, тело чаши не берётся.
 ## Помол p (0…1) растёт на grind_per_circle самого твёрдого ингредиента за круг; извлечение — EconomyConfig.extraction.
 ## Полная или молотая ступка не подсвечивается как цель; бросок в неё — отскок (&"full" — мигают огоньки, &"ground").
 ## Монет не хватает — отскок и drop_refused(&"coins"): HUD вздрогнет счётчиком (S2.4).
 ## Сигналы: item_released(item) — ингредиент отдан обратно (полка ловит его в take_back);
 ##   contents_changed(ids) — что лежит в чаше; drop_refused(reason) — бросок отклонён (&"full", &"coins", &"kind",
-##   &"ground"); grind_changed(grind) — помол изменился (0…1).
+##   &"ground"); grind_changed(grind) — помол изменился (0…1); handed_off(mixture) — содержимое отдано (клиенту).
 ## Зависимости: DropTarget, StateMachine (Empty / Loaded / Grinding / Ground), GrindGesture, HitArea (зона помола),
-##   ZoneGauge (шкала), Pestle, StationTrash, JuicePunch, SfxComponent, IngredientItem, EconomyConfig (вместимость,
+##   ZoneGauge (шкала), Pestle, StationTrash, CarryVessel + Draggable (перенос) + HitArea body_area, JuicePunch, SfxComponent, IngredientItem, EconomyConfig (вместимость,
 ##   помол, извлечение), ToolData (улучшение «третий слот»), GameState (монеты, покупки), EventBus (пауза, поворот).
 class_name Mortar
 extends Node2D
@@ -19,6 +22,7 @@ signal item_released(item: IngredientItem)
 signal contents_changed(ids: Array[StringName])
 signal drop_refused(reason: StringName)
 signal grind_changed(grind: float)
+signal handed_off(mixture: Dictionary[StringName, float])
 
 const STATE_EMPTY: StringName = &"Empty"
 const STATE_LOADED: StringName = &"Loaded"
@@ -65,12 +69,21 @@ const REASON_GROUND: StringName = &"ground"
 @export var punch: JuicePunch
 @export var sfx_accept: SfxComponent
 @export var sfx_reject: SfxComponent
+@export_group("Перенос")
+## Баночка со смесью: прячется в чаше, появляется, когда содержимое берут.
+@export var vessel: CarryVessel
+## Draggable баночки (body = vessel, hit_area = body_area, kind = &"potion").
+@export var vessel_drag: Draggable
+## Тело чаши под зоной помола: за него берут содержимое.
+@export var body_area: HitArea
 
 var items: Array[IngredientItem] = []
 var capacity: int = 2
 ## Степень помола p: 0 — целые, perfect_from…perfect_to — идеально, 1 — пыль.
 var grind: float = 0.0
 var _blink: Tween
+## Где баночка ждёт в чаше (локально в ступке).
+var _vessel_home: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -88,6 +101,13 @@ func _ready() -> void:
 	grind_area.pointer_up.connect(_on_grind_area_released)
 	EventBus.layout_changed.connect(_on_layout_changed)
 	EventBus.pause_changed.connect(_on_pause_changed)
+	_vessel_home = vessel.position
+	body_area.enabled = false
+	vessel_drag.drag_started.connect(_on_vessel_taken)
+	vessel_drag.selected_changed.connect(_on_vessel_selected)
+	vessel_drag.dropped.connect(_on_vessel_dropped)
+	vessel_drag.landed.connect(_on_vessel_landed)
+	vessel_drag.returned.connect(_on_vessel_returned)
 	if economy != null:
 		gesture.taps_per_circle = economy.taps_per_circle
 		gauge.set_zone(economy.perfect_from, economy.perfect_to)
@@ -122,6 +142,11 @@ func is_full() -> bool:
 ## Молотое (Ground) или мелется прямо сейчас: ингредиенты уже не вернуть, новые не принять.
 func is_ground() -> bool:
 	return state_machine.is_in(STATE_GROUND) or state_machine.is_in(STATE_GRINDING)
+
+
+## Мелется прямо сейчас: палец занят жестом, содержимое не берётся.
+func is_grinding() -> bool:
+	return state_machine.is_in(STATE_GRINDING)
 
 
 ## Самый твёрдый ингредиент в чаше — по нему считается скорость помола (GDD §3.3).
@@ -198,6 +223,13 @@ func empty_to_shelf() -> void:
 		release(item, refund)
 
 
+## Содержимое отдали (клиенту принята баночка): ингредиенты исчезают, ступка пустеет, цена не возвращается.
+func hand_off() -> void:
+	var given: Dictionary[StringName, float] = vessel.mixture.duplicate() if vessel.is_filled() else mixture()
+	discard()
+	handed_off.emit(given)
+
+
 ## Выбросить содержимое: ингредиенты исчезают, помол сбрасывается, цена не возвращается.
 func discard() -> void:
 	if state_machine.is_in(STATE_GRINDING):
@@ -254,7 +286,9 @@ func _on_received(draggable: Draggable) -> void:
 	contents_changed.emit(ids())
 
 
-func _on_rejected(_draggable: Draggable, reason: StringName) -> void:
+func _on_rejected(draggable: Draggable, reason: StringName) -> void:
+	if draggable == vessel_drag:
+		return  # баночку опустили обратно на ступку: она просто вернётся в чашу
 	var why: StringName = reason
 	if reason == DropTarget.REASON_DISABLED:
 		if is_ground():
@@ -280,11 +314,15 @@ func _on_state_changed(_from: StringName, to: StringName) -> void:
 			set_grind(0.0, true)
 			gauge.show_gauge(false)
 			grind_area.enabled = false
+			body_area.enabled = false
 			pestle.rest()
 		STATE_LOADED, STATE_GROUND:
 			if not gauge.visible:
 				gauge.show_gauge(true)
 			grind_area.enabled = true
+			body_area.enabled = true
+		STATE_GRINDING:
+			body_area.enabled = false
 	_update_view()
 
 
@@ -338,6 +376,43 @@ func _on_layout_changed(_portrait: bool) -> void:
 func _on_pause_changed(paused: bool) -> void:
 	if paused:
 		gesture.cancel()
+
+
+## Баночку взяли (перенос или выбор тапом): наполнить смесью и показать.
+func _on_vessel_taken() -> void:
+	if items.is_empty() or is_grinding():
+		vessel_drag.cancel()
+		return
+	_hide_item_tips()
+	vessel.fill(mixture(), grind)
+	vessel.show_up()
+
+
+func _on_vessel_selected(selected: bool) -> void:
+	if selected:
+		_on_vessel_taken()
+	else:
+		# Выбор снят: если баночка сейчас не летит к цели, она остаётся в чаше и прячется.
+		_stow_if_idle.call_deferred()
+
+
+func _on_vessel_dropped(_target: DropTarget) -> void:
+	hand_off()
+
+
+## Баночка долетела до клиента: прячем её и возвращаем на место в чаше.
+func _on_vessel_landed() -> void:
+	vessel.stow()
+	vessel_drag.place_at(to_global(_vessel_home))
+
+
+func _on_vessel_returned() -> void:
+	vessel.stow()
+
+
+func _stow_if_idle() -> void:
+	if not vessel_drag.is_busy():
+		vessel.stow()
 
 
 ## Ингредиент в чаше под точкой мира (ближайший в пределах item_pick_radius).

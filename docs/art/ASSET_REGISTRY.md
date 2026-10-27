@@ -20,6 +20,7 @@
 | fx_flakes | assets/fx/fx_flakes.png | 128×32 | center | — | proc | — | Обломки трав, 4 кадра 32×32 (`particles_anim_h_frames = 4`); заливка белая, цвет — смесь в ступке |
 | prop_shelf_slot | assets/props/prop_shelf_slot.png | 256×192 | bottom | #FF00FF | temp | P-PROP-04 | Ячейка полки под один ингредиент; в сетке и в ленте одна и та же. В GDD §14 — «prop_shelf» |
 | prop_flask_round | assets/props/prop_flask_round.png | 384×512 | bottom | #FF00FF (global) | temp | P-PROP-03 | Стекло прозрачное, жидкость — шейдер |
+| prop_jar_ointment | assets/props/prop_jar_ointment.png | 256×256 | center | #FF00FF | temp | P-PROP-05 | Баночка мази: так выглядит зелье, отданное прямо из ступки (GDD §3.3). Летит к клиенту, на оценку не влияет |
 | ing_fire_bloom | assets/ingredients/ing_fire_bloom.png | 256×256 | center | #FF00FF | temp | P-ING-01 |  |
 | ing_moon_moss | assets/ingredients/ing_moon_moss.png | 256×256 | center | #FF00FF | temp | P-ING-02 |  |
 | ing_golden_root | assets/ingredients/ing_golden_root.png | 256×256 | center | #FF00FF | temp | P-ING-03 |  |
@@ -47,3 +48,5 @@
 | icon_prop_cold | assets/ui/icon_prop_cold.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Снежинка; заливка белая, цвет — `PropertyData.color` через modulate |
 | icon_prop_sleep | assets/ui/icon_prop_sleep.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Полумесяц; заливка белая, цвет — `PropertyData.color` через modulate |
 | icon_prop_light | assets/ui/icon_prop_light.png | 128×128 | center | #FF00FF | temp | P-UI-07 | Искра; заливка белая, цвет — `PropertyData.color` через modulate |
+| ui_order_bubble | assets/ui/ui_order_bubble.png | 512×320 | center | #FF00FF | temp | P-UI-08 | Пузырь заказа, хвостик справа внизу (к клиенту). Внутри — иконки свойств и кристаллы чистоты (GDD §5.2) |
+| icon_purity | assets/ui/icon_purity.png | 128×128 | center | #FF00FF | temp | P-UI-09 | Кристалл чистоты: в пузыре заказа столько кристаллов, сколько звёзд чистоты требуется |

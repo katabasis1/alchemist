@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/vessel/carry_vessel.gd" id="1_vessel"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_jar_ointment.png" id="2_jar"]
+
+[node name="CarryVessel" type="Node2D" node_paths=PackedStringArray("pop")]
+script = ExtResource("1_vessel")
+pop = NodePath("Lift/Pop")
+
+[node name="Shadow" type="Polygon2D" parent="."]
+modulate = Color(1, 1, 1, 0)
+position = Vector2(0, 62)
+color = Color(0.164706, 0.0705882, 0.0196078, 1)
+polygon = PackedVector2Array(54, 0, 51.4, 4, 43.7, 7.6, 31.7, 10.5, 16.7, 12.4, 0, 13, -16.7, 12.4, -31.7, 10.5, -43.7, 7.6, -51.4, 4, -54, 0, -51.4, -4, -43.7, -7.6, -31.7, -10.5, -16.7, -12.4, 0, -13, 16.7, -12.4, 31.7, -10.5, 43.7, -7.6, 51.4, -4)
+
+[node name="Lift" type="Node2D" parent="."]
+
+[node name="Pop" type="Node2D" parent="Lift"]
+
+[node name="Sprite" type="Sprite2D" parent="Lift/Pop"]
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("2_jar")

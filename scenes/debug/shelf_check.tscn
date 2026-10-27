@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://vuygbnielce"]
 
 [ext_resource type="Script" uid="uid://b366uljvmhqi1" path="res://scenes/debug/shelf_check.gd" id="1_check"]
-[ext_resource type="PackedScene" path="res://scenes/workshop/workshop.tscn" id="2_workshop"]
+[ext_resource type="PackedScene" path="res://scenes/workshop/workshop_room.tscn" id="2_workshop"]
 [ext_resource type="PackedScene" path="res://scenes/shelf/shelf.tscn" id="3_shelf"]
 [ext_resource type="PackedScene" path="res://scenes/stations/mortar/mortar.tscn" id="4_mortar"]
 [ext_resource type="PackedScene" path="res://components/layout_switcher/layout_switcher.tscn" id="5_layout"]

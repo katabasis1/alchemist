@@ -6,9 +6,23 @@
 > Ответ агента может оборваться в любой момент. Чего нет в Pod, следующий агент не увидит.
 
 ## Сейчас
-- **Сессия 17 (2026-10-27): правки S2.3 по замечаниям пользователя → S2.3a, будет v0.1.4.** Пока пользователь не примет результат, к S2.4 не переходим.
-- Замечания: (1) пестик «внутри ободка», сливается с чашей; (2) передний край обрезан выше горлышка (нужна нижняя дуга, зелёная линия на скриншоте); (3) частицы и шейдеры примитивны — нужны волшебство и juice; сначала нарисовать референсы (травы / горка порошка в ступке), потом делать по ним; порошок сейчас — овал в воздухе; посмотреть godotshaders.com (свечения, кольцо, порошок); (4) заменить временные ступку и пестик финальной графикой (лежит в `inbox/art/`).
-- База: GitHub `0ee28a7` (= v0.1.3 + `*.uid` Godot), тег `gh-0ee28a7`. Агент 17g оборвался после референсов; 17h — пестик, порошок, распад трав (оборвался до сохранения, 17i подобрал); агент 17i («виа») оборвался после лучей; 17j («впа») — превью частиц/FX, правка обрезки лучей и волны, выдача.
+- **Сессия 18 (2026-10-27): S2.4 мини-заказ, будет v0.1.6.** S2.3b (v0.1.5) пользователь принял («Принято, делай S2.4», GitHub `776c702` = 0.1.5).
+- **Новый Pod** («новая папка»): bundle, outbox, inbox/art прошлого Pod недоступны. Рабочая копия восстановлена с GitHub `776c702` по §2.3: 426 текстовых файлов через веб-инструмент, вызванный из песочницы (`dsbx tools … webbrowser`, ответы не идут в контекст), hash-object совпали все; коммит `sync: GitHub 776c702`, теги `gh-776c702`, `v0.1.5`. История агента до v0.1.5 потеряна вместе со старым Pod — не страшно, GitHub = источник истины.
+- Бинарники (PNG/OGG/TTF/translation) в рабочей копии — заглушки и пересинтезированные файлы (`placeholder_pngs.py`, `fx_textures.py`, `synth_sfx.py`, пустые файлы), все в `.git/info/exclude`.
+- Чек-лист S2.4 — ниже. Сессия 19 (2026-10-27, вечер): продолжение — прошлый агент только прочитал код, файлов не менял; GitHub HEAD всё ещё `776c702`.
+- Сессия 20 (2026-10-27, вечер): продолжение 19 (у неё остались несохранённые PNG баночки и пузыря — сохранены). GitHub HEAD `776c702`, inbox пуст.
+- Сессия 21 (2026-10-27, 16:32 UTC): продолжение 20; рабочая копия цела (HEAD f88c351 = LAST_SYNC), GitHub HEAD `776c702`, inbox нет. Дальше HUD: CoinCounter + полёт монет.
+
+## Чек-лист S2.4 (v0.1.6) — мини-заказ
+- [x] план и чек-лист
+- [x] OrderJudge — оценка смеси по заказу (эффект / сила / чистота, «безупречно», оплата): первая версия S5.3; GameState.start_order/finish_order
+- [x] CarryVessel (баночка мази) — перенос содержимого ступки: тянуть за тело чаши или «тап — тап»; Mortar.hand_off
+- [x] Client — портрет, пузырь заказа иконками (свойство × звёзды силы, кристалл чистоты), приём баночки, реакция (рад / качает головой), уход и приход
+- [x] HUD — счётчик монет (прокрутка цифр; вздрагивает на «монет не хватает»), полёт монет со шлейфом — `scenes/hud/`
+- [x] OrderDesk — очередь заказов S2.4 (FTUE 1–2 + заказы пекарши), текущий заказ в сохранении — `scenes/client/order_desk.*`
+- [x] Workshop — полка + ступка + клиент + HUD в лавке, ландшафт и портрет; main без изменений. Фон вынесен в `workshop_room.tscn` (его берут grind/juice/shelf_check), клиент — дочерний `Room/ClientSpot` (за прилавком)
+- [x] графика: баночка, пузырь, кристалл чистоты — временные + промпты; звуки: монеты, «вжух», «уф» (+ sfx_happy)
+- [ ] order_check (проверочная сцена), валидатор, документы, v0.1.6, выдача `--base gh-776c702`
 
 ## Чек-лист S2.3a (v0.1.4) — правки ступки
 - [x] база с GitHub `0ee28a7`; финальные ступка и пестик в холсты (`tools/art/fit_final.py`); передний край по нижней дуге горлышка
@@ -101,3 +115,19 @@
 - 2026-10-27 14:50 UTC — S2.3b: поза покоя пестика (20,-216)/0.5 — обойма и ручка над задним краем; помол tip_reach 44×9, max_lean 0.4 — на крайних позициях обойма не уходит под боковой край (макеты _rest_cmp/_grind_cmp). Дальше: --pestle-check в mortar_preview, превью, документы
 - 2026-10-27 14:51 UTC — S2.3b: mortar_preview.py --pestle-check (дерево пестика не под передним краем с запасом 6 px, головка в покое не под боковым краем) — все 3 позы OK; max_lean 0.35. Дальше: превью rest, документы, v0.1.5
 - 2026-10-27 14:52 UTC — S2.3b: документы (PLAN, PROGRESS, DEVLOG), версия 0.1.5, валидатор OK. Дальше: коммит/тег v0.1.5, выдача --base gh-ab70b01
+- 2026-10-27 15:38 UTC — сессия 18: новый Pod, рабочая копия восстановлена с GitHub 776c702 (426 файлов, hash-object OK), S2.3b принят пользователем. Дальше: чек-лист S2.4
+- 2026-10-27 16:00 UTC — S2.4: старт сессии 19, чек-лист S2.4 в HANDOFF; дальше OrderJudge
+- 2026-10-27 16:05 UTC — S2.4: OrderJudge (scenes/client/order_judge.gd) + GameState.start_order/finish_order; дальше CarryVessel в ступке
+- 2026-10-27 16:12 UTC — сессия 20: найдена несохранённая работа 19 — временная графика prop_jar_ointment.png (256×256) и ui_order_bubble.png (512×320) после cutout; дальше реестр/промпты, CarryVessel + Mortar.hand_off
+- 2026-10-27 16:16 UTC — S2.4: реестр и промпты P-PROP-05 (баночка), P-UI-08 (пузырь), P-UI-09 (кристалл чистоты, icon_purity 128×128); дальше генерация кристалла, затем CarryVessel
+- 2026-10-27 16:17 UTC — S2.4: временный icon_purity.png (128×128, cutout); графика баночки/пузыря/кристалла готова; дальше CarryVessel + Mortar.hand_off
+- 2026-10-27 16:18 UTC — S2.4: scenes/vessel/carry_vessel.tscn/.gd — баночка (fill/show_up/stow, mixture+grind); дальше Mortar: BodyArea + VesselDrag + hand_off
+- 2026-10-27 16:20 UTC — S2.4: Mortar — перенос: body_area (тело чаши) + VesselDrag (Draggable, kind potion) + Vessel; hand_off/handed_off, баночка прячется при возврате; валидатор OK. Дальше OrderTemplate.needs_perfect_grind (FTUE 1–3) и Client
+- 2026-10-27 16:22 UTC — S2.4: needs_perfect_grind в OrderTemplate (ftue_1–3 = true); scenes/client/client.gd (приход, пузырь иконками, приём баночки, реакция, уход). Дальше client.tscn + order_icon.tscn
+- 2026-10-27 16:24 UTC — S2.4: звуки sfx_whoosh/happy/oof/coin_1–3 (synth_sfx.py, рецепты добавлены), AUDIO.md; дальше client.tscn + order_icon.tscn
+- 2026-10-27 16:24 UTC — S2.4: client.tscn (портрет, пузырь с рядами иконок, DropTarget potion, OrderJudge, StateMachine Away→Arriving→Waiting→Reacting→Leaving, звуки) + order_icon.tscn; валидатор OK. Дальше HUD: CoinCounter + полёт монет
+- 2026-10-27 16:32 UTC — сессия 21: старт, рабочая копия цела (f88c351), GitHub 776c702, inbox нет; дальше HUD CoinCounter
+- 2026-10-27 16:37 UTC — HUD: scenes/hud/coin_counter.gd+.tscn (прокрутка, hold/release монет в полёте, deny — дрожь+красный); дальше flying_coin + coin_flight + hud
+- 2026-10-27 16:39 UTC — HUD: flying_coin (шлейф CPUParticles2D, поворот ребром), coin_flight (пул, веер, дуга Безье, coin_landed), hud.tscn (CanvasLayer 10, fly_coins/deny_coins); дальше OrderDesk
+- 2026-10-27 16:42 UTC — OrderDesk (scenes/client/order_desk.gd+.tscn): сохранённый заказ → FTUE 1–2 (ftue_limit) → заказы пекарши по весу и открытым свойствам; оплата+репутация → finish_order(ftue_done) → Hud.fly_coins. Client: coin_point, is_present, безопасный уход после радости. DataCatalog.order(id), OrderJudge.reputation_for. Дальше Workshop
+- 2026-10-27 16:45 UTC — Workshop собран: workshop_room.tscn (фон, прилавок, ClientSpot) + workshop.tscn (Client в Room/ClientSpot, Mortar, Shelf, OrderDesk, Hud, LayoutSwitcher), workshop.gd (item_released→take_back, coins→deny). Debug-сцены берут workshop_room. Shelf перестраивается на state_reset. Дальше order_check

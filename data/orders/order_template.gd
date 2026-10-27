@@ -18,3 +18,5 @@ extends Resource
 @export var weight: float = 0.0
 ## Фраза клиента — для атмосферы, а не инструкция.
 @export var line_key: StringName = &""
+## Отдать можно, только когда помол дошёл до зоны «идеально» (FTUE 1–3, GDD §9): иначе клиент не берёт баночку.
+@export var needs_perfect_grind: bool = false

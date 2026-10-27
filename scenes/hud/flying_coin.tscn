@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/hud/flying_coin.gd" id="1_coin"]
+[ext_resource type="Texture2D" path="res://assets/ui/icon_coin.png" id="2_coin"]
+[ext_resource type="Texture2D" path="res://assets/fx/fx_spark.png" id="3_spark"]
+[ext_resource type="Texture2D" path="res://assets/fx/fx_glow.png" id="4_glow"]
+
+[sub_resource type="CanvasItemMaterial" id="Mat_add"]
+blend_mode = 1
+
+[sub_resource type="Curve" id="Curve_shrink"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Gradient" id="Gradient_trail"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 0.96, 0.7, 0.95, 1, 0.78, 0.3, 0.7, 1, 0.55, 0.15, 0)
+
+[node name="FlyingCoin" type="Node2D" node_paths=PackedStringArray("spin_node", "trail")]
+script = ExtResource("1_coin")
+spin_node = NodePath("Spin")
+trail = NodePath("Trail")
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+material = SubResource("Mat_add")
+emitting = false
+amount = 32
+lifetime = 0.42
+randomness = 0.3
+local_coords = false
+texture = ExtResource("3_spark")
+emission_shape = 1
+emission_sphere_radius = 10.0
+spread = 180.0
+gravity = Vector2(0, 40)
+initial_velocity_min = 10.0
+initial_velocity_max = 45.0
+angle_min = 0.0
+angle_max = 90.0
+scale_amount_min = 0.35
+scale_amount_max = 0.8
+scale_amount_curve = SubResource("Curve_shrink")
+color_ramp = SubResource("Gradient_trail")
+
+[node name="Spin" type="Node2D" parent="."]
+
+[node name="Glow" type="Sprite2D" parent="Spin"]
+modulate = Color(1, 0.85, 0.4, 0.55)
+material = SubResource("Mat_add")
+scale = Vector2(1.6, 1.6)
+texture = ExtResource("4_glow")
+
+[node name="Sprite" type="Sprite2D" parent="Spin"]
+scale = Vector2(0.28, 0.28)
+texture = ExtResource("2_coin")

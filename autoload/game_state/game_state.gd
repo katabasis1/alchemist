@@ -25,6 +25,11 @@ const SETTING_LOCALE: String = "locale"
 const REASON_COINS: StringName = &"coins"
 const REASON_SETTINGS: StringName = &"settings"
 const REASON_RESET: StringName = &"reset"
+const REASON_ORDER: StringName = &"order"
+
+## Ключи текущего заказа (current_order): id клиента и шаблона заказа.
+const ORDER_CLIENT: String = "client"
+const ORDER_TEMPLATE: String = "order"
 
 ## Все данные игры (data/catalog.tres). Стартовые значения новой игры берутся отсюда.
 @export var catalog: DataCatalog
@@ -43,6 +48,7 @@ var day: int = 1
 var order_in_day: int = 0
 var streak_3star: int = 0
 ## Текущий заказ: после перезагрузки приходит тот же клиент с тем же заказом (GDD §11).
+## {ORDER_CLIENT: id клиента, ORDER_TEMPLATE: id шаблона}; пусто — заказа нет.
 var current_order: Dictionary = {}
 var ftue_step: int = 0
 ## Ежедневная награда: {"chain_day": int, "last_claim": "YYYY-MM-DD"}.
@@ -84,6 +90,28 @@ func try_spend_coins(cost: int) -> bool:
 		return false
 	add_coins(-cost)
 	return true
+
+
+## Клиент пришёл с заказом: запомнить его, чтобы перезагрузка не меняла заказ (GDD §5.4).
+func start_order(client_id: StringName, order_id: StringName) -> void:
+	current_order = {ORDER_CLIENT: String(client_id), ORDER_TEMPLATE: String(order_id)}
+	request_save(REASON_ORDER)
+
+
+## Заказ закрыт (GDD §5.3): оплата, репутация, серия 3★, счёт заказов дня — одной записью.
+## three_stars — оценка 3★: серия растёт, иначе обнуляется. ftue_done — закрыт обучающий заказ: шаг FTUE +1.
+## Счётчик монет HUD узнаёт об оплате из coins_changed.
+func finish_order(pay: int, reputation_gain: int, three_stars: bool, ftue_done: bool = false) -> void:
+	coins = maxi(coins + pay, 0)
+	reputation += maxi(reputation_gain, 0)
+	streak_3star = streak_3star + 1 if three_stars else 0
+	order_in_day += 1
+	current_order = {}
+	if ftue_done:
+		ftue_step += 1
+	if pay != 0:
+		EventBus.coins_changed.emit(coins, pay)
+	request_save(REASON_ORDER)
 
 
 func get_setting(key: String) -> Variant:

@@ -99,6 +99,14 @@ func unlocks_for_rank(rank: int) -> Array[Resource]:
 	return result
 
 
+## Шаблон заказа по id (у клиентов и в FTUE); null — такого нет (старое сохранение).
+func order(id: StringName) -> OrderTemplate:
+	for item: OrderTemplate in all_orders():
+		if item.id == id:
+			return item
+	return null
+
+
 ## Все шаблоны заказов без повторов: у клиентов и в FTUE.
 func all_orders() -> Array[OrderTemplate]:
 	var result: Array[OrderTemplate] = []

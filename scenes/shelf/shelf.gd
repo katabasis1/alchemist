@@ -4,7 +4,7 @@
 ## по инерции. Колесо мыши тоже листает. Ячейка у края ленты тает, а скрывшись, перестаёт ловить касания.
 ## Сигналы: ingredient_taken(item) — ингредиент взяли с полки, и станция его приняла.
 ## Методы: build(ids) — выложить ингредиенты; take_back(item) — станция вернула ингредиент; set_ribbon(on).
-## Зависимости: DataCatalog, GameState (открытые ингредиенты), EventBus (layout_changed), LayoutSwitcher (portrait),
+## Зависимости: DataCatalog, GameState (открытые ингредиенты; state_reset — выложить заново), EventBus (layout_changed), LayoutSwitcher (portrait),
 ##   ShelfSlot (slot_scene), HitArea (scroll_hit).
 class_name Shelf
 extends Node2D
@@ -58,9 +58,17 @@ func _ready() -> void:
 		scroll_hit.pointer_up.connect(_on_scroll_hit_up)
 		scroll_hit.pointer_cancelled.connect(_on_scroll_cancelled)
 	EventBus.layout_changed.connect(set_ribbon)
+	GameState.state_reset.connect(_on_state_reset)
 	ribbon = LayoutSwitcher.portrait
 	build(ingredient_ids if not ingredient_ids.is_empty() else GameState.unlocked_ingredients)
 	set_ribbon(ribbon)
+
+
+## Загрузка сохранения или новая игра: открытые ингредиенты могли смениться (полка без своего списка).
+func _on_state_reset() -> void:
+	if ingredient_ids.is_empty():
+		build(GameState.unlocked_ingredients)
+		set_ribbon(ribbon)
 
 
 ## Выложить ингредиенты по id (порядок сохраняется). Старые ячейки убираются.

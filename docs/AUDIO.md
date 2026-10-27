@@ -20,6 +20,10 @@
 | `audio/sfx/sfx_grind_dull_1.ogg`, `_2.ogg` | 0,16 с | p = 1: пестик трёт пыль — глухо, без щелчков | `MortarJuice` (вместо хруста) | temp |
 | `audio/sfx/sfx_perfect.ogg` | 0,7 с | Помол вошёл в «идеально»: колокольчик из двух нот | `MortarJuice` ← `ZoneGauge.zone_changed` | temp |
 | `audio/sfx/sfx_overgrind.ogg` | 0,42 с | Перетёр (вышли за «идеально»): «пфф», полоса уходит вниз | `MortarJuice` ← `ZoneGauge.zone_changed` | temp |
+| `audio/sfx/sfx_whoosh.ogg` | 0,36 с | «Вжух»: клиент принял сосуд, тот летит к нему | `Client` (SfxReceive) | temp |
+| `audio/sfx/sfx_happy.ogg` | 0,60 с | Клиент доволен (верный эффект) | `Client` (SfxHappy) | temp |
+| `audio/sfx/sfx_oof.ogg` | 0,42 с | «Уф»: неверный эффект, клиент качает головой | `Client` (SfxUpset) | temp |
+| `audio/sfx/sfx_coin_1…3.ogg` | 0,32 с | Монета долетела до счётчика (случайный из трёх) | `CoinCounter` | temp |
 
 ## Требования к финальным звукам
 

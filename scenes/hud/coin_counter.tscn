@@ -1,0 +1,100 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/hud/coin_counter.gd" id="1_counter"]
+[ext_resource type="Texture2D" path="res://assets/ui/icon_coin.png" id="2_coin"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="3_punch"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="4_sfx"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_coin_1.ogg" id="5_coin1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_coin_2.ogg" id="6_coin2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_coin_3.ogg" id="7_coin3"]
+
+[sub_resource type="StyleBoxFlat" id="Style_panel"]
+bg_color = Color(0.239216, 0.12549, 0.0627451, 0.86)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 6
+border_color = Color(0.85098, 0.627451, 0.270588, 1)
+corner_radius_top_left = 46
+corner_radius_top_right = 46
+corner_radius_bottom_right = 46
+corner_radius_bottom_left = 46
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[node name="CoinCounter" type="Control" node_paths=PackedStringArray("shaker", "icon", "amount_label", "punch", "sfx_land")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 28.0
+offset_top = 22.0
+offset_right = 318.0
+offset_bottom = 118.0
+mouse_filter = 2
+script = ExtResource("1_counter")
+shaker = NodePath("Shaker")
+icon = NodePath("Shaker/Row/Icon")
+amount_label = NodePath("Shaker/Row/Amount")
+punch = NodePath("JuicePunch")
+sfx_land = NodePath("SfxLand")
+
+[node name="Shaker" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 290.0
+offset_bottom = 96.0
+mouse_filter = 2
+
+[node name="Panel" type="Panel" parent="Shaker"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = 8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_panel")
+
+[node name="Row" type="HBoxContainer" parent="Shaker"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Icon" type="TextureRect" parent="Shaker/Row"]
+custom_minimum_size = Vector2(96, 96)
+layout_mode = 2
+pivot_offset = Vector2(48, 48)
+mouse_filter = 2
+texture = ExtResource("2_coin")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Amount" type="Label" parent="Shaker/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+auto_translate_mode = 2
+theme_override_colors/font_color = Color(1, 0.909804, 0.6, 1)
+theme_override_colors/font_outline_color = Color(0.262745, 0.113725, 0.0509804, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 54
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("3_punch")]
+target = NodePath("../Shaker/Row/Icon")
+punch_scale = 0.22
+punch_sec = 0.28
+
+[node name="SfxLand" parent="." instance=ExtResource("4_sfx")]
+streams = Array[AudioStream]([ExtResource("5_coin1"), ExtResource("6_coin2"), ExtResource("7_coin3")])
+volume_db = -3.0
+min_interval_sec = 0.04

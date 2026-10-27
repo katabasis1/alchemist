@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/client/order_desk.gd" id="1_desk"]
+[ext_resource type="Resource" path="res://data/clients/baker.tres" id="2_baker"]
+[ext_resource type="Script" path="res://data/clients/client_data.gd" id="3_client_data"]
+
+[node name="OrderDesk" type="Node"]
+script = ExtResource("1_desk")
+ftue_clients = Array[ExtResource("3_client_data")]([ExtResource("2_baker"), ExtResource("2_baker")])
+free_client = ExtResource("2_baker")
