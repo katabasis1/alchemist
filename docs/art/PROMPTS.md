@@ -345,12 +345,12 @@ Single isolated game asset, centered, three-quarter front view seen slightly fro
 
 ## P-UI-08 — Пузырь заказа → `ui_order_bubble.png`
 
-Пустой пузырь: иконки заказа игра кладёт поверх. Хвостик — справа внизу, к клиенту. Холст 512×320.
+Пустой пузырь: фразу и иконки заказа игра кладёт поверх. Хвостик — справа внизу, к клиенту. Холст 512×320. Игра тянет пузырь как nine-patch (ASSET_REGISTRY): стороны должны быть ровными, а хвостик — маленьким и у самого угла. После cutout сверить поля и кончик хвостика с реестром.
 
 ```
 Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
 
-An empty speech bubble for a game order panel: a wide rounded rectangle of warm parchment cream with a soft painted paper texture, slightly darker toasted edges, a clean thick dark warm-brown outline, and a small rounded tail at the bottom right edge pointing down and to the right. The inside is completely empty and evenly lit so icons placed on it stay readable.
+An empty speech bubble for a game order panel: a wide rounded rectangle of warm parchment cream with a soft painted paper texture, slightly darker toasted edges, a clean thick dark warm-brown outline, and a small rounded tail at the bottom right edge, close to the corner, pointing down and to the right. Straight even sides and evenly rounded corners, so the panel can be stretched (nine-slice) without distortion. The inside is completely empty and evenly lit, with no pattern, so text and icons placed on it stay readable.
 
 Flat front view game UI element, centered, fully visible with generous empty margin, blank (no text, no icons). Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Landscape 1536x1024.
 ```

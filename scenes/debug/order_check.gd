@@ -185,6 +185,10 @@ func _check_arrival() -> void:
 	_check("пузырь: иконок свойства = нужные × сила, звёзд чистоты = сколько просит", _bubble_matches(first))
 	_check("реплика заказа видна", client.line_label.visible and client.line_label.text == tr(first.line_key)
 			and not client.line_label.text.is_empty())
+	_check("фраза — внутри пузыря, над иконками", _line_inside_bubble())
+	_check("фон пузыря — по содержимому, кончик хвостика в начале узла Bubble", _bubble_fits())
+	_check("пузырь не наезжает на ступку: кончик хвостика выше пестика", client.bubble.global_position.y < _pestle_top())
+	_check("портрет дышит: шейдер Breathe на Portrait", _breathes())
 
 
 func _check_empty_vessel() -> void:
@@ -457,10 +461,40 @@ func _check(title: String, ok: bool) -> void:
 		push_error("OrderCheck: не прошло — %s" % title)
 
 
+## Фраза целиком в фоне пузыря и выше ряда свойств.
+func _line_inside_bubble() -> bool:
+	var back: Rect2 = client.bubble_back.get_global_rect()
+	var line: Rect2 = client.line_label.get_global_rect()
+	return back.encloses(line) and line.end.y <= client.property_row.get_global_rect().position.y
+
+
+## Фон повторяет поля с содержимым, кончик хвостика — ровно в начале узла Bubble (ландшафт: хвостик справа внизу).
+func _bubble_fits() -> bool:
+	var content: Control = client.bubble_content
+	return client.bubble_back.size.is_equal_approx(content.size)
+			and content.size.is_equal_approx(content.get_combined_minimum_size())
+			and (content.position + content.size).is_equal_approx(client.tail_tip)
+
+
+## Верх пестика в покое — по рамке его спрайта с учётом поворота.
+func _pestle_top() -> float:
+	for child: Node in mortar.pestle.get_children():
+		var sprite: Sprite2D = child as Sprite2D
+		if sprite != null:
+			return (sprite.get_global_transform() * sprite.get_rect()).position.y
+	return -INF
+
+
+func _breathes() -> bool:
+	var breath: ShaderMaterial = client.portrait.material as ShaderMaterial
+	return breath != null and breath.shader != null and breath.shader.resource_path.ends_with("breathe.gdshader")
+			and float(breath.get_shader_parameter(&"lift_px")) > 0.0
+
+
 func _print_manual() -> void:
 	print("--- Ручная проверка ---")
-	print("1. После проверок приходит пекарша: в пузыре иконка жизни и звезда чистоты, под пузырём реплика,")
-	print("   через несколько секунд она гаснет.")
+	print("1. После проверок приходит пекарша: в пузыре сверху фраза, под ней иконка жизни и кристалл чистоты;")
+	print("   пузырь не задевает пестик. Пекарша еле заметно дышит: плечи и голова чуть поднимаются, лицо не плывёт.")
 	print("2. Бросьте шалфей в ступку, мелите до зелёной зоны. Тап по чаше (или потяните) — в руке баночка мази,")
 	print("   клиентка подсвечена.")
 	print("3. Баночка крупного помола: клиентка качает головой, баночка возвращается в чашу, смесь на месте.")
@@ -468,5 +502,6 @@ func _print_manual() -> void:
 	print("   по мере прилёта.")
 	print("5. Она уходит и через секунду приходит снова: бальзам покрепче, в пузыре две иконки.")
 	print("6. Отдайте огнецвет: расстроится, монет нет, заказ остаётся, она снова ждёт.")
-	print("7. Сузьте окно до портрета: клиентка сверху, пузырь справа, монеты летят в счётчик в углу.")
+	print("7. Сузьте окно до портрета: клиентка сверху, пузырь справа, хвостик смотрит на неё, текст не зеркальный;")
+	print("   монеты летят в счётчик в углу.")
 	print("8. F5 (main.tscn): после экрана загрузки клиентка приходит сама.")

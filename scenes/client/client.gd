@@ -1,6 +1,8 @@
 ## Client — клиент у прилавка (GDD §5–6): приходит, показывает заказ в пузыре, принимает баночку, реагирует, уходит.
-## Пузырь — только иконки (GDD §5.2): каждое нужное свойство столько раз, сколько звёзд силы требуется (цвет свойства —
-## modulate белой иконки), ниже кристаллы чистоты по числу её звёзд. Фраза клиента — строкой под пузырём, гаснет сама.
+## Пузырь (GDD §5.2): сверху короткая фраза клиента (атмосфера), ниже заказ иконками — каждое нужное свойство столько раз,
+## сколько звёзд силы требуется (цвет свойства — modulate белой иконки), под ним кристаллы чистоты по числу её звёзд.
+## Фон пузыря — NinePatchRect: растёт под фразу и иконки, кончик хвостика всегда в начале узла Bubble (оттуда пузырь
+## и выскакивает). В портретной раскладке пузырь справа от клиента: фон зеркалится, текст и иконки — нет.
 ## Баночку оценивает OrderJudge в момент приёма. Верный эффект: радость, served(verdict) — оплату и монеты делает
 ## владелец (OrderDesk), клиент сам уходит через react_sec. Неверный: качает головой, «уф», зелье пропадает,
 ## refused(verdict), клиент ждёт дальше — можно переделать (GDD §5.3).
@@ -10,7 +12,7 @@
 ##   &"busy" — сейчас не ждёт заказ, &"kind" — пустой сосуд, &"grind" — FTUE 1–3, помол не дошёл до «идеально».
 ## Зависимости: OrderJudge, DropTarget (kind &"potion"), CarryVessel (смесь, помол), StateMachine, JuicePunch,
 ##   SfxComponent ×3, DataCatalog (свойства), EconomyConfig через OrderJudge (зона «идеально»), order_icon.tscn,
-##   EventBus (поворот экрана: пузырь слева или справа от клиента).
+##   EventBus (поворот экрана: пузырь слева или справа от клиента). Портрет дышит сам — шейдер Breathe на Portrait.
 class_name Client
 extends Node2D
 
@@ -46,16 +48,16 @@ const EPSILON: float = 0.0001
 @export var happy_punch: float = 0.8
 @export var bubble_pop_sec: float = 0.2
 ## Фраза под пузырём видна столько секунд, потом гаснет.
-@export var line_sec: float = 4.5
-@export var line_fade_sec: float = 0.4
 @export_group("Пузырь")
 @export var icon_size_max: float = 64.0
 @export var icon_size_min: float = 36.0
 ## Ширина строки иконок в пузыре (локально): иконки ужимаются, чтобы влезть.
 @export var row_width: float = 330.0
 ## Где пузырь в ландшафте и в портрете (в портрете клиент слева — пузырь справа, хвостик отражён).
-@export var bubble_landscape: Vector2 = Vector2(-400.0, -540.0)
-@export var bubble_portrait: Vector2 = Vector2(400.0, -540.0)
+@export var bubble_landscape: Vector2 = Vector2(-237.0, -444.0)
+@export var bubble_portrait: Vector2 = Vector2(237.0, -444.0)
+## Кончик хвостика от правого нижнего угла картинки пузыря, px текстуры (ASSET_REGISTRY, ui_order_bubble).
+@export var tail_tip: Vector2 = Vector2(52.0, 40.0)
 @export_group("Узлы")
 @export var state_machine: StateMachine
 @export var judge: OrderJudge
@@ -64,7 +66,9 @@ const EPSILON: float = 0.0001
 @export var body: Node2D
 @export var portrait: Sprite2D
 @export var bubble: Node2D
-@export var bubble_sprite: Sprite2D
+@export var bubble_back: NinePatchRect
+## Поля, фраза и ряды иконок; его размер задаёт размер фона.
+@export var bubble_content: Control
 @export var property_row: HBoxContainer
 @export var purity_row: HBoxContainer
 @export var line_label: Label
@@ -78,7 +82,7 @@ const EPSILON: float = 0.0001
 var data: ClientData
 var order: OrderTemplate
 var _walk: Tween
-var _line: Tween
+var _portrait_layout: bool = false
 var _bubble_tween: Tween
 
 
@@ -90,6 +94,8 @@ func _ready() -> void:
 	drop_target.enabled = false
 	bubble.visible = false
 	line_label.visible = false
+	bubble_content.minimum_size_changed.connect(_fit_bubble, CONNECT_DEFERRED)
+	_fit_bubble()
 
 
 ## Клиент подходит к прилавку с заказом.
@@ -116,7 +122,6 @@ func leave() -> void:
 	state_machine.transition_to(STATE_LEAVING, true)
 	drop_target.enabled = false
 	_show_bubble(false)
-	_hide_line()
 	_walk = _restart(_walk)
 	_walk.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_walk.tween_property(body, ^"position", walk_offset, walk_sec)
@@ -153,7 +158,6 @@ func _on_arrived() -> void:
 	state_machine.transition_to(STATE_WAITING)
 	drop_target.enabled = true
 	_show_bubble(true)
-	_show_line()
 	arrived.emit()
 
 
@@ -186,7 +190,6 @@ func _on_received(draggable: Draggable) -> void:
 func _react(verdict: Dictionary) -> void:
 	if not state_machine.is_in(STATE_REACTING):
 		return
-	_hide_line()
 	if bool(verdict[OrderJudge.KEY_EFFECT]):
 		_set_portrait(data.portrait_happy if data != null and data.portrait_happy != null else null)
 		_show_bubble(false)
@@ -226,6 +229,8 @@ func _set_portrait(texture: Texture2D) -> void:
 func _fill_bubble() -> void:
 	_clear(property_row)
 	_clear(purity_row)
+	line_label.text = tr(order.line_key) if order != null and order.line_key != &"" else ""
+	line_label.visible = not line_label.text.is_empty()
 	if order == null:
 		return
 	var count: int = order.required.size() * order.strength_req
@@ -268,27 +273,22 @@ func _show_bubble(on: bool) -> void:
 		_bubble_tween.tween_callback(bubble.hide)
 
 
-func _show_line() -> void:
-	if order == null or order.line_key == &"":
-		return
-	line_label.text = tr(order.line_key)
-	line_label.visible = true
-	line_label.modulate.a = 1.0
-	_line = _restart(_line)
-	_line.tween_interval(line_sec)
-	_line.tween_property(line_label, ^"modulate:a", 0.0, line_fade_sec)
-	_line.tween_callback(line_label.hide)
-
-
-func _hide_line() -> void:
-	if _line != null and _line.is_valid():
-		_line.kill()
-	line_label.visible = false
+## Фон и поля — по размеру содержимого; кончик хвостика — в начале узла Bubble. Зовётся и отложенно, когда меняется
+## минимальный размер содержимого (перенос строк у фразы считается после раскладки).
+func _fit_bubble() -> void:
+	bubble_content.reset_size()
+	var content_size: Vector2 = bubble_content.size
+	var left: float = -tail_tip.x if _portrait_layout else tail_tip.x - content_size.x
+	bubble_content.position = Vector2(left, tail_tip.y - content_size.y)
+	bubble_back.size = content_size
+	bubble_back.scale = Vector2(-1.0, 1.0) if _portrait_layout else Vector2.ONE
+	bubble_back.position = bubble_content.position + Vector2(content_size.x if _portrait_layout else 0.0, 0.0)
 
 
 func _on_layout_changed(is_portrait: bool) -> void:
+	_portrait_layout = is_portrait
 	bubble.position = bubble_portrait if is_portrait else bubble_landscape
-	bubble_sprite.flip_h = is_portrait
+	_fit_bubble()
 
 
 func _restart(tween: Tween) -> Tween:
