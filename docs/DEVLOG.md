@@ -181,3 +181,13 @@
 - Новых текстов игрока нет.
 - Архив: `outbox/alchemist_update_gh-b8b2a80_to_v0.1.8.zip`, `archive/history/alchemist_v0.1.8_S2.4b_client_on_counter.zip`.
 - Следующий шаг: приёмка S2.4a/S2.4b; затем S2.5.
+
+## 2026-10-27 — сессия 27 — S2.4c Исправление order_check — v0.1.9
+- Pod снова пустой: рабочая копия восстановлена с GitHub `0cb47f1` («0.1.8»: v0.1.8 + `breathe.gdshader.uid` от Godot) — 462 текстовых файла через `dsbx … webbrowser` из песочницы, `git hash-object` совпали все; теги `gh-0cb47f1`, `v0.1.8`. Бинарники — заглушки (`placeholder_pngs.py`, `fx_textures.py`, `synth_sfx.py`, тихие ogg, пустые ttf/translation/jpg) в `.git/info/exclude`.
+- Ошибка от пользователя (скриншот редактора): `order_check.gd (475, 1): Expected statement, found "Indent"`. Причина: в S2.4a `return a` и продолжение `and b` на следующей строке с отступом — без скобок. GDScript (как Python) склеивает строки только внутри скобок или после `\`; вторая такая же строка — в `_breathes()` (491).
+- Исправление: оба выражения в скобках. Валидатор не видел ошибку → правило **G016**: логическая строка глубже предыдущей, а предыдущая не кончается `:` (с учётом скобок, `\` и строк в тройных кавычках). Фикстура `tools/validator_tests/bad/scripts/continuation.gd`. На старом `order_check.gd` — 2 ошибки G016 (475, 491), по проекту 0/0.
+- Самотест в рабочей копии агента по-прежнему падает на A003/A005–A007/F001/T013/T014/A001/X001 — нет бинарных фикстур (PNG/TTF не скачать веб-инструментом); G016 срабатывает, покрыто 72/72 правил. У пользователя с настоящими фикстурами самотест полный.
+- Файлы: scenes/debug/order_check.gd, tools/validate_project.py, tools/validator_tests/bad/expected_codes.txt, tools/validator_tests/bad/scripts/continuation.gd, project.godot (0.1.9), docs/PLAN.md, docs/PROGRESS.md, docs/HANDOFF.md, docs/DEVLOG.md
+- Новых текстов игрока нет.
+- Архив: `outbox/alchemist_update_gh-0cb47f1_to_v0.1.9.zip`.
+- Следующий шаг: S2.5 плейтест-скрипт (по просьбе пользователя — не дожидаясь отдельной приёмки S2.4a/b).

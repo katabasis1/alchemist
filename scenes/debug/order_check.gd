@@ -471,9 +471,9 @@ func _line_inside_bubble() -> bool:
 ## Фон повторяет поля с содержимым, кончик хвостика — ровно в начале узла Bubble (ландшафт: хвостик справа внизу).
 func _bubble_fits() -> bool:
 	var content: Control = client.bubble_content
-	return client.bubble_back.size.is_equal_approx(content.size)
+	return (client.bubble_back.size.is_equal_approx(content.size)
 			and content.size.is_equal_approx(content.get_combined_minimum_size())
-			and (content.position + content.size).is_equal_approx(client.tail_tip)
+			and (content.position + content.size).is_equal_approx(client.tail_tip))
 
 
 ## Верх пестика в покое — по рамке его спрайта с учётом поворота.
@@ -487,8 +487,8 @@ func _pestle_top() -> float:
 
 func _breathes() -> bool:
 	var breath: ShaderMaterial = client.portrait.material as ShaderMaterial
-	return breath != null and breath.shader != null and breath.shader.resource_path.ends_with("breathe.gdshader")
-			and float(breath.get_shader_parameter(&"lift_px")) > 0.0
+	return (breath != null and breath.shader != null and breath.shader.resource_path.ends_with("breathe.gdshader")
+			and float(breath.get_shader_parameter(&"lift_px")) > 0.0)
 
 
 func _print_manual() -> void:

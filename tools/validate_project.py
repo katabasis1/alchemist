@@ -232,6 +232,7 @@ RULES: dict[str, str] = {
     "G013": "несбалансированные скобки",
     "G014": "смешаны табы и пробелы в отступах",
     "G015": "ключ локализации из tr() не найден в strings.csv",
+    "G016": "лишний отступ: перенос выражения без скобок или `\\` (Godot: Expected statement, found \"Indent\")",
     "S001": "нет shader_type",
     "S002": "синтаксис шейдеров Godot 3 (hint_color, SCREEN_TEXTURE …)",
     "S003": "несбалансированные скобки в шейдере",
@@ -1216,6 +1217,12 @@ def check_gdscript(p: Project, rel: str) -> None:
     for k, ll in enumerate(code_lines):
         code = ll.code.strip()
         raw_first = raw_lines[ll.line - 1] if ll.line - 1 < len(raw_lines) else ""
+        # перенос выражения без скобок: строка глубже предыдущей, а та не кончается двоеточием
+        if k > 0:
+            prev = code_lines[k - 1]
+            if (indent_width(ll.indent) > indent_width(prev.indent) and not prev.code.strip().endswith(":")
+                    and '"""' not in prev.raw and "'''" not in prev.raw):
+                r.err("G016", rel, ll.line, f"{code[:50]} — оберните выражение в ( ) или поставьте \\ в конце строки {prev.line}")
         # блок после двоеточия
         if code.endswith(":"):
             nxt = code_lines[k + 1] if k + 1 < len(code_lines) else None
