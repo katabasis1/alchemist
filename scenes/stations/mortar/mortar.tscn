@@ -89,13 +89,13 @@ mouse_filter = 2
 [node name="Contents" type="Node2D" parent="Visual"]
 
 [node name="Pestle" type="Node2D" parent="Visual" node_paths=PackedStringArray("center", "tip_center")]
-position = Vector2(44, -214)
-rotation = 0.55
+position = Vector2(20, -216)
+rotation = 0.5
 script = ExtResource("16_pestle")
 center = NodePath("../GrindCenter")
 tip_center = NodePath("../BowlBottom")
-tip_reach = Vector2(48, 9)
-max_lean = 0.5
+tip_reach = Vector2(44, 9)
+max_lean = 0.35
 
 [node name="Sprite" type="Sprite2D" parent="Visual/Pestle"]
 scale = Vector2(0.55, 0.55)

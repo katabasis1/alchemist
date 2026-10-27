@@ -7,6 +7,7 @@ scenes/stations/mortar/mortar.tscn (узел Visual), функции shade_* п�
 
   python tools/art/mortar_preview.py --out /tmp/prev            # все кадры
   python tools/art/mortar_preview.py --out /tmp/prev --only rest,heap
+  python tools/art/mortar_preview.py --pestle-check               # поза покоя и края помола: пестик не «проваливается»
 
 Только Pillow + numpy. Собственный код проекта.
 """
@@ -643,7 +644,7 @@ RAYS_RECT = (-202.45, -560.0, 197.55, -258.0)        # Rays
 MOTES_POS = (-2.45, -262.0)                          # Motes
 CENTER = (-2.0, -272.0)                              # Visual/GrindCenter
 SLOTS = ((-56.0, -254.0), (32.0, -256.0))            # Slots/Two1, Two2
-PESTLE_REST = ((44.0, -214.0), 0.55)
+PESTLE_REST = ((20.0, -216.0), 0.5)               # Visual/Pestle в mortar.tscn
 PESTLE_GRIND = ((-36.0, -210.0), -0.35)
 POWDER_BASE = (0.86, 0.78, 0.6)
 DUST_COLOR = (0.9, 0.87, 0.82)
@@ -703,6 +704,40 @@ def frame(name: str) -> np.ndarray:
 
 
 FRAMES = ("rest", "land", "grind", "heap", "perfect", "overgrind")
+PESTLE_WOOD_ROWS = 364      # строки текстуры пестика выше этой — дерево (ручка и обойма), ниже — каменная головка
+PESTLE_CLEARANCE = 6.0      # запас от переднего края, px Visual (перелёт TRANS_BACK, сглаживание следования)
+
+
+def pestle_check() -> bool:
+    """Поза покоя и крайние позы помола из mortar.tscn: дерево пестика не должно заходить под передний край
+    (иначе пестик «проваливается» в ступу), головка — не уходить под боковые края горлышка (|dx| > 0.7 rx).
+    Головке за ближней стенкой быть можно: она в полости."""
+    from scipy.ndimage import maximum_filter
+    sc = parse_tscn("scenes/stations/mortar/mortar.tscn")
+    node = {n["_name"]: n for n in sc["nodes"]}
+    pn = node["Pestle"]
+    bottom = node["BowlBottom"]["position"]
+    reach, lean = pn.get("tip_reach", [60.0, 14.0]), pn.get("max_lean", 0.55)
+    pest = load("assets/props/prop_pestle.png")
+    wood = pest.copy()
+    wood[PESTLE_WOOD_ROWS:, :, 3] = 0
+    fa = sprite_layer(load("assets/props/prop_mortar_bowl_front.png"), (0, 0), 0, 0.7, (0, -256))[..., 3]
+    k = int(PESTLE_CLEARANCE * S) * 2 + 1
+    fa_d = maximum_filter((fa > 0.3).astype(np.float32), size=k)
+    X, _ = grid()
+    side = np.abs(X - MOUTH_C[0]) > 0.7 * MOUTH_R[0]
+    poses = [("покой", tuple(pn["position"]), pn["rotation"])]
+    for name, ox in (("помол вправо", 1.0), ("помол влево", -1.0)):
+        poses.append((name, (bottom[0] + ox * reach[0], bottom[1]), ox * lean))
+    ok = True
+    for name, tip, rot in poses:
+        w = float((sprite_layer(wood, tip, rot, 0.55, (0, -248))[..., 3] * fa_d).sum()) / (S * S)
+        h = float((sprite_layer(pest, tip, rot, 0.55, (0, -248))[..., 3] * fa * side).sum()) / (S * S)
+        good = w < 1.0 and (name != "покой" or h < 1.0)
+        ok &= good
+        print(f"{'OK ' if good else 'BAD'} {name}: кончик ({tip[0]:.0f},{tip[1]:.0f}) поворот {rot:+.2f} — "
+              f"дерево под передним краем {w:.0f} px², головка под боковым краем {h:.0f} px²")
+    return ok
 
 
 def main() -> None:
@@ -710,7 +745,10 @@ def main() -> None:
     ap.add_argument("--out", default="/tmp/prev")
     ap.add_argument("--only", default="")
     ap.add_argument("--sheet", default="", help="ещё и лист всех кадров (jpg)")
+    ap.add_argument("--pestle-check", action="store_true", help="только проверить позы пестика из mortar.tscn")
     a = ap.parse_args()
+    if a.pestle_check:
+        raise SystemExit(0 if pestle_check() else 1)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     names = [n for n in a.only.split(",") if n] or list(FRAMES)
