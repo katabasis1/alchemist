@@ -4,7 +4,7 @@
 ## Первая версия (S2.4): зелье несут прямо из ступки. S5.3 добавит репутацию в разбор, Гримуар и экран итога.
 ## Сигналы: нет. Методы: judge(order, mixture) → словарь-вердикт (ключи KEY_*); pay_for(order, verdict, streak, multiplier);
 ##   reputation_for(verdict) — звёзды + бонус за «безупречно» (GDD §5.3, репутацию не отнимаем).
-## Зависимости: EconomyConfig (порог значимости, звёзды силы и чистоты, оплата), OrderTemplate.
+## Зависимости: AlchemyRules (значимость, сила, чистота — GDD §3.2), EconomyConfig (звёзды, оплата), OrderTemplate.
 class_name OrderJudge
 extends Node
 
@@ -20,8 +20,6 @@ const KEY_STARS: StringName = &"stars"
 const KEY_FLAWLESS: StringName = &"flawless"
 ## Нужные свойства, которых в зелье нет (только следы или совсем нет).
 const KEY_MISSING: StringName = &"missing"
-## Сравнение с порогами: 4 доли из 5 — ровно 80 %, а не 79,999…
-const EPSILON: float = 0.0001
 
 @export var economy: EconomyConfig
 
@@ -29,18 +27,13 @@ const EPSILON: float = 0.0001
 func judge(order: OrderTemplate, mixture: Dictionary) -> Dictionary:
 	var missing: Array[StringName] = []
 	var weakest: int = economy.max_stars()
-	var wanted: float = 0.0
-	var total: float = 0.0
-	for property_id: StringName in mixture:
-		total += float(mixture[property_id])
 	for property_id: StringName in order.required:
-		var amount: float = float(mixture.get(property_id, 0.0))
-		wanted += amount
-		if not economy.is_significant(amount + EPSILON):
+		var amount: float = AlchemyRules.amount(mixture, property_id)
+		if not AlchemyRules.is_present(amount, economy):
 			missing.append(property_id)
-		weakest = mini(weakest, economy.strength_stars(amount + EPSILON))
-	var purity: float = wanted / total if total > 0.0 else 0.0
-	var purity_stars: int = economy.purity_stars(purity + EPSILON)
+		weakest = mini(weakest, AlchemyRules.strength_stars(amount, economy))
+	var purity: float = AlchemyRules.purity(mixture, order.required)
+	var purity_stars: int = AlchemyRules.purity_stars(purity, economy)
 	var effect: bool = missing.is_empty() and not order.required.is_empty()
 	var strength_ok: bool = effect and weakest >= order.strength_req
 	var purity_ok: bool = effect and purity_stars >= order.purity_req

@@ -6,7 +6,7 @@
 ## Перенос (S2.4): тело чаши — своя зона body_area. Потянул за неё или тапнул — из чаши появляется баночка (CarryVessel)
 ## со смесью, её несут клиенту (или тапом выбирают цель). Принята — hand_off: ступка пустеет. Не принята — баночка
 ## возвращается и прячется. Пока мелется (Grinding) или пусто, тело чаши не берётся.
-## Помол p (0…1) растёт на grind_per_circle самого твёрдого ингредиента за круг; извлечение — EconomyConfig.extraction.
+## Помол p (0…1) растёт на grind_per_circle самого твёрдого ингредиента за круг; извлечение и смесь — AlchemyRules.
 ## Полная или молотая ступка не подсвечивается как цель; бросок в неё — отскок (&"full" — мигают огоньки, &"ground").
 ## Монет не хватает — отскок и drop_refused(&"coins"): HUD вздрогнет счётчиком (S2.4).
 ## Сигналы: item_released(item) — ингредиент отдан обратно (полка ловит его в take_back);
@@ -14,7 +14,7 @@
 ##   &"ground"); grind_changed(grind) — помол изменился (0…1); handed_off(mixture) — содержимое отдано (клиенту).
 ## Зависимости: DropTarget, StateMachine (Empty / Loaded / Grinding / Ground), GrindGesture, HitArea (зона помола),
 ##   ZoneGauge (шкала), Pestle, StationTrash, CarryVessel + Draggable (перенос) + HitArea body_area, JuicePunch, SfxComponent, IngredientItem, EconomyConfig (вместимость,
-##   помол, извлечение), ToolData (улучшение «третий слот»), GameState (монеты, покупки), EventBus (пауза, поворот).
+##   числа помола), AlchemyRules (помол, извлечение, смесь), ToolData (улучшение «третий слот»), GameState (монеты, покупки), EventBus (пауза, поворот).
 class_name Mortar
 extends Node2D
 
@@ -149,38 +149,37 @@ func is_grinding() -> bool:
 	return state_machine.is_in(STATE_GRINDING)
 
 
-## Самый твёрдый ингредиент в чаше — по нему считается скорость помола (GDD §3.3).
+## Данные ингредиентов в чаше по порядку броска (без пустых).
+func ingredients() -> Array[IngredientData]:
+	var result: Array[IngredientData] = []
+	for item: IngredientItem in items:
+		if item.data != null:
+			result.append(item.data)
+	return result
+
+
+## Самый твёрдый ингредиент в чаше — по нему считается скорость помола (GDD §3.3, AlchemyRules.hardest).
 func hardest() -> IngredientData.Hardness:
-	var result: IngredientData.Hardness = IngredientData.Hardness.SOFT
-	for item: IngredientItem in items:
-		if item.data != null and item.data.hardness > result:
-			result = item.data.hardness
-	return result
+	return AlchemyRules.hardest(ingredients())
 
 
-## Доля извлечения свойств при текущем помоле (GDD §3.3).
+## Доля извлечения свойств при текущем помоле (GDD §3.3, AlchemyRules.extraction).
 func extraction() -> float:
-	return economy.extraction(grind) if economy != null else 1.0
+	return AlchemyRules.extraction(grind, economy) if economy != null else 1.0
 
 
-## Свойства смеси в ступке: сумма свойств ингредиентов × извлечение (GDD §3.2–3.3). Её понесут клиенту (S2.4).
+## Свойства смеси в ступке: сумма свойств ингредиентов × извлечение (GDD §3.2–3.3, AlchemyRules.extract).
+## Её понесут клиенту (S2.4).
 func mixture() -> Dictionary[StringName, float]:
-	var result: Dictionary[StringName, float] = {}
-	var k: float = extraction()
-	for item: IngredientItem in items:
-		if item.data == null:
-			continue
-		for property_id: StringName in item.data.properties:
-			result[property_id] = result.get(property_id, 0.0) + item.data.properties[property_id] * k
-	return result
+	return AlchemyRules.extract(ingredients(), extraction())
 
 
 ## Добавить помол в кругах (жест, тап, проверки). Шкала стоит на 1.
 func add_circles(circles: float) -> void:
 	if items.is_empty() or circles <= 0.0:
 		return
-	var per_circle: float = economy.grind_per_circle(hardest()) if economy != null else 0.0
-	set_grind(grind + circles * per_circle)
+	if economy != null:
+		set_grind(AlchemyRules.grind_after(grind, circles, ingredients(), economy))
 
 
 func set_grind(value: float, instant: bool = false) -> void:
