@@ -1,10 +1,10 @@
 # PROGRESS — где мы сейчас
 
-**Обновлено:** 2026-10-27 (сессия 36)
-**Версия:** 0.2.3 (тег `v0.2.3`) — S3.3: стенд правил алхимии в Godot `scenes/debug/rules_check.tscn`. M2 (плейтест v0.2.0) отложен пользователем: «плейтесты потом»
-**Текущий этап:** S3 — алхимическое ядро
-**Текущий подэтап:** S3.3 (v0.2.3) выдан — стенд правил в Godot; ждём приёмки S3.1–S3.3 вместе, дальше S4.1 (шейдер слоёной жидкости)
-**Репозиторий:** https://github.com/katabasis1/alchemist (`main`, коммит пользователя `cb72542` «0.2.2» = v0.2.2 + два `*.uid`; тег агента `gh-cb72542`)
+**Обновлено:** 2026-10-28 (сессия 39)
+**Версия:** 0.2.4 (тег `v0.2.4`) — S4.1: шейдер слоёной жидкости `components/liquid/` + стенд `scenes/debug/liquid_check.tscn`. M2 (плейтест v0.2.0) отложен пользователем: «плейтесты потом»
+**Текущий этап:** S4 — станции 2 и 3
+**Текущий подэтап:** S4.1 (v0.2.4) выдан — шейдер жидкости; ждём `LIQUID CHECK` и взгляд на колбы у пользователя, дальше S4.2 (колба-отстойник)
+**Репозиторий:** https://github.com/katabasis1/alchemist (`main`, коммит пользователя `5a01c6e`; тег агента `gh-5a01c6e`)
 **Что делается прямо сейчас (по шагам):** `docs/HANDOFF.md`, в Pod — `HANDOFF.md` в корне. Читать первым.
 
 ## Статус S0–S2
@@ -38,7 +38,17 @@
 - [x] S3.2 Распознавание рецептов + данные Гримуара (v0.2.2): `data/alchemy/grimoire_rules.gd` — `class_name GrimoireRules`, статические чистые функции: `recognize` (рецепт по набору значимых свойств, следы и порядок ключей не важны; нет рецепта — «Странная смесь», null), `brew` (сила, чистота, «безупречно» — по своему рецепту, так одна оценка годится клиенту и Ростку), страница `{brews, best_strength, best_purity, flawless}` — `after_brew` (рекорды силы и чистоты раздельно, вход не меняет), `is_golden` (≥ `golden_page_flawless` = 3, не хранится), `parse_page`/`parse_grimoire` (JSON-числа → целые, мусор → 0, старый формат S1.4, идемпотентно). «Безупречно» — одно место `AlchemyRules.is_flawless` (+ `weakest_stars`), OrderJudge — через них. `GameState.record_brew(mixture)` → страница, `EventBus.recipe_discovered` / `grimoire_page_golden`, запрос записи; Гримуар разбирается в `from_dict`. Client — сигнал `potion_received(mixture)`, OrderDesk пишет каждую отданную баночку (и при отказе, GDD §3.5). Эталоны: `tools/alchemy/grimoire_model.py --self-test` — 132, `rules_model.py` — 86 (мутации убиты). Godot: `scenes/debug/grimoire_check.tscn` — 31 проверка (случаи эталона, сверка с OrderJudge на всех заказах, путь через GameState, сохранение → JSON → загрузка), `order_check` — 64 (+3: Гримуар через OrderDesk). GDD §3.5 — блок «Как это считается»
 - [x] S3.3 Стенд правил (v0.2.3): `scenes/debug/rules_check.tscn` — те же случаи, что `rules_model.py --self-test`, на настоящем `AlchemyRules`: числа GDD §3.2–3.4 (помол и извлечение, значимость, сила, чистота, сложение, слои и их толщины, слив и струя, температура, точное время выше точки, пар и дым), качество §5.3 (`weakest_stars`, `is_flawless`), летучесть §3.4 (летучие по точке, стойкие, горелка по окнам снимает {Холод} → {+Сон} → {+Едкость}), пути всех 20 рецептов из `hint_steps` и запасной путь «Согревающего бальзама», шаг dt не меняет итог (горелка: равное и случайное дробление тика; слив по кадрам; помол тапами = кругами), порядок ключей и повтор вызова. 85 проверок = 84 случая эталона (без сверки имён .gd ↔ .py — её делает Python) + «каталог на месте»; итог `RULES CHECK: 85/85 OK`, упавший путь печатает значимые свойства и ход. Симулятор путей игрока `scenes/debug/rule_paths.gd` — статические функции (preload, без `class_name`), копия `run_path` и соседей из `rules_model.py`; рецепт узнаёт `GrimoireRules.recognize`
 
-## Ждём от пользователя (S3.1–S3.3, v0.2.3)
+## Статус S4
+- [x] S4.1 Шейдер слоёной жидкости (v0.2.4): сначала референсы ImageGen в стиле игры (`docs/art/refs/ref_liquid_layers_4|tilt_pour|closeup|patterns_sheet.jpg`), потом по ним шейдер `components/liquid/liquid.gdshader`: до 6 слоёв по плотности, у каждого свойства свой узор (пузырьки, искры, листочки, снежинки, звёздочки, лучи), светлая кромка поверхности, светящиеся швы, муть отстаивания, наклон с горизонтом и раскачка, стекло колбы поверх. Слои — `LiquidLayers.view` (из `AlchemyRules.layers`); узел `Liquid` (`show_mixture`, `stir`, `bump`, `surface_tilt`); раскачка — ресурс `LiquidSlosh` (`data/liquid/liquid_slosh.tres`). Эталон `python tools/alchemy/liquid_model.py --self-test` → `LIQUID: 49/49 OK`, макет кадров без Godot — `tools/art/liquid_preview.py`. Стенд `liquid_check.tscn` → `LIQUID CHECK: 28/28 OK`.
+
+## Ждём от пользователя (S3.1–S4.1, v0.2.4)
+1. Распаковать **`outbox/alchemist_update_gh-5a01c6e_to_v0.2.4.zip`** поверх проекта (картинок в архиве нет, кроме того, что уже было у вас), открыть в Godot 4.7 — без ошибок разбора скриптов и шейдера, закоммитить вместе с новыми `*.uid` (`liquid.gd.uid`, `liquid_layers.gd.uid`, `liquid_slosh.gd.uid`, `liquid_check.gd.uid`) и запушить.
+2. `scenes/debug/liquid_check.tscn` → **F6** → `LIQUID CHECK: 28/28 OK` (секунд десять). Посмотреть на колбы: узоры, швы, слив, муть раз в 3 с, качание и рывки вбок. Если что-то не так — скриншот и строки `[!!]` с красными ошибками.
+3. Если ещё не запускали: `rules_check.tscn` → `RULES CHECK: 85/85 OK`; `grimoire_check.tscn` → `GRIMOIRE CHECK: 31/31 OK`; `order_check.tscn` → `ORDER: 64/64 OK`.
+4. По желанию: `python tools/alchemy/liquid_model.py --self-test` → `LIQUID: 49/49 OK`; `python tools/art/liquid_preview.py --out кадры/` — кадры жидкости без Godot.
+5. Плейтест M2 (`docs/playtest/PLAYTEST_M2.md`) — когда будет удобно; пользователь отложил его.
+
+## Ждём от пользователя раньше (S3.1–S3.3, v0.2.3)
 1. Распаковать **`outbox/alchemist_update_gh-cb72542_to_v0.2.3.zip`** поверх проекта (только S3.3: v0.2.2 уже на GitHub; картинок нет), открыть в Godot 4.7 — без ошибок разбора скриптов, закоммитить вместе с новыми `*.uid` (`rules_check.gd.uid`, `rule_paths.gd.uid`) и запушить.
 2. `scenes/debug/rules_check.tscn` → **F6** → `RULES CHECK: 85/85 OK` (мгновенно). При `FAIL` — прислать строки `FAIL`, строку под упавшим путём и красные ошибки.
 3. Приёмка S3.2 (если ещё не запускали): `grimoire_check.tscn` → `GRIMOIRE CHECK: 31/31 OK`; `order_check.tscn` → `ORDER: 64/64 OK` (секунд пятнадцать, экран не трогать).
@@ -54,9 +64,10 @@
 5. Провести плейтест по `docs/playtest/PLAYTEST_M2.md` (5 тестеров), сводка — `python tools/playtest/summarize.py плейтест/`. Сводку, листы наблюдений и ответы опроса — в Pod `inbox/playtest/`.
 
 ## Следующий шаг
-- Сверить GitHub (AGENTS.md §2.2; `commits?sha=main&nc=…`): подтянуть `rules_check.gd.uid`, `rule_paths.gd.uid` и прочие `*.uid`/`*.import`.
-- Приёмка S3.1–S3.3 по итогам `RULES CHECK`, `GRIMOIRE CHECK`, `ORDER` у пользователя; при `FAIL` — чинить причину (сначала воспроизвести на Python-эталоне).
-- **S4.1** шейдер слоёной жидкости (до 4 слоёв, волна, мениск, блик, наклон, уровень) — первый подэтап станций 2 и 3; слои и толщины берёт из `AlchemyRules.layers`/`layer_heights`. Перед началом — чек-лист в `docs/HANDOFF.md`.
+- Сверить GitHub (AGENTS.md §2.2; `commits?sha=main&nc=…`): подтянуть `*.uid` жидкости и прочие `*.uid`/`*.import`.
+- Приёмка S4.1 по `LIQUID CHECK` и взгляду пользователя на колбы; при `[!!]` — чинить причину (сначала воспроизвести на `liquid_model.py`). Если шейдер ругается в Compatibility/WebGL 2 — первым делом смотреть массивы uniform (`layer_colors` идёт как `PackedVector4Array`).
+- **S4.2** колба-отстойник: расслаивание, слив удержанием, граница слоя, шкала чистоты — на узле `Liquid` (`show_mixture(смесь, слив)`, `stir()`), без своего рисования жидкости. Перед началом — чек-лист в `docs/HANDOFF.md`.
+- Финальная колба `prop_flask_round` (ChatGPT Image по `docs/art/PROMPTS.md`) встаёт без правок, если холст и форма те же; иначе подстроить группу `shape` в `liquid_material.tres`.
 - Плейтест M2 — когда пользователь вернётся к нему.
 
 ## Блокеры

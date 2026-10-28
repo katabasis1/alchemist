@@ -1,0 +1,29 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://components/liquid/liquid.gdshader" id="1_liquid"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_liquid")
+shader_parameter/bulb_center = Vector2(189.0, 355.0)
+shader_parameter/bulb_radius = 124.0
+shader_parameter/neck_half_width = 40.0
+shader_parameter/neck_top = 60.0
+shader_parameter/column_height = 212.0
+shader_parameter/surface_squash = 0.2
+shader_parameter/idle_wave_px = 1.6
+shader_parameter/idle_wave_speed = 1.4
+shader_parameter/seam_px = 3.5
+shader_parameter/seam_glow = 0.55
+shader_parameter/edge_shade = 0.85
+shader_parameter/center_glow = 0.22
+shader_parameter/top_light = 0.45
+shader_parameter/rim_light = 0.9
+shader_parameter/meniscus_light = 0.5
+shader_parameter/caustic_light = 0.4
+shader_parameter/pattern_px = 46.0
+shader_parameter/pattern_alpha = 0.8
+shader_parameter/pattern_speed = 0.1
+shader_parameter/pattern_skip = 0.15
+shader_parameter/murk_swirl_px = 48.0
+shader_parameter/murk_blend = 0.6

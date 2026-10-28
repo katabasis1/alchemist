@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="LiquidSlosh" format=3]
+
+[ext_resource type="Script" path="res://data/liquid/liquid_slosh.gd" id="1_slosh"]
+
+[resource]
+script = ExtResource("1_slosh")
+stiffness = 70.0
+damping = 5.0
+per_accel = 0.00012
+rotation_drag = 0.35
+max_angle = 0.5
+bump_decay = 2.6
+bump_frequency = 9.0

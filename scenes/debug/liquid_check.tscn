@@ -1,0 +1,81 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/liquid_check.gd" id="1_check"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="3_economy"]
+[ext_resource type="Resource" path="res://data/liquid/liquid_slosh.tres" id="4_slosh"]
+[ext_resource type="PackedScene" path="res://components/liquid/liquid.tscn" id="5_liquid"]
+
+[node name="LiquidCheck" type="Node2D" node_paths=PackedStringArray("singles_row", "layered", "six", "poured", "stirred", "swing", "shaker", "probe")]
+script = ExtResource("1_check")
+catalog = ExtResource("2_catalog")
+economy = ExtResource("3_economy")
+slosh = ExtResource("4_slosh")
+singles_row = NodePath("Singles")
+layered = NodePath("Layered")
+six = NodePath("Six")
+poured = NodePath("Poured")
+stirred = NodePath("Stirred")
+swing = NodePath("Swing")
+shaker = NodePath("Shaker")
+probe = NodePath("Probe")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0.937255, 0.835294, 0.643137, 1)
+
+[node name="Singles" type="Node2D" parent="."]
+
+[node name="Acid" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(260, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Heat" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(540, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Life" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(820, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Cold" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(1100, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Sleep" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(1380, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Light" parent="Singles" instance=ExtResource("5_liquid")]
+position = Vector2(1660, 270)
+scale = Vector2(0.42, 0.42)
+
+[node name="Layered" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(200, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Six" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(450, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Poured" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(700, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Stirred" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(950, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Swing" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(1200, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Shaker" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(1450, 780)
+scale = Vector2(0.42, 0.42)
+
+[node name="Probe" parent="." instance=ExtResource("5_liquid")]
+position = Vector2(1700, 780)
+scale = Vector2(0.42, 0.42)

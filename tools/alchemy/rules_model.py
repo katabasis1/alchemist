@@ -95,6 +95,8 @@ class PropertyData:
     density_rank: int = 1
     evaporate_temp: float = NEVER
     burn_temp: float = NEVER
+    color: tuple = (1.0, 1.0, 1.0, 1.0)   # PropertyData.color (RGBA 0…1) — для шейдера жидкости (S4.1)
+    pattern: int = 0                       # PropertyData.Pattern
 
     def evaporates_at(self, temp: float) -> bool:
         return self.evaporate_temp >= 0.0 and temp >= self.evaporate_temp
@@ -466,6 +468,12 @@ def _value(raw: str):
         return raw
 
 
+def _color(raw: str) -> tuple:
+    """Color(r, g, b, a) из .tres → кортеж; нет поля — белый (как PropertyData.color по умолчанию)."""
+    match = re.match(r"^Color\(([^)]*)\)$", raw.strip())
+    return tuple(float(part) for part in match.group(1).split(",")) if match else (1.0, 1.0, 1.0, 1.0)
+
+
 def read_tres(path: Path) -> tuple[dict, dict]:
     """(поля [resource], ext_resource id → путь от res://)."""
     fields: dict = {}
@@ -499,7 +507,8 @@ def load_catalog(root: Path = ROOT) -> DataCatalog:
     for rel in _ext_list(fields["properties"], ext):
         f, _ = read_tres(root / rel)
         catalog.properties.append(PropertyData(_value(f["id"]), int(_value(f["density_rank"])),
-                                               float(_value(f["evaporate_temp"])), float(_value(f["burn_temp"]))))
+                                               float(_value(f["evaporate_temp"])), float(_value(f["burn_temp"])),
+                                               _color(f.get("color", "")), int(_value(f.get("pattern", "0")))))
     for rel in _ext_list(fields["ingredients"], ext):
         f, _ = read_tres(root / rel)
         props = {key: float(val) for key, val in _value(f["properties"]).items()}
