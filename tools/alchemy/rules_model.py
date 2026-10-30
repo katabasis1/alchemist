@@ -364,6 +364,82 @@ def pour_tail(held: float, economy: EconomyConfig) -> float:
     return pour_rate(max(held, 0.0), economy) * economy.pour_stop_time * 0.5
 
 
+def pour_tail_after(held: float, since: float, economy: EconomyConfig) -> float:
+    stop = economy.pour_stop_time
+    rate = pour_rate(max(held, 0.0), economy)
+    if stop <= 0.0:
+        return 0.0
+    time = _clampf(since, 0.0, stop)
+    return rate * (time - time * time / (2.0 * stop))
+
+
+def pour_between(mixture: dict, poured_from: float, poured_to: float, catalog: DataCatalog,
+                 economy: EconomyConfig) -> dict:
+    low = _clampf(poured_from, 0.0, 1.0)
+    high = _clampf(poured_to, 0.0, 1.0)
+    if high <= low:
+        return {}
+    before = pour_top(mixture, low, catalog, economy)[KEY_TOP]
+    after = pour_top(mixture, high, catalog, economy)[KEY_TOP]
+    result = {}
+    for property_id in after:
+        result[property_id] = after[property_id] - amount(before, property_id)
+    return cleaned(result)
+
+
+def cut_marks(mixture: dict, catalog: DataCatalog, economy: EconomyConfig) -> list:
+    heights = layer_heights(mixture, catalog, economy)
+    result = []
+    mark = 0.0
+    for i in range(len(heights) - 1, 0, -1):
+        mark += heights[i]
+        result.append(mark)
+    return result
+
+
+def cut_admixture(mixture: dict, poured: float, catalog: DataCatalog, economy: EconomyConfig) -> float:
+    ids = layers(mixture, catalog)
+    split = pour_top(mixture, poured, catalog, economy)
+    marks = cut_marks(mixture, catalog, economy)
+    best = 1.0
+    for k in range(len(marks)):
+        boundary = len(ids) - 1 - k
+        stray = 0.0
+        if poured >= marks[k]:
+            vessel = split[KEY_TOP]
+            for i in range(boundary):
+                stray += amount(vessel, ids[i])
+        else:
+            vessel = split[KEY_BOTTOM]
+            for i in range(boundary, len(ids)):
+                stray += amount(vessel, ids[i])
+        whole = total(vessel)
+        if whole > 0.0:
+            best = min(best, stray / whole)
+    return best
+
+
+def clean_bands(mixture: dict, catalog: DataCatalog, economy: EconomyConfig) -> list:
+    ids = layers(mixture, catalog)
+    heights = layer_heights(mixture, catalog, economy)
+    limit = economy.clean_cut_admixture
+    ratio = limit / (1.0 - limit)
+    whole = total(cleaned(mixture))
+    result = []
+    mark = 0.0
+    above = 0.0
+    for i in range(len(ids) - 1, 0, -1):
+        upper = amount(mixture, ids[i])
+        lower = i - 1
+        mark += heights[i]
+        above += upper
+        below = whole - above
+        up_reach = min(heights[i], heights[i] / upper * below * ratio)
+        down_reach = min(heights[lower], heights[lower] / amount(mixture, ids[lower]) * above * ratio)
+        result.append((mark - up_reach, mark + down_reach))
+    return result
+
+
 # --- AlchemyRules: нагрев (GDD §3.3, §3.4) -------------------------------------------------------------------------
 def temp_after(temp: float, heating: bool, dt: float, economy: EconomyConfig) -> float:
     start = _clampf(temp, economy.room_temp, economy.max_temp)
@@ -431,6 +507,8 @@ RULE_FUNCTIONS = [
     "total", "amount", "cleaned", "combine", "scaled", "is_present", "significant", "traces", "strength_stars",
     "purity", "purity_stars", "weakest_stars", "is_flawless", "hardest", "grind_per_circle", "grind_after", "extraction", "extract", "ground",
     "layers", "layer_heights", "pour_top", "height_above_layer", "pour_rate", "pour_height", "pour_tail",
+    "pour_tail_after", "pour_between",
+    "cut_marks", "cut_admixture", "clean_bands",
     "temp_after", "time_at_or_above", "heat", "steaming", "burning", "_lies_below",
 ]
 
@@ -672,6 +750,11 @@ def _same_mix(a: dict, b: dict, tol: float = DT_TOLERANCE) -> bool:
     return list(a) == list(b) and all(_near(a[key], b[key], tol) for key in a)
 
 
+def _same_amounts(a: dict, b: dict, tol: float = DT_TOLERANCE) -> bool:
+    """Те же доли, порядок ключей не важен (смесь, собранная combine из частей)."""
+    return sorted(a) == sorted(b) and all(_near(a[key], b[key], tol) for key in a)
+
+
 def check_numbers(c: Checks, catalog: DataCatalog) -> None:
     e = catalog.economy
     ing = catalog.ingredient
@@ -865,6 +948,102 @@ def check_dt(c: Checks, catalog: DataCatalog) -> None:
     c.check("помол: 36 тапов = 9 кругов", _near(by_taps, grind_after(0.0, 9.0, herbs, e)))
 
 
+CUT_SWEEP_STEPS = 1000      # шкала среза: сетка по слитой высоте 0…1
+CUT_SWEEP_MIXES = (
+    {"heat": 2.0, "acid": 1.0},
+    {"heat": 3.0, "life": 0.1},
+    {"light": 1.0, "life": 1.0, "acid": 1.0},
+    {"light": 1.2, "acid": 0.4, "life": 2.0, "cold": 0.9, "sleep": 0.35, "heat": 1.1},
+    {"sleep": 2.0, "cold": 0.05, "heat": 0.7},
+    {"light": 3.0, "acid": 0.3},
+)
+
+
+def _in_bands(poured: float, bands: list, tol: float) -> int:
+    """1 — внутри полосы, 0 — снаружи, -1 — у самого края (ближе tol): не судим."""
+    for low, high in bands:
+        if abs(poured - low) <= tol or abs(poured - high) <= tol:
+            return -1
+        if low < poured < high:
+            return 1
+    return 0
+
+
+def check_cut(c: Checks, catalog: DataCatalog) -> None:
+    """Колба-отстойник S4.2: примесь среза и чистые полосы шкалы среза."""
+    e = catalog.economy
+    m = e.clean_cut_admixture
+    c.check("порог чистого среза — 5 %", m == 0.05)
+    two = {"heat": 2.0, "acid": 1.0}
+    c.check("риски среза: Жар 2 над Едкостью 1 — одна риска на 2/3",
+            len(cut_marks(two, catalog, e)) == 1 and _near(cut_marks(two, catalog, e)[0], 2 / 3))
+    c.check("срез точно по границе — примеси нет", cut_admixture(two, 2 / 3, catalog, e) <= EPSILON)
+    c.check("недолил (0,5): в Отстойнике осталась Жар 0,5 из 1,5 — примесь 1/3",
+            _near(cut_admixture(two, 0.5, catalog, e), 1 / 3))
+    c.check("перелил (0,75): в Приёмник ушла Едкость 0,25 из 2,25 — примесь 1/9",
+            _near(cut_admixture(two, 0.75, catalog, e), 1 / 9))
+    bands = clean_bands(two, catalog, e)
+    c.check("чистая полоса: 2/3 − 1/57 … 2/3 + 2/57 (недолив дороже: Жар толще)",
+            len(bands) == 1 and _near(bands[0][0], 2 / 3 - 1 / 57) and _near(bands[0][1], 2 / 3 + 2 / 57),
+            str(bands))
+    c.check("на краях полосы примесь ровно 5 %",
+            _near(cut_admixture(two, bands[0][0], catalog, e), m)
+            and _near(cut_admixture(two, bands[0][1], catalog, e), m))
+    c.check("один слой: рисок и полос нет, чистого среза нет (1,0)",
+            cut_marks({"life": 2.0}, catalog, e) == [] and clean_bands({"life": 2.0}, catalog, e) == []
+            and cut_admixture({"life": 2.0}, 0.5, catalog, e) == 1.0)
+    c.check("пусто: рисок и полос нет", cut_marks({}, catalog, e) == [] and clean_bands({}, catalog, e) == []
+            and cut_admixture({}, 0.3, catalog, e) == 1.0)
+    trace = clean_bands({"heat": 3.0, "life": 0.1}, catalog, e)
+    c.check("тонкий слой-след (Жизнь 0,1 на 10 %): полоса от самого верха — чисто и без слива",
+            len(trace) == 1 and trace[0][0] == 0.0 and _near(trace[0][1], 0.1 + 0.9 / 3.0 * 0.1 / 19.0),
+            str(trace))
+    three = {"light": 1.0, "life": 1.0, "acid": 1.0}
+    bands = clean_bands(three, catalog, e)
+    c.check("три слоя: две полосы сверху вниз, у каждой своя асимметрия",
+            len(bands) == 2 and _near(bands[0][0], 1 / 3 - 2 / 57) and _near(bands[0][1], 1 / 3 + 1 / 57)
+            and _near(bands[1][0], 2 / 3 - 1 / 57) and _near(bands[1][1], 2 / 3 + 2 / 57), str(bands))
+    c.check("середина среднего слоя: примесь — по ближней границе (1/3)",
+            _near(cut_admixture(three, 0.5, catalog, e), 1 / 3))
+    c.check("слив за пределы столба считается как весь столб",
+            cut_admixture(two, 1.5, catalog, e) == cut_admixture(two, 1.0, catalog, e)
+            and cut_admixture(two, -0.2, catalog, e) == cut_admixture(two, 0.0, catalog, e))
+    bad = []
+    for mixture in CUT_SWEEP_MIXES:
+        bands = clean_bands(mixture, catalog, e)
+        marks = cut_marks(mixture, catalog, e)
+        ok_marks = len(bands) == len(marks) and all(low <= mark <= high for (low, high), mark in zip(bands, marks))
+        ok_marks = ok_marks and marks == sorted(marks)
+        if not ok_marks:
+            bad.append("%s: полосы %s, риски %s" % (mixture, bands, marks))
+        for step in range(CUT_SWEEP_STEPS + 1):
+            poured = step / CUT_SWEEP_STEPS
+            inside = _in_bands(poured, bands, 1e-7)
+            if inside < 0:
+                continue
+            clean = cut_admixture(mixture, poured, catalog, e) <= m
+            if clean != (inside == 1):
+                bad.append("%s @ %.3f: примесь %.4f, в полосе %s" % (
+                    mixture, poured, cut_admixture(mixture, poured, catalog, e), inside == 1))
+                break
+    c.check("полосы = где примесь ≤ 5 %% (%d смесей × %d точек), риска внутри своей полосы"
+            % (len(CUT_SWEEP_MIXES), CUT_SWEEP_STEPS + 1), not bad, "; ".join(bad[:3]))
+    mixture = CUT_SWEEP_MIXES[3]
+    keys = list(mixture)
+    rng = random.Random(11)
+    base = (clean_bands(mixture, catalog, e), cut_marks(mixture, catalog, e),
+            [cut_admixture(mixture, k / 20, catalog, e) for k in range(21)])
+    same = True
+    for _ in range(10):
+        rng.shuffle(keys)
+        shuffled = {key: mixture[key] for key in keys}
+        got = (clean_bands(shuffled, catalog, e), cut_marks(shuffled, catalog, e),
+               [cut_admixture(shuffled, k / 20, catalog, e) for k in range(21)])
+        same = same and all(_near(a, b, 1e-12) for a, b in zip(sum(map(list, got[0]), []), sum(map(list, base[0]), [])))
+        same = same and all(_near(a, b, 1e-12) for a, b in zip(got[1] + got[2], base[1] + base[2]))
+    c.check("порядок ключей не меняет риски, полосы и примесь", same)
+
+
 def check_determinism(c: Checks, catalog: DataCatalog) -> None:
     e = catalog.economy
     mixture = {"light": 1.2, "acid": 0.4, "life": 2.0, "cold": 0.9, "sleep": 0.35, "heat": 1.1}
@@ -883,6 +1062,50 @@ def check_determinism(c: Checks, catalog: DataCatalog) -> None:
     c.check("порядок ключей на входе не меняет слои и слив", ok)
     c.check("повтор того же вызова — тот же результат (с порядком ключей)",
             pour_top(mixture, 0.45, catalog, e) == base_split)
+
+
+def check_pour_session(c: Checks, catalog: DataCatalog) -> None:
+    """Колба-отстойник S4.2: хвост струи по времени и что ушло в Приёмник между двумя высотами слива."""
+    e = catalog.economy
+    stop = e.pour_stop_time
+    c.check("хвост: сразу после отпускания ещё ничего не дотекло", pour_tail_after(1.0, 0.0, e) == 0.0
+            and pour_tail_after(1.0, -0.3, e) == 0.0)
+    c.check("хвост: к концу затухания дотекло ровно pour_tail (и дальше не растёт)",
+            _near(pour_tail_after(1.0, stop, e), pour_tail(1.0, e))
+            and _near(pour_tail_after(0.2, stop, e), pour_tail(0.2, e))
+            and pour_tail_after(1.0, stop * 5.0, e) == pour_tail_after(1.0, stop, e))
+    c.check("хвост: скорость спадает ровно — к середине затухания дотекло 3/4 хвоста",
+            _near(pour_tail_after(1.0, stop * 0.5, e), 0.75 * pour_tail(1.0, e))
+            and _near(pour_tail_after(0.2, stop * 0.5, e), 0.005625))
+    worst = 0.0
+    for dt in (1 / 30, 1 / 60, 1 / 144, 0.007):
+        since = 0.0
+        tail = 0.0
+        while since < stop * 1.5:
+            tail += pour_tail_after(0.8, since + dt, e) - pour_tail_after(0.8, since, e)
+            since += dt
+        worst = max(worst, abs(tail - pour_tail(0.8, e)))
+    c.check("хвост по кадрам = хвост целиком (макс. расхождение %.1e)" % worst, worst < 1e-12)
+    m = {"light": 1.2, "acid": 0.4, "life": 2.0, "cold": 0.9, "sleep": 0.35, "heat": 1.1}
+    c.check("между 0 и h ушло то же, что pour_top(h).top",
+            all(_same_mix(pour_between(m, 0.0, h, catalog, e), pour_top(m, h, catalog, e)[KEY_TOP], 1e-12)
+                for h in (0.0, 0.07, 0.3, 0.55, 0.999, 1.0)))
+    c.check("между 0 и 1 ушло всё", _same_mix(pour_between(m, 0.0, 1.0, catalog, e), cleaned(m), 1e-12))
+    c.check("между h и h, назад и за пределами столба — пусто",
+            pour_between(m, 0.4, 0.4, catalog, e) == {} and pour_between(m, 0.6, 0.2, catalog, e) == {}
+            and pour_between(m, 1.0, 1.7, catalog, e) == {})
+    parts = combine(pour_between(m, 0.0, 0.23, catalog, e), pour_between(m, 0.23, 0.61, catalog, e))
+    c.check("слив частями: 0…0,23 + 0,23…0,61 = 0…0,61",
+            _same_amounts(parts, pour_between(m, 0.0, 0.61, catalog, e), 1e-12))
+    rest = combine(pour_between(m, 0.0, 0.61, catalog, e), pour_top(m, 0.61, catalog, e)[KEY_BOTTOM])
+    c.check("Приёмник + остаток в колбе = вся смесь", _same_amounts(rest, cleaned(m), 1e-12))
+    keys = list(m)
+    keys.reverse()
+    flipped = {key: m[key] for key in keys}
+    c.check("порядок ключей результата — как в смеси",
+            list(pour_between(m, 0.1, 0.9, catalog, e)) == [k for k in m if k in pour_between(m, 0.1, 0.9, catalog, e)]
+            and list(pour_between(flipped, 0.1, 0.9, catalog, e))
+            == [k for k in flipped if k in pour_between(flipped, 0.1, 0.9, catalog, e)])
 
 
 def check_sync(c: Checks) -> None:
@@ -906,6 +1129,8 @@ def self_test(catalog: DataCatalog) -> int:
     check_paths(c, catalog)
     check_dt(c, catalog)
     check_determinism(c, catalog)
+    check_cut(c, catalog)
+    check_pour_session(c, catalog)
     check_sync(c)
     total_checks = c.passed + len(c.failed)
     print("RULES: %d/%d %s" % (c.passed, total_checks, "OK" if not c.failed else "FAIL"))

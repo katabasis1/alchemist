@@ -20,6 +20,7 @@
 | fx_flakes | assets/fx/fx_flakes.png | 128×32 | center | — | proc | — | Обломки трав, 4 кадра 32×32 (`particles_anim_h_frames = 4`); заливка белая, цвет — смесь в ступке |
 | prop_shelf_slot | assets/props/prop_shelf_slot.png | 256×192 | bottom | #FF00FF | temp | P-PROP-04 | Ячейка полки под один ингредиент; в сетке и в ленте одна и та же. В GDD §14 — «prop_shelf» |
 | prop_flask_round | assets/props/prop_flask_round.png | 384×512 | bottom | #FF00FF (global) | temp | P-PROP-03 | Стекло прозрачное, жидкость — шейдер |
+| prop_receiver_beaker | assets/props/prop_receiver_beaker.png | 320×384 | bottom | #FF00FF (global) | temp | P-PROP-06 | Приёмник Отстойника (S4.2). Стекло прозрачное, жидкость — шейдер liquid.gdshader со своей полостью (`receiver_liquid_material.tres`): после замены картинки сверить полость на макете. В GDD §14 — «prop_receiver_beaker»; колба-отстойник = `prop_flask_round` (отдельный `prop_settling_flask` не нужен) |
 | prop_jar_ointment | assets/props/prop_jar_ointment.png | 256×256 | center | #FF00FF | temp | P-PROP-05 | Баночка мази: так выглядит зелье, отданное прямо из ступки (GDD §3.3). Летит к клиенту, на оценку не влияет |
 | ing_fire_bloom | assets/ingredients/ing_fire_bloom.png | 256×256 | center | #FF00FF | temp | P-ING-01 |  |
 | ing_moon_moss | assets/ingredients/ing_moon_moss.png | 256×256 | center | #FF00FF | temp | P-ING-02 |  |

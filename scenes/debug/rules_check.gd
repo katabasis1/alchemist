@@ -1,6 +1,7 @@
 ## RulesCheck — стенд правил алхимии (S3.3): те же случаи, что `python tools/alchemy/rules_model.py --self-test`,
 ## но на настоящем AlchemyRules в Godot: числа GDD §3.2–3.4, качество §5.3, летучесть §3.4, пути всех рецептов,
-## независимость от шага кадра, детерминизм. Сверку имён .gd ↔ .py делает только Python.
+## независимость от шага кадра, детерминизм, срез отстойника и слив по кадрам (S4.2).
+## Сверку имён .gd ↔ .py делает только Python.
 ## Запуск: открыть сцену, F6 — мгновенно; итог одной строкой «RULES CHECK: x/y OK» в Output (не путать с «RULES:»
 ## Python-эталона). Упавший путь печатает значимые свойства и ход пути.
 ## Сигналы: нет. Зависимости: AlchemyRules, RulePaths (scenes/debug/rule_paths.gd), DataCatalog через @export.
@@ -40,6 +41,15 @@ const FRAME_TOLERANCE: float = 1e-12
 ## Помол смесей для случаев горелки и слива (как в эталоне).
 const DT_GRIND: float = 0.75
 const SHUFFLES: int = 20
+## Срез (S4.2): Vector2 полос — float32, поэтому края сверяются грубее; сетка шкалы и смеси — как в эталоне.
+const BAND_TOLERANCE: float = 1e-5
+const CUT_SWEEP_STEPS: int = 1000
+const CUT_SHUFFLES: int = 10
+const CUT_SAMPLES: int = 20
+## Хвост струи по кадрам: шаги кадра, удержание до отпускания, сколько затуханий пройти.
+const TAIL_FRAME_DT: Array[float] = [1.0 / 30.0, 1.0 / 60.0, 1.0 / 144.0, 0.007]
+const TAIL_HOLD_SEC: float = 0.8
+const TAIL_SPAN: float = 1.5
 
 @export var catalog: DataCatalog
 
@@ -64,6 +74,8 @@ func _ready() -> void:
 	_check_dt_burner()
 	_check_dt_pour()
 	_check_determinism()
+	_check_cut()
+	_check_pour_session()
 	_finish()
 
 
@@ -351,6 +363,209 @@ func _check_determinism() -> void:
 	_check("повтор того же вызова — тот же результат (с порядком ключей)",
 			_same_mix(again[AlchemyRules.KEY_TOP], base_split[AlchemyRules.KEY_TOP], 0.0)
 			and _same_mix(again[AlchemyRules.KEY_BOTTOM], base_split[AlchemyRules.KEY_BOTTOM], 0.0))
+
+
+## S4.2: риски среза, примесь среза и чистые полосы шкалы (как check_cut эталона).
+func _check_cut() -> void:
+	var e: EconomyConfig = catalog.economy
+	var limit: float = e.clean_cut_admixture
+	_check("порог чистого среза — 5 %", limit == 0.05)  # noqa: magic
+	var two: Dictionary = {HEAT: 2.0, ACID: 1.0}  # noqa: magic
+	var marks: Array[float] = AlchemyRules.cut_marks(two, catalog, e)
+	_check("риски среза: Жар 2 над Едкостью 1 — одна риска на 2/3", _near_list(marks, [2.0 / 3.0]))  # noqa: magic
+	_check("срез точно по границе — примеси нет",  # noqa: magic
+			AlchemyRules.cut_admixture(two, 2.0 / 3.0, catalog, e) <= AlchemyRules.EPSILON)  # noqa: magic
+	_check("недолил (0,5): в Отстойнике осталась Жар 0,5 из 1,5 — примесь 1/3",  # noqa: magic
+			_near(AlchemyRules.cut_admixture(two, 0.5, catalog, e), 1.0 / 3.0))  # noqa: magic
+	_check("перелил (0,75): в Приёмник ушла Едкость 0,25 из 2,25 — примесь 1/9",  # noqa: magic
+			_near(AlchemyRules.cut_admixture(two, 0.75, catalog, e), 1.0 / 9.0))  # noqa: magic
+	var bands: Array[Vector2] = AlchemyRules.clean_bands(two, catalog, e)
+	_check("чистая полоса: 2/3 − 1/57 … 2/3 + 2/57 (недолив дороже: Жар толще) %s" % [bands],  # noqa: magic
+			_near_bands(bands, [2.0 / 3.0 - 1.0 / 57.0, 2.0 / 3.0 + 2.0 / 57.0]))  # noqa: magic
+	_check("на краях полосы примесь ровно 5 %", bands.size() == 1
+			and absf(AlchemyRules.cut_admixture(two, bands[0].x, catalog, e) - limit) <= BAND_TOLERANCE
+			and absf(AlchemyRules.cut_admixture(two, bands[0].y, catalog, e) - limit) <= BAND_TOLERANCE)
+	var single: Dictionary = {LIFE: 2.0}  # noqa: magic
+	_check("один слой: рисок и полос нет, чистого среза нет (1,0)",
+			AlchemyRules.cut_marks(single, catalog, e).is_empty()
+			and AlchemyRules.clean_bands(single, catalog, e).is_empty()
+			and AlchemyRules.cut_admixture(single, 0.5, catalog, e) == 1.0)  # noqa: magic
+	_check("пусто: рисок и полос нет", AlchemyRules.cut_marks({}, catalog, e).is_empty()  # noqa: magic
+			and AlchemyRules.clean_bands({}, catalog, e).is_empty()
+			and AlchemyRules.cut_admixture({}, 0.3, catalog, e) == 1.0)  # noqa: magic
+	var trace: Array[Vector2] = AlchemyRules.clean_bands({HEAT: 3.0, LIFE: 0.1}, catalog, e)  # noqa: magic
+	_check("тонкий слой-след (Жизнь 0,1 на 10 %%): полоса от самого верха — чисто и без слива %s" % [trace],  # noqa: magic
+			trace.size() == 1 and trace[0].x == 0.0
+			and _near_bands(trace, [0.0, 0.1 + 0.9 / 3.0 * 0.1 / 19.0]))  # noqa: magic
+	var three: Dictionary = {LIGHT: 1.0, LIFE: 1.0, ACID: 1.0}  # noqa: magic
+	bands = AlchemyRules.clean_bands(three, catalog, e)
+	_check("три слоя: две полосы сверху вниз, у каждой своя асимметрия %s" % [bands], _near_bands(bands,  # noqa: magic
+			[1.0 / 3.0 - 2.0 / 57.0, 1.0 / 3.0 + 1.0 / 57.0, 2.0 / 3.0 - 1.0 / 57.0, 2.0 / 3.0 + 2.0 / 57.0]))  # noqa: magic
+	_check("середина среднего слоя: примесь — по ближней границе (1/3)",  # noqa: magic
+			_near(AlchemyRules.cut_admixture(three, 0.5, catalog, e), 1.0 / 3.0))  # noqa: magic
+	_check("слив за пределы столба считается как весь столб",  # noqa: magic
+			AlchemyRules.cut_admixture(two, 1.5, catalog, e) == AlchemyRules.cut_admixture(two, 1.0, catalog, e)  # noqa: magic
+			and AlchemyRules.cut_admixture(two, -0.2, catalog, e) == AlchemyRules.cut_admixture(two, 0.0, catalog, e))  # noqa: magic
+	_check_cut_sweep()
+	_check_cut_shuffle()
+
+
+## S4.2: хвост струи по времени (pour_tail_after) и что ушло между двумя высотами (pour_between). Как в эталоне.
+func _check_pour_session() -> void:
+	var e: EconomyConfig = catalog.economy
+	var stop: float = e.pour_stop_time
+	_check("хвост: сразу после отпускания ещё ничего не дотекло",  # noqa: magic
+			AlchemyRules.pour_tail_after(1.0, 0.0, e) == 0.0 and AlchemyRules.pour_tail_after(1.0, -0.3, e) == 0.0)  # noqa: magic
+	_check("хвост: к концу затухания дотекло ровно pour_tail (и дальше не растёт)",  # noqa: magic
+			_near(AlchemyRules.pour_tail_after(1.0, stop, e), AlchemyRules.pour_tail(1.0, e))
+			and _near(AlchemyRules.pour_tail_after(0.2, stop, e), AlchemyRules.pour_tail(0.2, e))  # noqa: magic
+			and AlchemyRules.pour_tail_after(1.0, stop * 5.0, e) == AlchemyRules.pour_tail_after(1.0, stop, e))  # noqa: magic
+	_check("хвост: скорость спадает ровно — к середине затухания дотекло 3/4 хвоста",  # noqa: magic
+			_near(AlchemyRules.pour_tail_after(1.0, stop * 0.5, e), 0.75 * AlchemyRules.pour_tail(1.0, e))  # noqa: magic
+			and _near(AlchemyRules.pour_tail_after(0.2, stop * 0.5, e), 0.005625))  # noqa: magic
+	var worst: float = 0.0
+	for dt: float in TAIL_FRAME_DT:
+		var since: float = 0.0
+		var tail: float = 0.0
+		while since < stop * TAIL_SPAN:
+			tail += AlchemyRules.pour_tail_after(TAIL_HOLD_SEC, since + dt, e) \
+					- AlchemyRules.pour_tail_after(TAIL_HOLD_SEC, since, e)
+			since += dt
+		worst = maxf(worst, absf(tail - AlchemyRules.pour_tail(TAIL_HOLD_SEC, e)))
+	_check("хвост по кадрам = хвост целиком (макс. расхождение %.1e)" % worst, worst < FRAME_TOLERANCE)  # noqa: magic
+	var m: Dictionary = {LIGHT: 1.2, ACID: 0.4, LIFE: 2.0, COLD: 0.9, SLEEP: 0.35, HEAT: 1.1}  # noqa: magic
+	var same_top: bool = true
+	for h: float in [0.0, 0.07, 0.3, 0.55, 0.999, 1.0]:  # noqa: magic
+		same_top = same_top and _same_mix(AlchemyRules.pour_between(m, 0.0, h, catalog, e),
+				AlchemyRules.pour_top(m, h, catalog, e)[AlchemyRules.KEY_TOP], FRAME_TOLERANCE)
+	_check("между 0 и h ушло то же, что pour_top(h).top", same_top)  # noqa: magic
+	_check("между 0 и 1 ушло всё", _same_mix(AlchemyRules.pour_between(m, 0.0, 1.0, catalog, e),  # noqa: magic
+			AlchemyRules.cleaned(m), FRAME_TOLERANCE))
+	_check("между h и h, назад и за пределами столба — пусто",  # noqa: magic
+			AlchemyRules.pour_between(m, 0.4, 0.4, catalog, e).is_empty()  # noqa: magic
+			and AlchemyRules.pour_between(m, 0.6, 0.2, catalog, e).is_empty()  # noqa: magic
+			and AlchemyRules.pour_between(m, 1.0, 1.7, catalog, e).is_empty())  # noqa: magic
+	var parts: Dictionary = AlchemyRules.combine(AlchemyRules.pour_between(m, 0.0, 0.23, catalog, e),  # noqa: magic
+			AlchemyRules.pour_between(m, 0.23, 0.61, catalog, e))  # noqa: magic
+	_check("слив частями: 0…0,23 + 0,23…0,61 = 0…0,61",  # noqa: magic
+			_same_amounts(parts, AlchemyRules.pour_between(m, 0.0, 0.61, catalog, e)))  # noqa: magic
+	var rest: Dictionary = AlchemyRules.combine(AlchemyRules.pour_between(m, 0.0, 0.61, catalog, e),  # noqa: magic
+			AlchemyRules.pour_top(m, 0.61, catalog, e)[AlchemyRules.KEY_BOTTOM])  # noqa: magic
+	_check("Приёмник + остаток в колбе = вся смесь", _same_amounts(rest, AlchemyRules.cleaned(m)))  # noqa: magic
+	var flipped: Dictionary = {}
+	var keys: Array = m.keys()
+	keys.reverse()
+	for key: Variant in keys:
+		flipped[key] = m[key]
+	_check("порядок ключей результата — как в смеси",  # noqa: magic
+			_keeps_order(AlchemyRules.pour_between(m, 0.1, 0.9, catalog, e), m)  # noqa: magic
+			and _keeps_order(AlchemyRules.pour_between(flipped, 0.1, 0.9, catalog, e), flipped))  # noqa: magic
+
+
+## Те же доли, порядок ключей не важен (смесь, собранная combine из частей).
+func _same_amounts(a: Dictionary, b: Dictionary) -> bool:
+	if a.size() != b.size():
+		return false
+	for key: Variant in a:
+		if not b.has(key) or absf(float(a[key]) - float(b[key])) > FRAME_TOLERANCE:
+			return false
+	return true
+
+
+## Ключи part идут в том же порядке, что в whole.
+func _keeps_order(part: Dictionary, whole: Dictionary) -> bool:
+	var expected: Array = []
+	for key: Variant in whole:
+		if part.has(key):
+			expected.append(key)
+	return part.keys() == expected
+
+
+## Полосы совпадают с примесью на сетке: внутри полосы срез чистый, снаружи — нет; риска внутри своей полосы.
+func _check_cut_sweep() -> void:
+	var e: EconomyConfig = catalog.economy
+	var mixes: Array[Dictionary] = [  # noqa: magic
+		{HEAT: 2.0, ACID: 1.0},  # noqa: magic
+		{HEAT: 3.0, LIFE: 0.1},  # noqa: magic
+		{LIGHT: 1.0, LIFE: 1.0, ACID: 1.0},  # noqa: magic
+		{LIGHT: 1.2, ACID: 0.4, LIFE: 2.0, COLD: 0.9, SLEEP: 0.35, HEAT: 1.1},  # noqa: magic
+		{SLEEP: 2.0, COLD: 0.05, HEAT: 0.7},  # noqa: magic
+		{LIGHT: 3.0, ACID: 0.3},  # noqa: magic
+	]
+	var bad: String = ""
+	for mixture: Dictionary in mixes:
+		var bands: Array[Vector2] = AlchemyRules.clean_bands(mixture, catalog, e)
+		var marks: Array[float] = AlchemyRules.cut_marks(mixture, catalog, e)
+		var ok: bool = bands.size() == marks.size()
+		for i: int in mini(bands.size(), marks.size()):
+			ok = ok and bands[i].x <= marks[i] + BAND_TOLERANCE and marks[i] <= bands[i].y + BAND_TOLERANCE
+			ok = ok and (i == 0 or marks[i - 1] < marks[i])
+		if not ok:
+			bad += " %s: полосы %s, риски %s;" % [mixture, bands, marks]
+			continue
+		for step: int in CUT_SWEEP_STEPS + 1:
+			var poured: float = float(step) / CUT_SWEEP_STEPS
+			var inside: int = _in_bands(poured, bands)
+			if inside < 0:
+				continue
+			var admixture: float = AlchemyRules.cut_admixture(mixture, poured, catalog, e)
+			if (admixture <= e.clean_cut_admixture) != (inside == 1):
+				bad += " %s @ %.3f: примесь %.4f;" % [mixture, poured, admixture]
+				break
+	_check("полосы = где примесь ≤ 5 %% (%d смесей × %d точек), риска внутри своей полосы%s"
+			% [mixes.size(), CUT_SWEEP_STEPS + 1, bad], bad.is_empty())
+
+
+func _check_cut_shuffle() -> void:
+	var e: EconomyConfig = catalog.economy
+	var mixture: Dictionary = {LIGHT: 1.2, ACID: 0.4, LIFE: 2.0, COLD: 0.9, SLEEP: 0.35, HEAT: 1.1}  # noqa: magic
+	var base: Array = _cut_numbers(mixture)
+	var keys: Array = mixture.keys()
+	var same: bool = true
+	for _i: int in CUT_SHUFFLES:
+		keys.shuffle()
+		var shuffled: Dictionary = {}
+		for key: StringName in keys:
+			shuffled[key] = mixture[key]
+		var got: Array = _cut_numbers(shuffled)
+		same = same and got.size() == base.size()
+		for i: int in mini(got.size(), base.size()):
+			same = same and absf(float(got[i]) - float(base[i])) <= FRAME_TOLERANCE
+	_check("порядок ключей не меняет риски, полосы и примесь", same)
+
+
+## Все числа среза одной смеси подряд: полосы, риски, примесь на сетке 0…1.
+func _cut_numbers(mixture: Dictionary) -> Array:
+	var e: EconomyConfig = catalog.economy
+	var result: Array = []
+	for band: Vector2 in AlchemyRules.clean_bands(mixture, catalog, e):
+		result.append_array([band.x, band.y])
+	result.append_array(AlchemyRules.cut_marks(mixture, catalog, e))
+	for k: int in CUT_SAMPLES + 1:
+		result.append(AlchemyRules.cut_admixture(mixture, float(k) / CUT_SAMPLES, catalog, e))
+	return result
+
+
+## 1 — внутри полосы, 0 — снаружи, -1 — у самого края (float32): не судим.
+func _in_bands(poured: float, bands: Array[Vector2]) -> int:
+	for band: Vector2 in bands:
+		if absf(poured - band.x) <= BAND_TOLERANCE or absf(poured - band.y) <= BAND_TOLERANCE:
+			return -1
+		if band.x < poured and poured < band.y:
+			return 1
+	return 0
+
+
+## Полосы подряд (от, до, от, до…) совпадают с ожидаемыми с допуском float32.
+func _near_bands(bands: Array[Vector2], expected: Array) -> bool:
+	if bands.size() * 2 != expected.size():
+		return false
+	for i: int in bands.size():
+		if absf(bands[i].x - float(expected[i * 2])) > BAND_TOLERANCE:
+			return false
+		if absf(bands[i].y - float(expected[i * 2 + 1])) > BAND_TOLERANCE:
+			return false
+	return true
 
 
 func _flawless(mixture: Dictionary) -> bool:

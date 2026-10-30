@@ -23,6 +23,7 @@ pour_speed_start = 0.15
 pour_speed_full = 0.3
 pour_ramp_time = 0.5
 pour_stop_time = 0.1
+clean_cut_admixture = 0.05
 heat_rate = 20.0
 cool_rate = 12.0
 room_temp = 20.0

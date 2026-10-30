@@ -39,6 +39,7 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 | P-UI-04 | `icon_star.png` | Иконка звезды (оценка) |
 | P-UI-05 | `ui_badge_round.png` | Рамка-медальон (пузырь заказа) |
 | P-PROP-04 | `prop_shelf_slot.png` | Ячейка полки (деревянный лоток под один ингредиент) |
+| P-PROP-06 | `prop_receiver_beaker.png` | Приёмник Отстойника (пустой сосуд для струи) |
 | P-UI-06 | `ui_trash.png` | Корзина «вылить» (деревянное ведёрко) |
 | P-UI-07 | `icon_prop_sheet.png` → `icon_prop_*.png` ×6 | Иконки шести свойств одним листом (агент режет) |
 
@@ -341,6 +342,18 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 A small round glazed ceramic ointment jar, cream-white with a wide sage-green painted band and a simple light leaf pattern on it, a short neck covered with a cream cloth cap tied with a twisted jute rope bow, a small blank parchment tag hanging from the rope. Plump, cosy and handmade, slightly wider than tall, a little copper-brown foot ring at the bottom.
 
 Single isolated game asset, centered, three-quarter front view seen slightly from above, the whole object fully visible with generous empty margin. Transparent background (PNG with alpha). If transparency is not possible: perfectly flat solid pure magenta #FF00FF background, no gradient. No cast shadow, no floor, no other objects. Square 1024x1024.
+```
+
+## P-PROP-06 — Приёмник Отстойника (пустой) → `prop_receiver_beaker.png`
+
+Сосуд, в который колба-отстойник сливает верхний слой (S4.2). Холст 320×384, опора снизу; стекло прозрачное, жидкость — шейдер `liquid.gdshader` со своими размерами полости (`scenes/stations/settler/receiver_liquid_material.tres`). Форма важна для шейдера: **круглое пузатое тело + короткое широкое прямое горло**. Приложи к чату ещё `prop_flask_round.png` — стекло должно быть нарисовано так же. Вырезка: `python tools/art/cutout.py <png> -o assets/props/prop_receiver_beaker.png --mode global --canvas 320x384 --pivot bottom`; после замены проверь полость на макете (`python tools/art/settler_preview.py`).
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+An empty, perfectly clear glass receiver vessel for an alchemy shop: a squat, wide round-bellied glass jar with a SHORT, WIDE straight cylindrical neck and a thick rolled rim, slightly smaller and chunkier than the attached round flask, drawn exactly like it: clean outline, bright white highlights and soft light-blue reflections along the edges.
+
+Single isolated game asset, centered, straight front view, the whole object fully visible with generous empty margin. The glass must be see-through: the background must be visible through the glass. Transparent background (PNG with alpha); if transparency is not possible: perfectly flat solid pure magenta #FF00FF background that also shows through the glass. No liquid, no cast shadow, no floor, no other objects. Square 1024x1024.
 ```
 
 ## P-UI-08 — Пузырь заказа → `ui_order_bubble.png`

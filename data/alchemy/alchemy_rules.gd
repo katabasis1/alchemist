@@ -8,12 +8,15 @@
 ## не меньше EconomyConfig.min_layer_height; все слои вместе — столб высотой 1. Слив сверху на высоту h (доля столба)
 ## забирает из каждого слоя ту часть, которую h накрыла. Слив считается от смеси на момент отстаивания и всей слитой
 ## высоты: сколькими удержаниями её слили — неважно.
+## Срез (S4.2): риски на границах слоёв, примесь среза (доля чужих слоёв в испорченном сосуде) и чистые полосы
+## шкалы среза, где примесь не больше EconomyConfig.clean_cut_admixture. Хвост струи по времени (pour_tail_after) и
+## что ушло между двумя высотами слива (pour_between) — для колбы, которая сливает по кадрам.
 ## Горелка: температура растёт на heat_rate, пока огонь держат, и падает на cool_rate до room_temp, когда отпустили;
 ## пока T не ниже точки свойства, оно уходит паром (evaporate_rate доли/с) или сгорает (burn_rate доли/с).
 ## Кто пользуется: ступка (помол и смесь), OrderJudge (значимость, сила, чистота, «безупречно»), отстойник и горелка (S4),
 ## распознавание рецептов (S3.2), стенд проверок (S3.3). Эталон на Python — tools/alchemy/rules_model.py:
 ## правило меняется в обоих местах сразу.
-## Сигналы: нет. Зависимости: EconomyConfig (порог значимости, звёзды, помол, извлечение, слив, горелка),
+## Сигналы: нет. Зависимости: EconomyConfig (порог значимости, звёзды, помол, извлечение, слив, чистый срез, горелка),
 ##   PropertyData (плотность, точки испарения и сгорания), IngredientData (доли, твёрдость), DataCatalog (свойство по id).
 class_name AlchemyRules
 extends RefCounted
@@ -281,6 +284,98 @@ static func pour_height(held: float, economy: EconomyConfig) -> float:
 ## Хвост струи после отпускания: скорость спадает до нуля за pour_stop_time, ровно.
 static func pour_tail(held: float, economy: EconomyConfig) -> float:
 	return pour_rate(maxf(held, 0.0), economy) * economy.pour_stop_time * 0.5
+
+
+## Сколько хвоста дотекло через since секунд после отпускания (0…pour_tail): скорость спадает ровно, поэтому
+## r · (t − t² / 2T). Точная формула — колба досливает хвост по кадрам, и итог не зависит от шага.
+static func pour_tail_after(held: float, since: float, economy: EconomyConfig) -> float:
+	var stop: float = economy.pour_stop_time
+	var rate: float = pour_rate(maxf(held, 0.0), economy)
+	if stop <= 0.0:
+		return 0.0
+	var time: float = clampf(since, 0.0, stop)
+	return rate * (time - time * time / (2.0 * stop))
+
+
+## Что ушло в Приёмник, пока слитая высота росла от poured_from до poured_to (доли столба): разница pour_top.
+## Так Приёмник, опустошённый посреди слива, получает только новое. Назад и за пределами столба — пусто.
+static func pour_between(mixture: Dictionary, poured_from: float, poured_to: float, catalog: DataCatalog,
+		economy: EconomyConfig) -> Dictionary[StringName, float]:
+	var low: float = clampf(poured_from, 0.0, 1.0)
+	var high: float = clampf(poured_to, 0.0, 1.0)
+	if high <= low:
+		var empty: Dictionary[StringName, float] = {}
+		return empty
+	var before: Dictionary = pour_top(mixture, low, catalog, economy)[KEY_TOP]
+	var after: Dictionary = pour_top(mixture, high, catalog, economy)[KEY_TOP]
+	var result: Dictionary[StringName, float] = {}
+	for property_id: StringName in after:
+		result[property_id] = float(after[property_id]) - amount(before, property_id)
+	return cleaned(result)
+
+
+# --- Срез (S4.2, STATIONS §1.2): где граница слоёв и насколько чисто её поймали ---------------------------------
+
+## Риски шкалы среза: сколько столба слить, чтобы срез прошёл точно по границе слоёв. Сверху вниз (по возрастанию
+## слитой высоты), только внутренние границы: у одного слоя рисок нет.
+static func cut_marks(mixture: Dictionary, catalog: DataCatalog, economy: EconomyConfig) -> Array[float]:
+	var heights: Array[float] = layer_heights(mixture, catalog, economy)
+	var result: Array[float] = []
+	var mark: float = 0.0
+	for i: int in range(heights.size() - 1, 0, -1):
+		mark += heights[i]
+		result.append(mark)
+	return result
+
+
+## Примесь среза после слива poured (0…1): доля чужих слоёв в том сосуде, который срез испортил, по ближней границе.
+## Перелил за границу — в Приёмник попал нижний слой (примесь сверху); недолил — верхний остался в Отстойнике
+## (примесь снизу). 0 — срез точно по границе; 1 — границ нет (один слой или пусто), чистого среза не бывает.
+static func cut_admixture(mixture: Dictionary, poured: float, catalog: DataCatalog, economy: EconomyConfig) -> float:
+	var ids: Array[StringName] = layers(mixture, catalog)
+	var split: Dictionary = pour_top(mixture, poured, catalog, economy)
+	var marks: Array[float] = cut_marks(mixture, catalog, economy)
+	var best: float = 1.0
+	for k: int in marks.size():
+		var boundary: int = ids.size() - 1 - k
+		var stray: float = 0.0
+		var vessel: Dictionary
+		if poured >= marks[k]:
+			vessel = split[KEY_TOP]
+			for i: int in boundary:
+				stray += amount(vessel, ids[i])
+		else:
+			vessel = split[KEY_BOTTOM]
+			for i: int in range(boundary, ids.size()):
+				stray += amount(vessel, ids[i])
+		var whole: float = total(vessel)
+		if whole > 0.0:
+			best = minf(best, stray / whole)
+	return best
+
+
+## Чистые полосы шкалы среза: для каждой риски (в порядке cut_marks) отрезок слитой высоты (x — от, y — до), где
+## cut_admixture не больше clean_cut_admixture. Полоса не выходит за соседние слои: дальше чище соседняя граница.
+## Vector2 — float32, этого хватает для рисования; судить «чисто или нет» — только по cut_admixture.
+static func clean_bands(mixture: Dictionary, catalog: DataCatalog, economy: EconomyConfig) -> Array[Vector2]:
+	var ids: Array[StringName] = layers(mixture, catalog)
+	var heights: Array[float] = layer_heights(mixture, catalog, economy)
+	var limit: float = economy.clean_cut_admixture
+	var ratio: float = limit / (1.0 - limit)
+	var whole: float = total(cleaned(mixture))
+	var result: Array[Vector2] = []
+	var mark: float = 0.0
+	var above: float = 0.0
+	for i: int in range(ids.size() - 1, 0, -1):
+		var upper: float = amount(mixture, ids[i])
+		var lower: int = i - 1
+		mark += heights[i]
+		above += upper
+		var below: float = whole - above
+		var up_reach: float = minf(heights[i], heights[i] / upper * below * ratio)
+		var down_reach: float = minf(heights[lower], heights[lower] / amount(mixture, ids[lower]) * above * ratio)
+		result.append(Vector2(mark - up_reach, mark + down_reach))
+	return result
 
 
 # --- Нагрев (GDD §3.3 Горелка, §3.4 летучесть) --------------------------------------------------------------------

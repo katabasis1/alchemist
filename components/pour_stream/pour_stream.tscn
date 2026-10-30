@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://components/pour_stream/pour_stream.gd" id="1_stream"]
+[ext_resource type="Material" path="res://components/pour_stream/pour_stream_material.tres" id="2_mat"]
+
+[sub_resource type="Curve" id="Curve_taper"]
+_data = [Vector2(0, 1), 0.0, -0.6, 0, 0, Vector2(1, 0.55), -0.3, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_uv"]
+width = 4
+height = 4
+
+[node name="PourStream" type="Line2D"]
+material = ExtResource("2_mat")
+width = 0.0
+width_curve = SubResource("Curve_taper")
+texture = SubResource("GradientTexture2D_uv")
+texture_mode = 2
+joint_mode = 2
+script = ExtResource("1_stream")

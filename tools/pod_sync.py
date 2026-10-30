@@ -8,6 +8,8 @@
         # ПОСЛЕ КАЖДОГО ШАГА (секунды): строка в docs/HANDOFF.md → коммит всего незакоммиченного
         # ("wip: <note>") → archive/alchemist_repo.bundle → HANDOFF.md, AGENTS.md и docs/PROGRESS.md
         # в корень Pod → archive/LAST_SYNC.txt. Без --note — то же, но без строки в журнале.
+        # Если в Pod есть outbox/GITHUB_BASE (его пишет полный протокол с --base), --quick ещё и
+        # пересобирает outbox/alchemist_update_<метка>_to_v<ver>.zip — архив «поверх GitHub» всегда свежий.
   python tools/pod_sync.py --id S1.2 --slug minimal_project
         # полный протокол после подэтапа:
         #   1) рабочее дерево чистое, валидатор без ошибок
@@ -39,6 +41,9 @@ POD_DEFAULT = Path("/files/pod")
 HISTORY_KEEP = 10
 MIRROR_TO_ROOT = ("docs", "tools", "AGENTS.md")
 HANDOFF_MD = "docs/HANDOFF.md"
+# Где стоит GitHub пользователя: строка «<коммит> <метка>». Пишет полный протокол с --base,
+# читает --quick, чтобы после каждого шага пересобрать сводный архив для GitHub.
+GITHUB_BASE = "outbox/GITHUB_BASE"
 HANDOFF_LOG_HEADER = "## Журнал"
 # Что --quick кладёт в Pod открытым текстом (следующий агент читает без git).
 QUICK_COPIES = ((HANDOFF_MD, "HANDOFF.md"), ("AGENTS.md", "AGENTS.md"), ("docs/PROGRESS.md", "docs/PROGRESS.md"),
@@ -112,6 +117,10 @@ def quick_save(pod: Path, tmp: Path, note: str) -> None:
         if (REPO / src).exists():
             copy_file(REPO / src, pod / dst)
     head = git("rev-parse", "HEAD")
+    base_file = pod / GITHUB_BASE
+    if base_file.exists():
+        base, label = (base_file.read_text(encoding="utf-8").split() + [""])[:2]
+        make_github_update(pod, tmp, base, label or base[:7], head, project_version())
     (pod / "archive" / "LAST_SYNC.txt").write_text(
         f"version: v{project_version()}\nstep: quick — {note or 'автосохранение'}\ncommit: {head}\n"
         f"synced: {utc_stamp()}\n", encoding="utf-8")
@@ -144,6 +153,15 @@ def make_update_zip(pod: Path, tmp: Path, since: str, head: str, ver: str, name:
             z.writestr("DELETED.txt", "\n".join(deleted) + "\n")
     copy_file(out, pod / "outbox" / name)
     print(f"[pod_sync] обновление → outbox/{name} (файлов {len(changed)}, удалить {len(deleted)})")
+
+
+def make_github_update(pod: Path, tmp: Path, base: str, label: str, head: str, ver: str) -> None:
+    """Сводный outbox/alchemist_update_<label>_to_v<ver>.zip от коммита GitHub до HEAD; прежние сводные удаляются."""
+    outbox = pod / "outbox"
+    for old in outbox.glob("alchemist_update_*_to_v*.zip"):
+        old.unlink()
+    make_update_zip(pod, tmp, base, head, ver, f"alchemist_update_{label}_to_v{ver}.zip")
+    (outbox / "GITHUB_BASE").write_text(f"{base} {label}\n", encoding="utf-8")
 
 
 def main() -> None:
@@ -218,11 +236,7 @@ def main() -> None:
             if since:
                 make_update_zip(pod, tmp, since, head, ver)
         if a.base:
-            label = a.base_label or a.base
-            for old in (pod / "outbox").glob("alchemist_update_*_to_v*.zip"):
-                old.unlink()
-            make_update_zip(pod, tmp, git("rev-parse", a.base), head, ver,
-                            f"alchemist_update_{label}_to_v{ver}.zip")
+            make_github_update(pod, tmp, git("rev-parse", a.base), a.base_label or a.base, head, ver)
 
         # 6. зеркала
         tree = tmp / "tree"

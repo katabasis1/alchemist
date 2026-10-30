@@ -1,0 +1,27 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://components/pour_stream/pour_stream.gdshader" id="1_stream"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_stream")
+shader_parameter/stream_color = Color(0.98, 0.76, 0.2, 1)
+shader_parameter/head = 0.0
+shader_parameter/reach = 1.0
+shader_parameter/end_soft = 0.04
+shader_parameter/length_px = 300.0
+shader_parameter/light_side = 0.0
+shader_parameter/edge_dark = 0.18
+shader_parameter/edge_saturate = 1.0
+shader_parameter/core_light = 0.3
+shader_parameter/edge_alpha = 0.96
+shader_parameter/core_alpha = 0.86
+shader_parameter/highlight_at = 0.42
+shader_parameter/highlight_width = 0.13
+shader_parameter/highlight = 0.85
+shader_parameter/streak_px = 46.0
+shader_parameter/flow_px = 420.0
+shader_parameter/streak = 0.32
+shader_parameter/sparkle_px = 18.0
+shader_parameter/sparkle_density = 0.16
+shader_parameter/sparkle = 0.9
