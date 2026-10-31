@@ -24,6 +24,9 @@
 | `audio/sfx/sfx_happy.ogg` | 0,60 с | Клиент доволен (верный эффект) | `Client` (SfxHappy) | temp |
 | `audio/sfx/sfx_oof.ogg` | 0,42 с | «Уф»: неверный эффект, клиент качает головой | `Client` (SfxUpset) | temp |
 | `audio/sfx/sfx_coin_1…3.ogg` | 0,32 с | Монета долетела до счётчика (случайный из трёх) | `CoinCounter` | temp |
+| `audio/sfx/sfx_glug_1.ogg` … `_3.ogg` | 0,22 с | «Буль» струи Отстойника: ритм — `SettlerConfig.glug_sec_full` на полной скорости, реже при слабой струе; при удержании во время отстаивания — одиночный «буль» без слива (3 варианта, без повтора подряд) | `Settler` (SfxGlug) | temp |
+| `audio/sfx/sfx_settle_bubble.ogg` | 1,1 с | Смесь отстаивается: бульканье, затихающее к концу (под `settle_time` 1,2 с) | `Settler` (SfxSettle) | temp |
+| `audio/sfx/sfx_clean_cut.ogg` | 0,6 с | «Дзынь» чистого среза: примесь ≤ 5 %, вместе с искоркой на поверхности | `Settler` (SfxClean) ← `cut_made(…, clean = true)` | temp |
 
 ## Требования к финальным звукам
 

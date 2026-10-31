@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/debug/settler_check.gd" id="1_check"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="2_catalog"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="3_economy"]
+[ext_resource type="PackedScene" path="res://scenes/stations/settler/settler.tscn" id="4_settler"]
+
+[node name="SettlerCheck" type="Node2D" node_paths=PackedStringArray("probe", "live")]
+script = ExtResource("1_check")
+catalog = ExtResource("2_catalog")
+economy = ExtResource("3_economy")
+probe = NodePath("Probe")
+live = NodePath("Live")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0.937255, 0.835294, 0.643137, 1)
+
+[node name="Live" parent="." instance=ExtResource("4_settler")]
+position = Vector2(720, 940)
+
+[node name="Probe" parent="." instance=ExtResource("4_settler")]
+position = Vector2(1560, 940)
+scale = Vector2(0.5, 0.5)

@@ -1,10 +1,10 @@
 # PROGRESS — где мы сейчас
 
-**Обновлено:** 2026-10-28 (сессия 39)
-**Версия:** 0.2.4 (тег `v0.2.4`) — S4.1: шейдер слоёной жидкости `components/liquid/` + стенд `scenes/debug/liquid_check.tscn`. M2 (плейтест v0.2.0) отложен пользователем: «плейтесты потом»
+**Обновлено:** 2026-10-31 (сессия 49)
+**Версия:** 0.2.5 (тег `v0.2.5`) — S4.2: колба-отстойник `scenes/stations/settler/` (шкала среза, струя, Приёмник, наклон по уровню) + стенд `scenes/debug/settler_check.tscn`. M2 (плейтест v0.2.0) отложен пользователем: «плейтесты потом»
 **Текущий этап:** S4 — станции 2 и 3
-**Текущий подэтап:** S4.1 (v0.2.4) выдан — шейдер жидкости; ждём `LIQUID CHECK` и взгляд на колбы у пользователя, дальше S4.2 (колба-отстойник)
-**Репозиторий:** https://github.com/katabasis1/alchemist (`main`, коммит пользователя `5a01c6e`; тег агента `gh-5a01c6e`)
+**Текущий подэтап:** S4.2 (v0.2.5) выдан — колба-отстойник; ждём `SETTLER CHECK`, `LIQUID CHECK`, `RULES CHECK` и взгляд на живую колбу у пользователя, дальше S4.3 (горелка)
+**Репозиторий:** https://github.com/katabasis1/alchemist (`main`, коммит пользователя `d783bd1` «0.2.4»; тег агента `gh-d783bd1`)
 **Что делается прямо сейчас (по шагам):** `docs/HANDOFF.md`, в Pod — `HANDOFF.md` в корне. Читать первым.
 
 ## Статус S0–S2
@@ -40,20 +40,14 @@
 
 ## Статус S4
 - [x] S4.1 Шейдер слоёной жидкости (v0.2.4): сначала референсы ImageGen в стиле игры (`docs/art/refs/ref_liquid_layers_4|tilt_pour|closeup|patterns_sheet.jpg`), потом по ним шейдер `components/liquid/liquid.gdshader`: до 6 слоёв по плотности, у каждого свойства свой узор (пузырьки, искры, листочки, снежинки, звёздочки, лучи), светлая кромка поверхности, светящиеся швы, муть отстаивания, наклон с горизонтом и раскачка, стекло колбы поверх. Слои — `LiquidLayers.view` (из `AlchemyRules.layers`); узел `Liquid` (`show_mixture`, `stir`, `bump`, `surface_tilt`); раскачка — ресурс `LiquidSlosh` (`data/liquid/liquid_slosh.tres`). Эталон `python tools/alchemy/liquid_model.py --self-test` → `LIQUID: 49/49 OK`, макет кадров без Godot — `tools/art/liquid_preview.py`. Стенд `liquid_check.tscn` → `LIQUID CHECK: 28/28 OK`.
+- [x] S4.2 Колба-отстойник (v0.2.5). Решение пользователя: «шкала чистоты» = **шкала среза** (`components/band_gauge/`): риски на границах слоёв, вокруг каждой зелёная полоса «примесь ≤ 5 %», бегунок — где срез; без цифр и звёзд (точные доли — Индикатор S6). Правила (TDD, эталон сначала падал): `AlchemyRules.cut_marks`, `cut_admixture` (доля чужого слоя в испорченном сосуде по ближней границе: перелил — в Приёмнике, недолил — в Отстойнике), `clean_bands`, `pour_tail_after`, `pour_between`; `EconomyConfig.clean_cut_admixture = 0.05`; `RULES: 111/111`. Референсы станции до шейдера (правило D20): `docs/art/refs/ref_settler_*.jpg`, временный `prop_receiver_beaker`. Струя `components/pour_stream/` (Line2D + шейдер, макет `tools/art/settler_preview.py`). D22: наклон колбы от уровня — кромка горла под поверхностью, у горла всегда льющийся слой (`LiquidPourTilt`, `LIQUID: 59/59`; `Liquid.pour_angle/top_color/surface_point/texture_to_global/settle_now`). Станция `scenes/stations/settler/`: Empty → Settling (1,2 с, тап — сразу) → Layered ⇄ Pouring; зажал — колба поднимается, наклоняется и льёт; отпустил — хвост 0,1 с; слитая высота по точным формулам (кадры не влияют); Приёмник Empty ⇄ Filled со своей корзиной, вылит посреди слива — в нём только слитое после; чистый срез — искорка и «дзынь»; пауза останавливает слив; вид и анимация — `SettlerConfig`. Звуки «буль» ×3, отстаивание, «дзынь». Стенд `settler_check.tscn` — 70 проверок (30/60/144 к/с и случайный шаг дают одно и то же, края полосы, подряд и внахлёст, дно, корзины, пауза, ввод) + живая колба. Смесь станция получает методом `receive()`: перенос из ступки и «унести» — S4.4, в лавку станция пока не встала.
 
-## Ждём от пользователя (S3.1–S4.1, v0.2.4)
-1. Распаковать **`outbox/alchemist_update_gh-5a01c6e_to_v0.2.4.zip`** поверх проекта (картинок в архиве нет, кроме того, что уже было у вас), открыть в Godot 4.7 — без ошибок разбора скриптов и шейдера, закоммитить вместе с новыми `*.uid` (`liquid.gd.uid`, `liquid_layers.gd.uid`, `liquid_slosh.gd.uid`, `liquid_check.gd.uid`) и запушить.
-2. `scenes/debug/liquid_check.tscn` → **F6** → `LIQUID CHECK: 28/28 OK` (секунд десять). Посмотреть на колбы: узоры, швы, слив, муть раз в 3 с, качание и рывки вбок. Если что-то не так — скриншот и строки `[!!]` с красными ошибками.
-3. Если ещё не запускали: `rules_check.tscn` → `RULES CHECK: 85/85 OK`; `grimoire_check.tscn` → `GRIMOIRE CHECK: 31/31 OK`; `order_check.tscn` → `ORDER: 64/64 OK`.
-4. По желанию: `python tools/alchemy/liquid_model.py --self-test` → `LIQUID: 49/49 OK`; `python tools/art/liquid_preview.py --out кадры/` — кадры жидкости без Godot.
-5. Плейтест M2 (`docs/playtest/PLAYTEST_M2.md`) — когда будет удобно; пользователь отложил его.
-
-## Ждём от пользователя раньше (S3.1–S3.3, v0.2.3)
-1. Распаковать **`outbox/alchemist_update_gh-cb72542_to_v0.2.3.zip`** поверх проекта (только S3.3: v0.2.2 уже на GitHub; картинок нет), открыть в Godot 4.7 — без ошибок разбора скриптов, закоммитить вместе с новыми `*.uid` (`rules_check.gd.uid`, `rule_paths.gd.uid`) и запушить.
-2. `scenes/debug/rules_check.tscn` → **F6** → `RULES CHECK: 85/85 OK` (мгновенно). При `FAIL` — прислать строки `FAIL`, строку под упавшим путём и красные ошибки.
-3. Приёмка S3.2 (если ещё не запускали): `grimoire_check.tscn` → `GRIMOIRE CHECK: 31/31 OK`; `order_check.tscn` → `ORDER: 64/64 OK` (секунд пятнадцать, экран не трогать).
+## Ждём от пользователя (S3.1–S4.2, v0.2.5)
+1. Распаковать **`outbox/alchemist_update_gh-d783bd1_to_v0.2.5.zip`** поверх проекта (всё после вашего коммита `d783bd1`; картинок нет, новые звуки есть), открыть в Godot 4.7 — без ошибок разбора скриптов и шейдеров. Godot создаст `*.uid` для `settler.gd`, `receiver.gd`, `settler_config.gd`, `settler_check.gd` и `*.import` для пяти новых `.ogg` — закоммитить их вместе с архивом и запушить.
+2. `scenes/debug/settler_check.tscn` → **F6** → `SETTLER CHECK: 70/70 OK` (пару секунд, правую колбу не трогать). Потом поиграть с левой колбой: зажать и лить, поймать границу (искорка + «дзынь»), вылить Приёмник посреди слива, слить до дна. Смотреть: струя течёт сразу при нажатии, пока колба ещё наклоняется (~0,14 с) — не режет ли глаз; у горла цвет того слоя, что льётся. Если что-то не так — скриншот и строки `[!!]`/`FAIL` с красными ошибками.
+3. `liquid_check.tscn` → `LIQUID CHECK: 43/43 OK`; `rules_check.tscn` → `RULES CHECK: 110/110 OK`; если ещё не запускали — `grimoire_check.tscn` → `GRIMOIRE CHECK: 31/31 OK`, `order_check.tscn` → `ORDER: 64/64 OK`.
 4. Регрессия: `grind_check.tscn` → `GRIND: 47/47 OK`; `playtest_check.tscn` → `PLAYTEST: 34/34 OK`.
-5. По желанию: `python tools/alchemy/rules_model.py --self-test` → `RULES: 86/86 OK`, `python tools/alchemy/grimoire_model.py --self-test` → `GRIMOIRE: 132/132 OK`.
+5. По желанию: `python tools/alchemy/rules_model.py --self-test` → `RULES: 111/111 OK`, `python tools/alchemy/liquid_model.py --self-test` → `LIQUID: 59/59 OK`, `python tools/art/settler_preview.py --out кадры/` — кадры станции без Godot (нужны numpy и Pillow).
 6. Плейтест M2 (`docs/playtest/PLAYTEST_M2.md`) — когда будет удобно; пользователь отложил его.
 
 ## Ждём от пользователя раньше (S2.5, v0.2.0 — отложено)
@@ -64,16 +58,18 @@
 5. Провести плейтест по `docs/playtest/PLAYTEST_M2.md` (5 тестеров), сводка — `python tools/playtest/summarize.py плейтест/`. Сводку, листы наблюдений и ответы опроса — в Pod `inbox/playtest/`.
 
 ## Следующий шаг
-- Сверить GitHub (AGENTS.md §2.2; `commits?sha=main&nc=…`): подтянуть `*.uid` жидкости и прочие `*.uid`/`*.import`.
-- Приёмка S4.1 по `LIQUID CHECK` и взгляду пользователя на колбы; при `[!!]` — чинить причину (сначала воспроизвести на `liquid_model.py`). Если шейдер ругается в Compatibility/WebGL 2 — первым делом смотреть массивы uniform (`layer_colors` идёт как `PackedVector4Array`).
-- **S4.2** колба-отстойник: расслаивание, слив удержанием, граница слоя, шкала чистоты — на узле `Liquid` (`show_mixture(смесь, слив)`, `stir()`), без своего рисования жидкости. Перед началом — чек-лист в `docs/HANDOFF.md`.
-- Финальная колба `prop_flask_round` (ChatGPT Image по `docs/art/PROMPTS.md`) встаёт без правок, если холст и форма те же; иначе подстроить группу `shape` в `liquid_material.tres`.
+- Сверить GitHub (AGENTS.md §2.2; `commits?sha=main&nc=…`): подтянуть `*.uid` станции и `*.import` звуков.
+- Приёмка S4.2 по `SETTLER CHECK` и взгляду пользователя на живую колбу (и S4.1 по `LIQUID CHECK`); при `FAIL` — сначала воспроизвести на эталоне (`rules_model.py`, `liquid_model.py`), потом чинить.
+- **S4.3** горелка: удержание огня, термометр с зонами, шейдер кипения, цветной пар. Правила нагрева уже есть (`AlchemyRules.temp_after`, `time_at_or_above`, `heat`, `steaming`, `burning`). По правилу D20 — сначала референсы ImageGen в стиле игры, шейдер по ним. Перед началом — чек-лист в `docs/HANDOFF.md`.
+- Финальные `prop_flask_round` и `prop_receiver_beaker` (ChatGPT Image по `docs/art/PROMPTS.md`) встают без правок, если холст и форма те же; иначе подстроить группу `shape` в материалах жидкости, `LiquidPourTilt` (кромка горла) и `SettlerConfig.mouth_px`.
 - Плейтест M2 — когда пользователь вернётся к нему.
 
 ## Блокеры
 - нет. Computer без сети — принято; GitHub читается веб-инструментом агента.
 
 ## Известный долг
+- Отстойник (S4.2) агент в Godot не запускал: обращения станции и стенда к API сверены скриптом, ожидания стенда (0,24 при 30/60/144 к/с, хвост, внахлёст, пауза, дно за 215 кадров) — Python-симуляцией станции поверх `rules_model.py`, число проверок (70) пересчитано по коду. Тайминги твинов (подъём, возврат колбы), вид струи и наклона — только в Godot. Брызги и кольца в Приёмнике из референсов `ref_settler_*` не сделаны (есть муть и волна); струя начинает течь сразу при нажатии, пока колба ещё наклоняется (~0,14 с) — решить по взгляду пользователя.
+- Возврат лишнего из Приёмника в пустой Отстойник (STATIONS §1.2) — вместе с переносом сосудов на S4.4.
 - `AlchemyRules` (S3.1), `GrimoireRules` (S3.2) и стенд `rules_check` (S3.3) агент в Godot не запускал: правила проверены Python-копией строка в строку (`rules_model.py --self-test` 86/86, `grimoire_model.py --self-test` 132/132), обращения стенда к API (157) сверены скриптом, число проверок (85) пересчитано по коду. Разбор GDScript и совпадение чисел в движке — `RULES CHECK`, `GRIMOIRE CHECK` и регрессия `grind_check`/`order_check` у пользователя. Правишь правило — правь `.gd`, Python-эталон и, если меняется путь игрока, `scenes/debug/rule_paths.gd` (самопроверка сверяет имена функций).
 - Регистратор плейтеста и `playtest_check` (S2.5) агент не запускал: обращения к API сверены скриптом, сценарий проверки сверен с кодом ступки, клиента и `OrderDesk` (порядок сигналов при опустошении ступки, отказы, пауза); тайминги — только в Godot.
 - Код S2.4 (клиент, очередь, HUD, баночка, лавка, `order_check`) агент не запускал: обращения к API сверены скриптом, числа оценки пересчитаны на данных `.tres`, тайминги живого заказа — только в Godot. Код S2.1–S2.3a (полка, ступка, жест, шкала, пестик, отклик, FX) у агента тоже не запускался — у агента нет Godot. Проверка: `shelf_check.tscn`, `grind_check.tscn`. Шейдеры порошка/распада/волны/лучей и частицы проверены только numpy-макетом `tools/art/mortar_preview.py` (копии шейдеров строка в строку — правишь шейдер, правь и макет).
@@ -87,4 +83,4 @@
 - В истории агента нет PNG/JPG пользователя (AGENTS.md §2.3); исключение — графика, которую добавил сам агент (портретный фон).
 
 ## Архив
-`outbox/alchemist_update_gh-cb72542_to_v0.2.3.zip` (всё после коммита пользователя `cb72542`), `outbox/alchemist_update_v0.2.3.zip`, `outbox/patches/v0.2.3/`, `archive/alchemist_repo.bundle` (история агента), `archive/alchemist_latest.zip`, `archive/history/`, `archive/LAST_SYNC.txt`.
+`outbox/alchemist_update_gh-d783bd1_to_v0.2.5.zip` (всё после коммита пользователя `d783bd1`), `outbox/alchemist_update_v0.2.5.zip`, `outbox/patches/v0.2.5/`, `archive/alchemist_repo.bundle` (история агента), `archive/alchemist_latest.zip`, `archive/history/`, `archive/LAST_SYNC.txt`.

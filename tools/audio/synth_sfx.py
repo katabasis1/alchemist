@@ -163,6 +163,50 @@ def happy() -> np.ndarray:
     return _norm(_fade(out, 0.003, 0.05), -10.0)
 
 
+def _bubble(t: np.ndarray, at: float, freq: float, decay: float, rise: float) -> np.ndarray:
+    """Один пузырь: синус, высота которого растёт (пузырь всплывает и сжимается), быстрое затухание."""
+    tt = np.clip(t - at, 0.0, None)
+    on = (t >= at).astype(float)
+    phase = 2 * np.pi * freq * (tt + rise * tt * tt / 2.0)
+    return on * np.sin(phase) * np.exp(-tt / decay) * (1.0 - np.exp(-tt / 0.0015))
+
+
+def glug(seed: int) -> np.ndarray:
+    """«Буль» струи в Приёмнике (S4.2): два пузыря подряд с растущей высотой + мягкий глухой плюх."""
+    rng = np.random.default_rng(seed)
+    t = _t(0.22)
+    base = 330.0 * (1.0 + rng.uniform(-0.12, 0.12))
+    out = _bubble(t, 0.0, base, 0.045, 9.0)
+    out += 0.6 * _bubble(t, 0.05 + rng.uniform(0.0, 0.02), base * 1.35, 0.03, 12.0)
+    plop = _low(rng.standard_normal(t.size), 420.0) * np.exp(-t / 0.02) * 0.5
+    return _norm(_fade(out + plop, 0.001, 0.03), -12.0)
+
+
+def settle_bubble() -> np.ndarray:
+    """Бульканье отстаивания (S4.2): россыпь мелких пузырей, к концу всё реже, под ними тихое шипение."""
+    rng = np.random.default_rng(77)
+    t = _t(1.1)
+    out = np.zeros_like(t)
+    at = 0.0
+    while at < 0.95:
+        out += rng.uniform(0.4, 1.0) * _bubble(t, at, rng.uniform(520.0, 1250.0), rng.uniform(0.012, 0.03), 14.0)
+        at += rng.uniform(0.025, 0.07) * (1.0 + 3.0 * at)
+    fizz = _band(rng.standard_normal(t.size), 2500.0, 7000.0) * np.exp(-t / 0.35) * 0.08
+    return _norm(_fade(out + fizz, 0.002, 0.08), -13.0)
+
+
+def clean_cut() -> np.ndarray:
+    """«Дзынь» чистого среза (S4.2): стеклянный колокольчик — одна высокая нота и тихий отзвук октавой выше."""
+    t = _t(0.6)
+    out = np.zeros_like(t)
+    for delay, base, gain in ((0.0, 2093.0, 1.0), (0.05, 4186.0, 0.3)):
+        tt = np.clip(t - delay, 0.0, None)
+        on = (t >= delay).astype(float)
+        for ratio, amp, decay in ((1.0, 1.0, 0.22), (2.32, 0.3, 0.09), (4.1, 0.12, 0.04)):
+            out += on * gain * amp * np.sin(2 * np.pi * base * ratio * tt) * np.exp(-tt / decay)
+    return _norm(_fade(out, 0.002, 0.06), -11.0)
+
+
 SOUNDS = {
     "sfx_grind_crunch_1.ogg": lambda: crunch(101),
     "sfx_grind_crunch_2.ogg": lambda: crunch(202),
@@ -179,6 +223,11 @@ SOUNDS = {
     "sfx_whoosh.ogg": whoosh,
     "sfx_oof.ogg": oof,
     "sfx_happy.ogg": happy,
+    "sfx_glug_1.ogg": lambda: glug(31),
+    "sfx_glug_2.ogg": lambda: glug(32),
+    "sfx_glug_3.ogg": lambda: glug(33),
+    "sfx_settle_bubble.ogg": settle_bubble,
+    "sfx_clean_cut.ogg": clean_cut,
 }
 
 

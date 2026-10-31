@@ -1,0 +1,115 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/stations/settler/settler.gd" id="1_settler"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="2_economy"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="3_catalog"]
+[ext_resource type="Resource" path="res://data/settler/settler_round.tres" id="4_config"]
+[ext_resource type="PackedScene" path="res://components/liquid/liquid.tscn" id="5_liquid"]
+[ext_resource type="PackedScene" path="res://components/pour_stream/pour_stream.tscn" id="6_stream"]
+[ext_resource type="PackedScene" path="res://scenes/stations/settler/receiver.tscn" id="7_receiver"]
+[ext_resource type="PackedScene" path="res://components/band_gauge/band_gauge.tscn" id="8_gauge"]
+[ext_resource type="PackedScene" path="res://scenes/stations/station_trash.tscn" id="9_trash"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="10_hit"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_sparkle_burst.tscn" id="11_sparkle"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state_machine.tscn" id="12_sm"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state.tscn" id="13_state"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="14_punch"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="15_sfx"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_accept.ogg" id="16_accept"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_reject.ogg" id="17_reject"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_settle_bubble.ogg" id="18_settle"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_glug_1.ogg" id="19_glug1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_glug_2.ogg" id="20_glug2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_glug_3.ogg" id="21_glug3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_clean_cut.ogg" id="22_clean"]
+
+[node name="Settler" type="Node2D" node_paths=PackedStringArray("state_machine", "settling_state", "flask", "liquid", "flask_area", "stream", "receiver", "gauge", "trash", "punch", "sparkle", "sfx_receive", "sfx_reject", "sfx_settle", "sfx_glug", "sfx_clean")]
+script = ExtResource("1_settler")
+economy = ExtResource("2_economy")
+catalog = ExtResource("3_catalog")
+config = ExtResource("4_config")
+state_machine = NodePath("StateMachine")
+settling_state = NodePath("StateMachine/Settling")
+flask = NodePath("Flask")
+liquid = NodePath("Flask/Body/Liquid")
+flask_area = NodePath("FlaskArea")
+stream = NodePath("Stream")
+receiver = NodePath("Receiver")
+gauge = NodePath("Gauge")
+trash = NodePath("Trash")
+punch = NodePath("JuicePunch")
+sparkle = NodePath("SparkleBurst")
+sfx_receive = NodePath("SfxReceive")
+sfx_reject = NodePath("SfxReject")
+sfx_settle = NodePath("SfxSettle")
+sfx_glug = NodePath("SfxGlug")
+sfx_clean = NodePath("SfxClean")
+
+[node name="Flask" type="Node2D" parent="."]
+position = Vector2(0, -99)
+
+[node name="Body" type="Node2D" parent="Flask"]
+
+[node name="Liquid" parent="Flask/Body" instance=ExtResource("5_liquid")]
+position = Vector2(2.4, -79.2)
+scale = Vector2(0.8, 0.8)
+
+[node name="Stream" parent="." instance=ExtResource("6_stream")]
+visible = false
+
+[node name="Receiver" parent="." instance=ExtResource("7_receiver")]
+position = Vector2(370, 0)
+
+[node name="Gauge" parent="." instance=ExtResource("8_gauge")]
+visible = false
+offset_left = -205.0
+offset_top = -370.0
+offset_right = -175.0
+offset_bottom = -110.0
+
+[node name="Trash" parent="." instance=ExtResource("9_trash")]
+position = Vector2(-190, -46)
+
+[node name="FlaskArea" parent="." instance=ExtResource("10_hit")]
+offset_left = -125.0
+offset_top = -410.0
+offset_right = 130.0
+offset_bottom = 0.0
+
+[node name="SparkleBurst" parent="." instance=ExtResource("11_sparkle")]
+
+[node name="StateMachine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("12_sm")]
+initial_state = NodePath("Empty")
+
+[node name="Empty" parent="StateMachine" instance=ExtResource("13_state")]
+next_states = Array[StringName]([&"Settling"])
+
+[node name="Settling" parent="StateMachine" instance=ExtResource("13_state")]
+next_states = Array[StringName]([&"Layered"])
+timeout_to = &"Layered"
+
+[node name="Layered" parent="StateMachine" instance=ExtResource("13_state")]
+next_states = Array[StringName]([&"Pouring", &"Empty"])
+
+[node name="Pouring" parent="StateMachine" instance=ExtResource("13_state")]
+next_states = Array[StringName]([&"Layered", &"Empty"])
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("14_punch")]
+target = NodePath("../Flask/Body")
+
+[node name="SfxReceive" parent="." instance=ExtResource("15_sfx")]
+streams = Array[AudioStream]([ExtResource("16_accept")])
+
+[node name="SfxReject" parent="." instance=ExtResource("15_sfx")]
+streams = Array[AudioStream]([ExtResource("17_reject")])
+
+[node name="SfxSettle" parent="." instance=ExtResource("15_sfx")]
+streams = Array[AudioStream]([ExtResource("18_settle")])
+
+[node name="SfxGlug" parent="." instance=ExtResource("15_sfx")]
+streams = Array[AudioStream]([ExtResource("19_glug1"), ExtResource("20_glug2"), ExtResource("21_glug3")])
+pitch_jitter = 0.1
+min_interval_sec = 0.06
+
+[node name="SfxClean" parent="." instance=ExtResource("15_sfx")]
+streams = Array[AudioStream]([ExtResource("22_clean")])

@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/stations/settler/receiver.gd" id="1_receiver"]
+[ext_resource type="PackedScene" path="res://components/liquid/liquid.tscn" id="2_liquid"]
+[ext_resource type="Material" path="res://scenes/stations/settler/receiver_liquid_material.tres" id="3_mat"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_receiver_beaker.png" id="4_beaker"]
+[ext_resource type="PackedScene" path="res://scenes/stations/station_trash.tscn" id="5_trash"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state_machine.tscn" id="6_sm"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state.tscn" id="7_state"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="8_punch"]
+
+[node name="Receiver" type="Node2D" node_paths=PackedStringArray("liquid", "state_machine", "trash", "punch")]
+script = ExtResource("1_receiver")
+liquid = NodePath("Visual/Liquid")
+state_machine = NodePath("StateMachine")
+trash = NodePath("Trash")
+punch = NodePath("JuicePunch")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Liquid" parent="Visual" instance=ExtResource("2_liquid")]
+material = ExtResource("3_mat")
+position = Vector2(0, -115.2)
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("4_beaker")
+
+[node name="Trash" parent="." instance=ExtResource("5_trash")]
+position = Vector2(150, -46)
+
+[node name="StateMachine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("6_sm")]
+initial_state = NodePath("Empty")
+
+[node name="Empty" parent="StateMachine" instance=ExtResource("7_state")]
+next_states = Array[StringName]([&"Filled"])
+
+[node name="Filled" parent="StateMachine" instance=ExtResource("7_state")]
+next_states = Array[StringName]([&"Empty"])
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("8_punch")]
+target = NodePath("../Visual")
