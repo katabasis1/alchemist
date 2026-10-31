@@ -28,6 +28,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "art"))
 import liquid_preview as LP  # noqa: E402
+sys.path.insert(0, str(ROOT / "tools" / "alchemy"))
+import liquid_model as LM  # noqa: E402  — LiquidPourTilt: эталон наклона (D22), настройки из pour_tilt_round.tres
 
 STREAM_SHADER = ROOT / "components" / "pour_stream" / "pour_stream.gdshader"
 FLASK = ROOT / "assets" / "props" / "prop_flask_round.png"
@@ -41,12 +43,9 @@ FLASK_MOUTH_TEX = (252.0, 24.0)       # носик — край венчика �
 REST_PIVOT = (0.0, -99.0)
 POUR_LIFT = 170.0
 POUR_ANGLE = math.radians(100.0)     # только для --angle; по умолчанию угол считается от уровня (pour_angle)
-# Видимая внутренняя кромка горла со стороны слива на холсте 384×512. Полость шейдера шире (neck_half_width = 40,
-# до x = 229), но стекло prop_flask_round на x = 214…242 непрозрачно и закрывает жидкость; чистое стекло — до x = 213.
-LIP_INNER_TEX = (213.0, 60.0)
-POUR_DIP_PX = 15.0                    # на сколько кромка уходит под поверхность (px холста): видно из-под венчика…
-POUR_DIP_LAYER_SHARE = 0.7            # …но не глубже этой доли верхнего слоя: у кромки всегда цвет того, что льётся
-POUR_DIP_MIN_PX = 2.0
+# Наклон колбы при сливе — от уровня (D22): LiquidPourTilt из tools/alchemy/liquid_model.py, настройки —
+# data/liquid/pour_tilt_round.tres (кромка горла, заглубление). Тот же ресурс читает Liquid в игре.
+POUR_TILT = LM.load_pour_tilt()
 RECEIVER_POS = (370.0, 0.0)           # опора снизу
 RECEIVER_SCALE = 0.6
 # Полость Приёмника на холсте 320×384 (scenes/stations/settler/receiver_liquid_material.tres)
@@ -188,22 +187,9 @@ def rotate_about(img: Image.Image, pivot, angle_rad, canvas, at):
 
 
 def pour_angle(uf: dict) -> float:
-    """Наклон колбы, при котором кромка горла уходит под поверхность верхнего слоя на dip.
-
-    liquid.gdshader держит высоту слоёв над центром шара по мировой вертикали (объём при наклоне не
-    пересчитывается), поэтому высота кромки над центром = -lx·sinθ - ly·cosθ, а поверхность — на
-    s = surface0 - bulb_radius. Решение: θ = acos((s - dip) / |l|) - atan2(lx, -ly).
-    dip = clamp(доля·толщина верхнего слоя, MIN, DIP_PX): у кромки не показывается следующий слой.
-    """
+    """Наклон колбы по уровню: LiquidPourTilt.angle на слоях и форме колбы из uniforms макета."""
     n = uf["layer_count"]
-    tops, col = uf["layer_tops"], uf["column_height"]
-    surface0 = tops[n - 1] * col if n else 0.0
-    thick = (tops[n - 1] - (tops[n - 2] if n > 1 else 0.0)) * col if n else 0.0
-    dip = min(POUR_DIP_PX, max(POUR_DIP_MIN_PX, thick * POUR_DIP_LAYER_SHARE))
-    s = surface0 - uf["bulb_radius"] - dip
-    lx, ly = LIP_INNER_TEX[0] - uf["bulb_center"][0], LIP_INNER_TEX[1] - uf["bulb_center"][1]
-    a = math.hypot(lx, ly)
-    return math.acos(max(-1.0, min(1.0, s / a))) - math.atan2(lx, -ly)
+    return POUR_TILT.angle(list(uf["layer_tops"][:n]), uf["column_height"], tuple(uf["bulb_center"]), uf["bulb_radius"])
 
 
 def station_frame(t: float, mixture: dict, poured: float, receiver_mix: dict, flow: float, zoom: float = 1.0):

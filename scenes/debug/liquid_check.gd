@@ -2,9 +2,12 @@
 ## docs/art/refs/ref_liquid_*.jpg. Те же случаи, что python tools/alchemy/liquid_model.py --self-test (эталон):
 ## LiquidLayers.view и LiquidSlosh, плюс то, чего Python не видит: узел Liquid ставит параметры шейдера, муть
 ## отстаивается, поверхность держит горизонт при повороте, разгон вбок наклоняет её к нужной стенке, толчок затухает.
+## Слив (S4.2): LiquidPourTilt.angle сверяется с числами эталона, узел — pour_angle, top_color, surface_point,
+## texture_to_global, stir(сек), settle_now.
 ## На экране: верхний ряд — шесть свойств по одному (узоры), нижний — 4 слоя, 6 слоёв, слив, муть раз в
 ## STIR_EVERY с, качание колбы, рывки вбок и колба проверок. Итог — строкой «LIQUID CHECK: x/y».
-## Сигналы: нет. Зависимости: DataCatalog, EconomyConfig, LiquidSlosh, колбы Liquid (@export), LiquidLayers.
+## Сигналы: нет. Зависимости: DataCatalog, EconomyConfig, LiquidSlosh, колбы Liquid (@export), LiquidLayers,
+##   LiquidPourTilt (у колбы проверок).
 extends Node2D
 
 ## Порядок колб верхнего ряда = порядок детей singles_row: тяжёлое слева.
@@ -62,6 +65,22 @@ const FPS_SEC: float = 0.6
 const FPS_TOLERANCE: float = 0.04
 ## Узел: «мутная» — выше этого; запас к settle_sec на последний кадр твина.
 const TURBID: float = 0.9
+## Слив (S4.2, D22): смесь макета Отстойника при ёмкости колбы 5 и наклон по эталону
+## (python tools/alchemy/liquid_model.py, LiquidPourTilt.angle) для слива 0 / 0,12 / 0,3 / 0,5; пустая колба.
+const POUR_MIX: Dictionary = {&"sleep": 1.0, &"life": 1.1, &"light": 1.0}
+const POUR_CAPACITY: float = 5.0
+const POUR_SHARES: Array[float] = [0.0, 0.12, 0.3, 0.5]
+const POUR_ANGLES: Array[float] = [1.515164683083612, 1.5685348379924946, 1.6049847656662126, 1.7340810508014253]
+const POUR_ANGLE_EMPTY: float = 1.9293679119476301
+## tops приходят во float32: расхождение с эталоном на double — около 1e-6 рад.
+const ANGLE_NEAR: float = 0.0001
+const POUR_STEPS: int = 40
+## 70° и 120° в радианах: колба не переворачивается.
+const POUR_MIN_ANGLE: float = 1.2217304763960306
+const POUR_MAX_ANGLE: float = 2.0943951023931953
+const QUARTER_TURN: float = PI / 2.0
+const QUICK_STIR: float = 0.5
+const PIXEL_NEAR: float = 0.01
 const SETTLE_SLACK: float = 0.2
 
 @export var catalog: DataCatalog
@@ -90,6 +109,7 @@ func _ready() -> void:
 	_check_view()
 	_check_slosh()
 	await _check_node()
+	await _check_pour()
 	_finish()
 
 
@@ -206,6 +226,79 @@ func _check_node() -> void:
 	await get_tree().create_timer(BUMP_WAIT).timeout
 	var expected: float = BUMP_PX * exp(-slosh.bump_decay * BUMP_WAIT)
 	_check("толчок затухает", absf(float(mat.get_shader_parameter(&"slosh_px")) - expected) < expected * BUMP_TOLERANCE)
+
+
+## Слив (S4.2): наклон по уровню (D22) и то, что нужно станции Отстойника от колбы.
+func _check_pour() -> void:
+	var tilt: LiquidPourTilt = probe.pour_tilt
+	_check("у колбы есть LiquidPourTilt", tilt != null)
+	if tilt == null:
+		return
+	var mat: ShaderMaterial = probe.material as ShaderMaterial
+	var column: float = float(mat.get_shader_parameter(&"column_height"))
+	var center: Vector2 = mat.get_shader_parameter(&"bulb_center")
+	var radius: float = float(mat.get_shader_parameter(&"bulb_radius"))
+	var worst: float = 0.0
+	for i: int in POUR_SHARES.size():
+		var tops: PackedFloat32Array = _tops(LiquidLayers.view(POUR_MIX, POUR_SHARES[i], POUR_CAPACITY, catalog, economy))
+		worst = maxf(worst, absf(tilt.angle(tops, column, center, radius) - POUR_ANGLES[i]))
+	_check("LiquidPourTilt.angle = эталон (слив 0 / 0,12 / 0,3 / 0,5)", worst < ANGLE_NEAR)
+	_check("пустая колба: наклон как у эталона", absf(tilt.angle(PackedFloat32Array(), column, center, radius)
+			- POUR_ANGLE_EMPTY) < ANGLE_NEAR)
+	var previous: float = 0.0
+	var growing: bool = true
+	var inside: bool = true
+	for k: int in POUR_STEPS + 1:
+		var tops: PackedFloat32Array = _tops(LiquidLayers.view(POUR_MIX, float(k) / POUR_STEPS, POUR_CAPACITY,
+				catalog, economy))
+		if tops.is_empty():
+			continue
+		var angle: float = tilt.angle(tops, column, center, radius)
+		growing = growing and angle >= previous - NEAR
+		inside = inside and angle >= POUR_MIN_ANGLE and angle <= POUR_MAX_ANGLE
+		previous = angle
+	_check("по ходу слива колба только клонится дальше", growing)
+	_check("наклон в пределах 70…120°", inside)
+	probe.rotation = 0.0
+	probe.show_mixture(POUR_MIX, POUR_SHARES[1])
+	var view: Dictionary = LiquidLayers.view(POUR_MIX, POUR_SHARES[1], probe.capacity, catalog, economy)
+	var colors: PackedColorArray = view[LiquidLayers.KEY_COLORS]
+	_check("узел: pour_angle() = angle по показанным слоям",
+			absf(probe.pour_angle() - tilt.angle(_tops(view), column, center, radius)) < NEAR)
+	_check("top_color() — цвет верхнего слоя", probe.top_color() == colors[colors.size() - 1])
+	var half: Vector2 = probe.texture.get_size() * 0.5
+	_check("texture_to_global: середина холста — позиция колбы",
+			probe.texture_to_global(half).distance_to(probe.global_position) < PIXEL_NEAR)
+	var scale_y: float = probe.global_scale.y
+	var surface: float = _tops(view)[-1] * column
+	var bulb: Vector2 = probe.texture_to_global(center)
+	var point: Vector2 = probe.surface_point()
+	_check("surface_point без наклона: над центром шара на (поверхность − радиус)",
+			absf(point.x - bulb.x) < PIXEL_NEAR and absf((bulb.y - point.y) - (surface - radius) * scale_y) < PIXEL_NEAR)
+	probe.rotation = QUARTER_TURN
+	var top_mid: Vector2 = probe.texture_to_global(Vector2(half.x, 0.0))
+	_check("texture_to_global после поворота на 90°: верх холста справа от центра",
+			absf(top_mid.y - probe.global_position.y) < PIXEL_NEAR and top_mid.x > probe.global_position.x)
+	bulb = probe.texture_to_global(center)
+	point = probe.surface_point()
+	_check("surface_point при наклоне: на вертикали через центр шара (горизонт)",
+			absf(point.x - bulb.x) < PIXEL_NEAR and absf((bulb.y - point.y) - (surface - radius) * scale_y) < PIXEL_NEAR)
+	probe.rotation = 0.0
+	probe.show_mixture({})
+	_check("пустая колба: top_color прозрачный", probe.top_color().a == 0.0)
+	probe.show_mixture(POUR_MIX)
+	probe.stir(QUICK_STIR)
+	await _frames(2)
+	probe.settle_now()
+	_check("settle_now: муть пропала сразу", float(mat.get_shader_parameter(&"turbidity")) == 0.0)
+	await _frames(2)
+	_check("settle_now: твин мути остановлен, муть не вернулась", float(mat.get_shader_parameter(&"turbidity")) == 0.0)
+	probe.stir(QUICK_STIR)
+	await _frames(2)
+	var turbid: bool = float(mat.get_shader_parameter(&"turbidity")) > TURBID
+	await get_tree().create_timer(QUICK_STIR + SETTLE_SLACK).timeout
+	_check("stir(сек): мутнеет и отстаивается за заданное время, а не за settle_sec",
+			turbid and float(mat.get_shader_parameter(&"turbidity")) < RESTING and QUICK_STIR + SETTLE_SLACK < probe.settle_sec)
 
 
 ## process_frame приходит до _process и шага твинов: чтобы колба успела отработать кадр, ждём два.

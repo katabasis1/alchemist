@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/props/prop_flask_round.png" id="1_flask"]
 [ext_resource type="Material" path="res://components/liquid/liquid_material.tres" id="2_mat"]
@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://data/catalog.tres" id="4_catalog"]
 [ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="5_economy"]
 [ext_resource type="Resource" path="res://data/liquid/liquid_slosh.tres" id="6_slosh"]
+[ext_resource type="Resource" path="res://data/liquid/pour_tilt_round.tres" id="7_tilt"]
 
 [node name="Liquid" type="Sprite2D"]
 material = ExtResource("2_mat")
@@ -14,5 +15,6 @@ script = ExtResource("3_liquid")
 catalog = ExtResource("4_catalog")
 economy = ExtResource("5_economy")
 slosh = ExtResource("6_slosh")
+pour_tilt = ExtResource("7_tilt")
 capacity = 5.0
 settle_sec = 1.2

@@ -38,6 +38,11 @@ GD_SLOSH = R.ROOT / "data" / "liquid" / "liquid_slosh.gd"
 TRES_SLOSH = R.ROOT / "data" / "liquid" / "liquid_slosh.tres"
 SLOSH_FIELDS = ("stiffness", "damping", "per_accel", "rotation_drag", "max_angle", "bump_decay", "bump_frequency")
 SLOSH_FUNCTIONS = ("target", "step", "fade")
+GD_POUR_TILT = R.ROOT / "data" / "liquid" / "liquid_pour_tilt.gd"
+TRES_POUR_TILT = R.ROOT / "data" / "liquid" / "pour_tilt_round.tres"
+TRES_LIQUID_MATERIAL = R.ROOT / "components" / "liquid" / "liquid_material.tres"
+POUR_TILT_FIELDS = ("lip", "dip_px", "dip_layer_share", "dip_min_px")
+POUR_TILT_FUNCTIONS = ("angle",)
 
 MAX_LAYERS = 6
 KEY_COLORS = "colors"
@@ -113,6 +118,55 @@ class LiquidSlosh:
 
 def load_slosh() -> LiquidSlosh:
     return LiquidSlosh(R.read_tres(TRES_SLOSH)[0])
+
+
+# --- LiquidPourTilt (S4.2, D22) --------------------------------------------------------------------------------------
+class LiquidPourTilt:
+    """Копия data/liquid/liquid_pour_tilt.gd: наклон колбы при сливе — от уровня, а не постоянный.
+
+    liquid.gdshader держит высоты слоёв над центром шара по мировой вертикали (up = (sin a, −cos a),
+    a = surface_angle = −θ), значит высота точки l (от центра шара, px холста) над центром = −lx·sinθ − ly·cosθ.
+    Колба наклоняется так, чтобы видимая внутренняя кромка горла lip ушла под поверхность на dip:
+    θ = acos((surface − R − dip) / |l|) − atan2(lx, −ly), dip = clamp(доля·толщина верхнего слоя, min, dip_px) —
+    у кромки всегда цвет того слоя, что льётся.
+    """
+
+    def __init__(self, fields: dict) -> None:
+        self.lip = tuple(float(v) for v in fields["lip"])
+        for name in POUR_TILT_FIELDS[1:]:
+            setattr(self, name, float(fields[name]))
+
+    def angle(self, tops: list, column_height: float, bulb_center: tuple, bulb_radius: float) -> float:
+        count = len(tops)
+        surface = tops[count - 1] * column_height if count > 0 else 0.0
+        below = tops[count - 2] * column_height if count > 1 else 0.0
+        dip = min(self.dip_px, max(self.dip_min_px, (surface - below) * self.dip_layer_share))
+        arm_x, arm_y = self.lip[0] - bulb_center[0], self.lip[1] - bulb_center[1]
+        height = surface - bulb_radius - dip
+        return math.acos(max(-1.0, min(1.0, height / math.hypot(arm_x, arm_y)))) - math.atan2(arm_x, -arm_y)
+
+
+def _parse_vector2(text: str) -> tuple:
+    m = re.fullmatch(r"Vector2\(\s*([-0-9.e]+)\s*,\s*([-0-9.e]+)\s*\)", str(text).strip())
+    if not m:
+        raise ValueError("не Vector2: %r" % (text,))
+    return float(m.group(1)), float(m.group(2))
+
+
+def load_pour_tilt() -> LiquidPourTilt:
+    fields = dict(R.read_tres(TRES_POUR_TILT)[0])
+    fields["lip"] = _parse_vector2(fields["lip"]) if isinstance(fields["lip"], str) else fields["lip"]
+    return LiquidPourTilt(fields)
+
+
+def flask_shape() -> dict:
+    """Форма круглой колбы из liquid_material.tres: bulb_center, bulb_radius, column_height, neck_half_width."""
+    text = TRES_LIQUID_MATERIAL.read_text(encoding="utf-8")
+    shape = {}
+    for name in ("bulb_center", "bulb_radius", "column_height", "neck_half_width", "neck_top"):
+        m = re.search(r"^shader_parameter/%s = (.+)$" % name, text, re.MULTILINE)
+        shape[name] = _parse_vector2(m.group(1)) if m.group(1).startswith("Vector2") else float(m.group(1))
+    return shape
 
 
 # --- Самопроверка ----------------------------------------------------------------------------------------------------
@@ -317,6 +371,76 @@ def check_slosh_sync(c: R.Checks) -> None:
     c.check("поля LiquidSlosh = поля эталона", tuple(fields) == SLOSH_FIELDS, str(fields))
 
 
+def _lip_height(t: LiquidPourTilt, theta: float, center: tuple) -> float:
+    lx, ly = t.lip[0] - center[0], t.lip[1] - center[1]
+    return -lx * math.sin(theta) - ly * math.cos(theta)
+
+
+def _pour_mixes(catalog: R.DataCatalog) -> list:
+    """Смеси путей рецептов (как print_paths) + смесь макета станции: на них проверяется наклон."""
+    e = catalog.economy
+    mixes = [{"sleep": 1.0, "life": 1.1, "light": 1.0}]
+    for recipe in catalog.recipes:
+        steps = [s for s in recipe.hint_steps if s.startswith("ing_")]
+        ings = [i for i in catalog.ingredients if i.id in steps]
+        if ings:
+            mixes.append(R.ground(ings, R.grind_to_perfect(ings, e)[0], e))
+    return mixes
+
+
+def check_pour_tilt(c: R.Checks, t: LiquidPourTilt, catalog: R.DataCatalog) -> None:
+    shape = flask_shape()
+    col, center, radius = shape["column_height"], shape["bulb_center"], shape["bulb_radius"]
+    c.check("кромка — на видимой стенке горла: внутри полости шейдера, со стороны слива",
+            center[0] < t.lip[0] <= center[0] + shape["neck_half_width"] and _near(t.lip[1], shape["neck_top"]),
+            str(t.lip))
+    c.check("настройки dip разумны: 0 < min ≤ max, 0 < доля < 1",
+            0.0 < t.dip_min_px <= t.dip_px and 0.0 < t.dip_layer_share < 1.0)
+    worst_geo, worst_drop, lo, hi, lip_in_top, n = 0.0, 0.0, 10.0, -10.0, True, 0
+    for mix in _pour_mixes(catalog):
+        prev = -10.0
+        for k in range(0, 41):
+            v = view(mix, k / 40.0, 5.0, catalog, catalog.economy)
+            tops = v[KEY_TOPS]
+            if not tops:
+                continue
+            theta = t.angle(tops, col, center, radius)
+            surface = tops[-1] * col
+            below = tops[-2] * col if len(tops) > 1 else 0.0
+            dip = min(t.dip_px, max(t.dip_min_px, (surface - below) * t.dip_layer_share))
+            worst_geo = max(worst_geo, abs(_lip_height(t, theta, center) - (surface - radius - dip)))
+            worst_drop = max(worst_drop, prev - theta)
+            prev = theta
+            lo, hi = min(lo, theta), max(hi, theta)
+            if surface - below >= t.dip_min_px / t.dip_layer_share:
+                lip_in_top = lip_in_top and _lip_height(t, theta, center) >= below - radius - 1e-9
+            n += 1
+    c.check("кромка ровно на dip под поверхностью (геометрия шейдера), %d кадров" % n, worst_geo < 1e-9,
+            "%.2e px" % worst_geo)
+    c.check("по ходу слива колба только наклоняется дальше", worst_drop <= 1e-12, "%.2e рад" % worst_drop)
+    c.check("наклон в пределах 70…120° (колба не переворачивается)",
+            math.radians(70.0) <= lo and hi <= math.radians(120.0), "%.1f…%.1f°" % (math.degrees(lo), math.degrees(hi)))
+    c.check("у кромки — верхний слой (кроме остатка тоньше min/доля)", lip_in_top)
+    empty = t.angle([], col, center, radius)
+    full = t.angle([1.0], col, center, radius)
+    c.check("пустая колба — наклон больше, чем полная", empty > full,
+            "%.1f° / %.1f°" % (math.degrees(empty), math.degrees(full)))
+    lone = t.angle([0.4], col, center, radius)
+    c.check("один слой: толщина от дна (как два слоя с нижним нулевым)",
+            _near(lone, t.angle([0.0, 0.4], col, center, radius), 1e-12))
+
+
+def check_pour_tilt_sync(c: R.Checks) -> None:
+    if not GD_POUR_TILT.exists():
+        c.check("liquid_pour_tilt.gd на месте", False, str(GD_POUR_TILT))
+        return
+    text = GD_POUR_TILT.read_text(encoding="utf-8")
+    gd = re.findall(r"^func ([a-z_][a-z0-9_]*)\(", text, re.MULTILINE)
+    c.check("функции LiquidPourTilt = функции эталона", sorted(gd) == sorted(POUR_TILT_FUNCTIONS), str(gd))
+    fields = re.findall(r"^@export var ([a-z_]+): (?:float|Vector2)", text, re.MULTILINE)
+    c.check("поля LiquidPourTilt = поля эталона", tuple(fields) == POUR_TILT_FIELDS, str(fields))
+
+
 def _same_view(a: dict, b: dict) -> bool:
     return (a[KEY_COLORS] == b[KEY_COLORS] and a[KEY_PATTERNS] == b[KEY_PATTERNS]
             and len(a[KEY_TOPS]) == len(b[KEY_TOPS]) and all(_near(x, y, 1e-12) for x, y in zip(a[KEY_TOPS], b[KEY_TOPS]))
@@ -352,6 +476,11 @@ def self_test(catalog: R.DataCatalog) -> int:
     else:
         c.check("liquid_slosh.tres на месте", False, str(TRES_SLOSH))
     check_slosh_sync(c)
+    if TRES_POUR_TILT.exists():
+        check_pour_tilt(c, load_pour_tilt(), catalog)
+    else:
+        c.check("pour_tilt_round.tres на месте", False, str(TRES_POUR_TILT))
+    check_pour_tilt_sync(c)
     total_checks = c.passed + len(c.failed)
     print("LIQUID: %d/%d %s" % (c.passed, total_checks, "OK" if not c.failed else "FAIL"))
     return 0 if not c.failed else 1

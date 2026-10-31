@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LiquidPourTilt" format=3]
+
+[ext_resource type="Script" path="res://data/liquid/liquid_pour_tilt.gd" id="1_tilt"]
+
+[resource]
+script = ExtResource("1_tilt")
+lip = Vector2(213.0, 60.0)
+dip_px = 15.0
+dip_layer_share = 0.7
+dip_min_px = 2.0
