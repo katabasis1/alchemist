@@ -4,11 +4,12 @@
 
 [resource]
 script = ExtResource("1_config")
-mouth_px = Vector2(252, 24)
-pour_lift = 170.0
+mouth_px = Vector2(232, 30)
+spout_offset = Vector2(-18, -50)
 lift_sec = 0.14
 return_sec = 0.28
 tilt_sharpness = 14.0
+receiver_mouth_px = Vector2(160, 48)
 stream_dip_px = 6.0
 glug_sec_full = 0.24
 receiver_bump_px = 3.0

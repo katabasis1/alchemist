@@ -50,6 +50,11 @@ func surface_point() -> Vector2:
 	return liquid.surface_point()
 
 
+## Пиксель холста текстуры Приёмника → мир (над серединой горла колба держит носик при сливе).
+func texture_to_global(pixel: Vector2) -> Vector2:
+	return liquid.texture_to_global(pixel)
+
+
 func is_empty() -> bool:
 	return mixture.is_empty()
 

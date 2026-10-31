@@ -4,7 +4,9 @@
 ## в секунду и случайном шаге — одно и то же. Ещё: приём и отказ, отстаивание (само и тапом), удержание во время
 ## отстаивания, шкала среза (у одного слоя её нет), чистый и грязный срез, края чистой полосы, два слива подряд и
 ## внахлёст, Приёмник вылит посреди слива и Приёмник с прошлой колбой, слив до дна, корзины, пауза, ввод через HitArea,
-## наклон колбы и её возврат. Итог — строкой «SETTLER CHECK: x/y OK», потом памятка для ручной проверки.
+## поза слива (пока колба встаёт — не льёт; встала — носик над горлом Приёмника и стоит там, пока колба клонится;
+## струя падает в горло), короткое нажатие без слива, наклон колбы и её возврат. Удержание в проверках — время слива:
+## сначала стенд даёт колбе встать в позу (Settler.lift_left). Итог — строкой «SETTLER CHECK: x/y OK», потом памятка для ручной проверки.
 ## Живая колба (слева) получает смеси по кругу: слили всё или вылили — через LIVE_NEXT_SEC следующая. Каждый срез —
 ## строкой в Output. Проверка идёт пару секунд — колбу проверок (справа) в это время не трогайте.
 ## Тексты на экран не выводятся.
@@ -62,10 +64,16 @@ const DRAIN_HOLD: float = 3.5833333333333335
 const DRAIN_LIMIT_SEC: float = 10.0
 ## Хвост не может течь дольше стольких кадров.
 const TAIL_GUARD_FRAMES: int = 1000
-## Допуски: высота и доли (double, формулы точные), наклон колбы, поворот и позиция у покоящейся колбы.
+## Допуски: высота и доли (double, формулы точные), наклон колбы, поворот и позиция у покоящейся колбы, носик над
+## горлом Приёмника (px станции).
 const NEAR: float = 0.000001
 const TILT_NEAR: float = 0.05
 const REST_NEAR: float = 0.001
+const SPOUT_NEAR: float = 0.01
+## Доля подъёма, на которой колбу отпускают или ставят на паузу, — колба ещё встаёт.
+const LIFT_PART: float = 0.5
+## Полуширина отверстия Приёмника с запасом, px холста его текстуры (отверстие x 97…220): струя входит между краями.
+const RECEIVER_HOLE_HALF: Vector2 = Vector2(55.0, 0.0)
 ## Доли в проценты для строки живой колбы.
 const PERCENT: float = 100.0
 ## Запас к времени твинов при ожидании, секунды.
@@ -200,7 +208,7 @@ func _check_frame_rate() -> void:
 	_fresh(TWO)
 	seed(RANDOM_SEED)
 	probe.begin_pour()
-	_step_random(HOLD_SEC)
+	_step_random(probe.lift_left() + HOLD_SEC)
 	probe.end_pour()
 	var guard: int = 0
 	while probe.is_tailing() and guard < TAIL_GUARD_FRAMES:
@@ -208,8 +216,7 @@ func _check_frame_rate() -> void:
 		guard += 1
 	_check("случайный шаг: слито %.6f = 0,24" % probe.poured, _near(probe.poured, POURED_AFTER_HOLD))
 	_fresh(TWO)
-	probe.begin_pour()
-	_step_for(HOLD_SEC)
+	_hold(HOLD_SEC)
 	probe.end_pour()
 	_step_for(TAIL_PEEK_SEC)
 	_check("хвост через 0,05 с: %.6f = 0,23625, ещё течёт" % probe.poured,
@@ -255,11 +262,11 @@ func _check_two_pours() -> void:
 	_check("два слива подряд: Приёмник = pour_top", _receiver_is_top(TWO))
 	_fresh(TWO)
 	cuts = _cuts
-	probe.begin_pour()
-	_step_for(HOLD_SEC)
+	_hold(HOLD_SEC)
 	probe.end_pour()
 	_step_for(OVERLAP_AFTER)
-	_check("внахлёст: снова зажали, пока течёт хвост", probe.is_tailing() and probe.begin_pour())
+	_check("внахлёст: снова зажали, пока течёт хвост, — колба в позе, льёт сразу", probe.is_tailing()
+			and probe.begin_pour() and probe.lift_left() == 0.0)
 	_step_for(SHORT_HOLD)
 	probe.end_pour()
 	_finish_tail()
@@ -267,8 +274,7 @@ func _check_two_pours() -> void:
 	_check("внахлёст: Приёмник = pour_top", _receiver_is_top(TWO))
 	_fresh(TWO)
 	cuts = _cuts
-	probe.begin_pour()
-	_step_for(HOLD_SEC)
+	_hold(HOLD_SEC)
 	probe.end_pour()
 	_step_for(TINY_GAP)
 	probe.begin_pour()
@@ -281,8 +287,7 @@ func _check_two_pours() -> void:
 
 func _check_receiver() -> void:
 	_fresh(TWO)
-	probe.begin_pour()
-	_step_for(EMPTY_RECEIVER_AT)
+	_hold(EMPTY_RECEIVER_AT)
 	var from: float = probe.poured
 	probe.receiver.pour_out()
 	_check("Приёмник вылит посреди слива: пуст, Empty", probe.receiver.is_empty()
@@ -310,11 +315,12 @@ func _check_drain() -> void:
 	var cuts: int = _cuts
 	var emptied: int = _emptied.size()
 	probe.begin_pour()
+	var lift: float = probe.lift_left()
 	var frames: int = 0
 	while probe.state_machine.is_in(Settler.STATE_POURING) and frames < ceili(DRAIN_LIMIT_SEC * FPS):
 		probe.advance(1.0 / FPS)
 		frames += 1
-	var held: float = float(frames) / FPS
+	var held: float = float(frames) / FPS - lift
 	_check("слив до дна: Empty через %.3f с ≈ 3,583" % held, probe.state_machine.is_in(Settler.STATE_EMPTY)
 			and absf(held - DRAIN_HOLD) <= 1.0 / FPS)
 	_check("слив до дна: flask_emptied(drained) один раз", _emptied.size() == emptied + 1
@@ -345,8 +351,7 @@ func _check_trash() -> void:
 	probe.empty_flask()
 	_check("вылить во время отстаивания: нельзя", probe.state_machine.is_in(Settler.STATE_SETTLING))
 	probe.skip_settling()
-	probe.begin_pour()
-	probe.advance(1.0 / FPS)
+	_hold(1.0 / FPS)
 	_check("слив: корзина погашена", not probe.trash.active)
 	probe.empty_flask()
 	_check("вылить во время слива: нельзя", probe.state_machine.is_in(Settler.STATE_POURING))
@@ -359,31 +364,56 @@ func _check_trash() -> void:
 func _check_pause() -> void:
 	_fresh(TWO)
 	var cuts: int = _cuts
-	probe.begin_pour()
-	_step_for(PAUSE_HOLD)
+	_hold(PAUSE_HOLD)
 	EventBus.pause_changed.emit(true)
 	_check("пауза: слив остановлен, течёт хвост", probe.state_machine.is_in(Settler.STATE_LAYERED)
 			and not probe.is_pouring() and probe.is_tailing())
 	EventBus.pause_changed.emit(false)
 	_finish_tail()
 	_check("пауза: слито 0,06 + хвост 0,0075, срез один", _near(probe.poured, POURED_PAUSE) and _cuts == cuts + 1)
+	_fresh(TWO)
+	cuts = _cuts
+	probe.begin_pour()
+	_step_for(probe.lift_left() * LIFT_PART)
+	EventBus.pause_changed.emit(true)
+	_check("пауза, пока колба встаёт: Layered, не слито ни капли, хвоста и среза нет",
+			probe.state_machine.is_in(Settler.STATE_LAYERED) and not probe.is_tailing() and probe.poured == 0.0
+			and _cuts == cuts and probe.receiver.is_empty())
+	EventBus.pause_changed.emit(false)
 
 
 func _check_input() -> void:
 	_fresh(TWO)
 	probe.flask_area.pointer_down.emit(Vector2.ZERO)
-	_check("зажали колбу: Pouring", probe.state_machine.is_in(Settler.STATE_POURING) and probe.is_pouring())
+	_check("зажали колбу: Pouring, колба встаёт в позу за lift_sec", probe.state_machine.is_in(Settler.STATE_POURING)
+			and probe.is_pouring() and _near(probe.lift_left(), probe.config.lift_sec))
+	_step_for(probe.lift_left() * LIFT_PART)
+	_check("пока встаёт: не льёт — струи нет, слито 0, Приёмник пуст", probe.lift_left() > 0.0
+			and not probe.stream.is_flowing() and probe.poured == 0.0 and probe.receiver.is_empty())
+	_step_for(probe.lift_left())
+	_check("встала: носик над горлом Приёмника (%.4f px)" % _spout_error(), _spout_error() <= SPOUT_NEAR)
+	_check("встала: струя течёт", probe.lift_left() == 0.0 and probe.stream.is_flowing())
 	_step_for(SHORT_HOLD)
-	_check("льёт: струя течёт, Приёмник Filled", probe.stream.is_flowing()
-			and probe.receiver.state_machine.is_in(Receiver.STATE_FILLED))
+	_check("льёт: Приёмник Filled", probe.receiver.state_machine.is_in(Receiver.STATE_FILLED))
 	_check("колба наклонена по уровню: %.3f ≈ %.3f рад" % [probe.flask.rotation, probe.liquid.pour_angle()],
 			absf(probe.flask.rotation - probe.liquid.pour_angle()) <= TILT_NEAR)
+	_check("колба клонится вокруг носика: он всё над горлом (%.4f px)" % _spout_error(),
+			_spout_error() <= SPOUT_NEAR)
+	_check("струя падает в горло Приёмника и кончается в нём", _stream_into_receiver())
 	probe.flask_area.pointer_up.emit(Vector2.ZERO, true)
 	_check("отпустили: Layered, хвост, струя стихает", probe.state_machine.is_in(Settler.STATE_LAYERED)
 			and probe.is_tailing() and not probe.stream.is_flowing())
 	_finish_tail()
+	var cuts: int = _cuts
+	var poured: float = probe.poured
 	probe.flask_area.pointer_down.emit(Vector2.ZERO)
-	probe.advance(1.0 / FPS)
+	_step_for(probe.lift_left() * LIFT_PART)
+	probe.flask_area.pointer_up.emit(Vector2.ZERO, true)
+	_check("отпустили, пока колба вставала: не налито ни капли, хвоста и среза нет",
+			probe.state_machine.is_in(Settler.STATE_LAYERED) and not probe.is_tailing()
+			and probe.poured == poured and _cuts == cuts and not probe.stream.is_flowing())
+	probe.flask_area.pointer_down.emit(Vector2.ZERO)
+	_step_for(probe.lift_left() + 1.0 / FPS)
 	probe.flask_area.pointer_cancelled.emit()
 	_check("касание сорвалось: как отпускание", probe.state_machine.is_in(Settler.STATE_LAYERED)
 			and probe.is_tailing())
@@ -418,10 +448,16 @@ func _reset_probe() -> void:
 	probe.receiver.pour_out()
 
 
-## Удержание sec секунд кадрами fps (последний подогнан, сумма ровно sec), отпускание и хвост до конца.
-func _pour(sec: float, fps: int = FPS) -> void:
+## Зажать колбу и лить sec секунд кадрами fps: сначала колба встаёт в позу (lift_left, не льёт), потом слив; шаги
+## ровные, сумма ровно lift_left + sec. Колбу не отпускает.
+func _hold(sec: float, fps: int = FPS) -> void:
 	probe.begin_pour()
-	_step_for(sec, fps)
+	_step_for(probe.lift_left() + sec, fps)
+
+
+## Слив sec секунд кадрами fps (_hold), отпускание и хвост до конца.
+func _pour(sec: float, fps: int = FPS) -> void:
+	_hold(sec, fps)
 	probe.end_pour()
 	_finish_tail(fps)
 
@@ -465,6 +501,30 @@ func _expected(hold: float) -> float:
 
 func _wait(sec: float) -> void:
 	await get_tree().create_timer(sec + WAIT_MARGIN_SEC).timeout
+
+
+## Насколько носик колбы проверок далёк от своей точки над горлом Приёмника (spout_offset), px станции.
+func _spout_error() -> float:
+	var spout: Vector2 = probe.to_local(probe.liquid.texture_to_global(probe.config.mouth_px))
+	var mouth: Vector2 = probe.to_local(probe.receiver.texture_to_global(probe.config.receiver_mouth_px))
+	return spout.distance_to(mouth + probe.config.spout_offset)
+
+
+## Струя входит в горло Приёмника сверху — на высоте горла она между краями отверстия — и кончается ниже горла.
+func _stream_into_receiver() -> bool:
+	var mouth: Vector2 = probe.receiver.texture_to_global(probe.config.receiver_mouth_px)
+	var left: float = probe.receiver.texture_to_global(probe.config.receiver_mouth_px - RECEIVER_HOLE_HALF).x
+	var right: float = probe.receiver.texture_to_global(probe.config.receiver_mouth_px + RECEIVER_HOLE_HALF).x
+	var points: PackedVector2Array = probe.stream.points
+	if points.size() < 2 or probe.stream.to_global(points[points.size() - 1]).y <= mouth.y:
+		return false
+	for i: int in range(1, points.size()):
+		var a: Vector2 = probe.stream.to_global(points[i - 1])
+		var b: Vector2 = probe.stream.to_global(points[i])
+		if a.y <= mouth.y and b.y > mouth.y:
+			var x: float = lerpf(a.x, b.x, (mouth.y - a.y) / (b.y - a.y))
+			return x > left and x < right
+	return false
 
 
 # --- Сравнения ----------------------------------------------------------------------------------------------------
@@ -550,10 +610,11 @@ func _print_manual() -> void:
 	print("1. Смесь пришла: колба пульсирует, мутнеет и за ~1 с расслаивается; булькает. Тап — расслоится сразу.")
 	print("   Удержание во время отстаивания — только «буль» и волна, не льёт.")
 	print("2. Слева шкала среза: риски на границах слоёв, вокруг — зелёные полосы. У одного слоя шкалы нет.")
-	print("3. Зажмите колбу: она поднимается и наклоняется так, что у горла верхний слой; струя его цвета")
-	print("   бежит в Приёмник, «буль» в такт; Приёмник мутнеет и качается. Через 0,5 с струя толще и быстрее.")
+	print("3. Зажмите колбу: за 0,14 с она встаёт носиком над горлом Приёмника, наклон — по уровню; тогда струя")
+	print("   цвета верхнего слоя выходит из отверстия горла и падает в горло Приёмника, «буль» в такт; Приёмник")
+	print("   мутнеет и качается. Пока льёт, колба клонится дальше, а носик стоит на месте. Через 0,5 с струя толще.")
 	print("4. Отпустите: струя стихает за 0,1 с и отрывается, колба возвращается. Бегунок шкалы — где срез.")
 	print("5. Остановите бегунок в зелёной полосе: искорка на поверхности и «дзынь». Мимо — без искорки.")
 	print("6. Корзина колбы — вылить остаток (Приёмник не трогается). Корзина Приёмника — вылить его.")
 	print("7. Держите до конца: колба пустеет, Приёмник полный; через 1 с — следующая смесь.")
-	print("8. Смотрите: струя начинает течь сразу при нажатии, пока колба поднимается (0,14 с) — не режет ли глаз?")
+	print("8. Короткий тап по отстоянной колбе: она привстаёт и возвращается, не налив ни капли.")

@@ -1,8 +1,11 @@
 ## Settler — станция Отстойника (S4.2, GDD §3.3, STATIONS §1.2): колба отстаивает смесь в слои по плотности, игрок
-## зажимает колбу — она поднимается, наклоняется по уровню и льёт верхние слои струёй в Приёмник; отпустил — струя
-## стихает за EconomyConfig.pour_stop_time (хвост). Срез точно по границе слоёв — «чистый»: искорка и «дзынь».
+## зажимает колбу — она за SettlerConfig.lift_sec встаёт в позу слива (носик над горлом Приёмника) и льёт верхние слои
+## струёй в горло; пока льёт, клонится по уровню, а носик стоит на месте. Отпустил — струя стихает за
+## EconomyConfig.pour_stop_time (хвост); отпустил, пока колба вставала, — не налито ни капли.
+## Срез точно по границе слоёв — «чистый»: искорка и «дзынь».
 ## Состояния: Empty → Settling → Layered ⇄ Pouring; Layered и Pouring → Empty (колбу вылили корзиной или слили всю).
-## Слитая высота (доля столба сверху) = слито раньше + AlchemyRules.pour_height удержания + pour_tail_after хвоста:
+## Слитая высота (доля столба сверху) = слито раньше + AlchemyRules.pour_height удержания (с момента, когда колба
+## встала в позу) + pour_tail_after хвоста:
 ## точные формулы, поэтому итог не зависит от частоты кадров. Приёмник = что было в нём до этой колбы (или пусто
 ## после «вылить») + AlchemyRules.pour_between с той высоты, на которой его опустошили.
 ## Ввод: колба — нажал и держишь = слив; тап во время отстаивания — отстоять сразу; удержание там — только «буль».
@@ -27,6 +30,8 @@ const STATE_LAYERED: StringName = &"Layered"
 const STATE_POURING: StringName = &"Pouring"
 const REASON_DRAINED: StringName = &"drained"
 const REASON_TRASH: StringName = &"trash"
+## Остаток подъёма меньше этого — колба встала (шаги кадров в сумме дают lift_sec с ошибкой float).
+const LIFT_DONE_SEC: float = 0.000001
 
 @export var economy: EconomyConfig
 @export var catalog: DataCatalog
@@ -35,7 +40,7 @@ const REASON_TRASH: StringName = &"trash"
 @export var state_machine: StateMachine
 ## Его timeout_sec берётся из EconomyConfig.settle_time.
 @export var settling_state: State
-## Поворотный узел колбы: начало — центр шара, вокруг него колба наклоняется.
+## Узел колбы: начало — центр шара. При сливе станция ставит его так, чтобы носик был над горлом Приёмника.
 @export var flask: Node2D
 @export var liquid: Liquid
 @export var flask_area: HitArea
@@ -69,6 +74,13 @@ var _receiver_from: float = 0.0
 var _glug_left: float = 0.0
 var _rest_position: Vector2 = Vector2.ZERO
 var _pose_tween: Tween
+## Сколько ещё колба встаёт в позу слива, с; 0 — стоит в позе (или не зажата).
+var _lift_left: float = 0.0
+var _lift_from_position: Vector2 = Vector2.ZERO
+var _lift_from_rotation: float = 0.0
+## Носик в координатах узла колбы и где он должен быть при сливе (координаты станции).
+var _mouth_local: Vector2 = Vector2.ZERO
+var _spout_target: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -77,6 +89,7 @@ func _ready() -> void:
 			and flask_area != null and stream != null and receiver != null and gauge != null and trash != null
 			and punch != null and sparkle != null, "Settler: не заданы узлы сцены")
 	_rest_position = flask.position
+	_mouth_local = flask.to_local(liquid.texture_to_global(config.mouth_px))
 	settling_state.timeout_sec = economy.settle_time
 	settling_state.timeout_to = STATE_LAYERED
 	state_machine.state_changed.connect(_on_state_changed)
@@ -148,8 +161,19 @@ func empty_flask() -> void:
 	flask_emptied.emit(REASON_TRASH)
 
 
-## Шаг времени: удержание и хвост. Зовётся из _process; стенд выключает процесс и шагает сам.
+## Шаг времени: подъём колбы, удержание и хвост. Зовётся из _process; стенд выключает процесс и шагает сам.
+## Кадр, на котором колба встала в позу, делится: остаток после подъёма уже льёт (итог не зависит от частоты кадров).
 func advance(delta: float) -> void:
+	if _holding and _lift_left > 0.0:
+		var lift_step: float = minf(delta, _lift_left)
+		_lift_left -= lift_step
+		delta -= lift_step
+		if _lift_left <= LIFT_DONE_SEC:
+			_lift_left = 0.0
+		_place_lifting()
+		if _lift_left > 0.0:
+			return
+		_start_stream()
 	if not _holding and not _tail_active:
 		return
 	var tail_done: bool = false
@@ -181,8 +205,14 @@ func flask_mixture() -> Dictionary:
 	return AlchemyRules.pour_top(mixture, poured, catalog, economy)[AlchemyRules.KEY_BOTTOM]
 
 
+## Колба зажата (встаёт в позу или льёт).
 func is_pouring() -> bool:
 	return _holding
+
+
+## Сколько ещё колба встаёт в позу слива, с. Пока встаёт — не льёт; 0 — льёт или не зажата.
+func lift_left() -> float:
+	return _lift_left if _holding else 0.0
 
 
 ## Хвост струи ещё течёт (колбу отпустили меньше pour_stop_time назад).
@@ -232,22 +262,34 @@ func _enter_pouring() -> void:
 	trash.set_active(false)
 	_holding = true
 	_held = 0.0
-	_glug_left = stream.grow_sec
+	if _tail_active:
+		# Хвост ещё течёт — колба и так в позе: льёт сразу.
+		_lift_left = 0.0
+		_start_stream()
+		return
+	# Встаёт в позу оттуда, где её зажали (с прилавка или на полпути назад).
 	_kill_pose_tween()
-	_pose_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_pose_tween.tween_property(flask, ^"position", _rest_position + Vector2.UP * config.pour_lift, config.lift_sec)
-	_aim_stream()
-	stream.pour(liquid.top_color(), _flow())
+	_lift_left = config.lift_sec
+	_lift_from_position = flask.position
+	_lift_from_rotation = flask.rotation
+	_spout_target = to_local(receiver.texture_to_global(config.receiver_mouth_px)) + config.spout_offset
 
 
 ## Колбу отпустили: удержание засчитано, начинается хвост (если колба не опустела).
 func _release(with_tail: bool) -> void:
 	if not _holding:
 		return
+	var lifting: bool = _lift_left > 0.0
 	if _tail_active:
 		_finish_tail()
 	_committed += AlchemyRules.pour_height(_held, economy)
 	_holding = false
+	_lift_left = 0.0
+	if lifting:
+		# Отпустили, пока колба вставала в позу: не налито ни капли, хвоста и среза нет — колба возвращается.
+		_held = 0.0
+		_return_flask()
+		return
 	if with_tail:
 		_tail_active = true
 		_tail_held = _held
@@ -309,6 +351,7 @@ func _reset_pour() -> void:
 	_tail_active = false
 	_tail_held = 0.0
 	_tail_since = 0.0
+	_lift_left = 0.0
 
 
 ## Поток струи 0…1: скорость слива относительно полной.
@@ -326,16 +369,40 @@ func _glug(delta: float) -> void:
 	receiver.splash(config.receiver_bump_px)
 
 
+## Колба встала в позу (или хвост ещё течёт): струя течёт, первый «буль» — когда она дорастёт до Приёмника.
+func _start_stream() -> void:
+	_glug_left = stream.grow_sec
+	_aim_stream()
+	stream.pour(liquid.top_color(), _flow())
+
+
+## Струя — от носика в горло Приёмника и до поверхности в нём (рисуется за Приёмником: видна сквозь стекло).
 func _aim_stream() -> void:
 	stream.aim(liquid.texture_to_global(config.mouth_px), receiver.surface_point() + Vector2.DOWN * config.stream_dip_px)
 
 
 # --- Поза колбы ---------------------------------------------------------------------------------------------------
 
-## Наклон догоняет угол от уровня (D22): уровень падает — колба клонится дальше.
+## Колба встаёт в позу слива: от того места, где её зажали, к позе «носик над горлом» (с лёгким перелётом).
+func _place_lifting() -> void:
+	var elapsed: float = config.lift_sec - _lift_left
+	var weight: float = float(Tween.interpolate_value(0.0, 1.0, elapsed, config.lift_sec, Tween.TRANS_BACK,
+			Tween.EASE_OUT))
+	var angle: float = liquid.pour_angle()
+	flask.rotation = lerp_angle(_lift_from_rotation, angle, weight)
+	flask.position = _lift_from_position.lerp(_pose_position(angle), weight)
+
+
+## Наклон догоняет угол от уровня (D22): уровень падает — колба клонится дальше, поворачиваясь вокруг носика.
 func _follow_tilt(delta: float) -> void:
 	var weight: float = 1.0 - exp(-config.tilt_sharpness * delta)
 	flask.rotation = lerp_angle(flask.rotation, liquid.pour_angle(), weight)
+	flask.position = _pose_position(flask.rotation)
+
+
+## Где должен стоять узел колбы при повороте angle, чтобы носик был в _spout_target.
+func _pose_position(angle: float) -> Vector2:
+	return _spout_target - (_mouth_local * flask.scale).rotated(angle)
 
 
 func _return_flask() -> void:

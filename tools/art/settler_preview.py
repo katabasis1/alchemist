@@ -39,9 +39,10 @@ REFS = ROOT / "docs" / "art" / "refs"
 # --- раскладка: как в settler.tscn (координаты станции, начало — колба на прилавке) ------------------------------
 FLASK_SCALE = 0.8
 FLASK_PIVOT_TEX = (189.0, 355.0)      # центр шара колбы на холсте 384×512 (liquid.gdshader: bulb_center)
-FLASK_MOUTH_TEX = (252.0, 24.0)       # носик — край венчика со стороны слива (вправо)
+FLASK_MOUTH_TEX = (232.0, 30.0)       # носик — нижний край отверстия горла при наклоне вправо (SettlerConfig.mouth_px)
 REST_PIVOT = (0.0, -99.0)
-POUR_LIFT = 170.0
+RECEIVER_MOUTH_TEX = (160.0, 48.0)    # середина отверстия Приёмника на холсте 320×384 (SettlerConfig.receiver_mouth_px)
+SPOUT_OFFSET = (-18.0, -50.0)         # носик при сливе — от середины горла Приёмника (SettlerConfig.spout_offset)
 POUR_ANGLE = math.radians(100.0)     # только для --angle; по умолчанию угол считается от уровня (pour_angle)
 # Наклон колбы при сливе — от уровня (D22): LiquidPourTilt из tools/alchemy/liquid_model.py, настройки —
 # data/liquid/pour_tilt_round.tres (кромка горла, заглубление). Тот же ресурс читает Liquid в игре.
@@ -196,8 +197,13 @@ def station_frame(t: float, mixture: dict, poured: float, receiver_mix: dict, fl
     W, H, ox, oy = 640, 520, 130.0, 470.0           # начало станции на холсте
     flask_glass = np.asarray(Image.open(FLASK).convert("RGBA")).astype(np.float64) / 255.0
     recv_glass = np.asarray(Image.open(RECEIVER).convert("RGBA")).astype(np.float64) / 255.0
-    pivot = (REST_PIVOT[0], REST_PIVOT[1] - POUR_LIFT)
     ang = POUR_ANGLE if FIXED_ANGLE else pour_angle(LP.uniforms_for(mixture, poured))
+    # Поза слива (как Settler._pose_position): носик стоит над горлом Приёмника, колба поворачивается вокруг него.
+    recv_mouth = (RECEIVER_POS[0] + (RECEIVER_MOUTH_TEX[0] - 160.0) * RECEIVER_SCALE,
+            RECEIVER_POS[1] - (384.0 - RECEIVER_MOUTH_TEX[1]) * RECEIVER_SCALE)
+    spout = (recv_mouth[0] + SPOUT_OFFSET[0], recv_mouth[1] + SPOUT_OFFSET[1])
+    svx, svy = (FLASK_MOUTH_TEX[0] - FLASK_PIVOT_TEX[0]) * FLASK_SCALE, (FLASK_MOUTH_TEX[1] - FLASK_PIVOT_TEX[1]) * FLASK_SCALE
+    pivot = (spout[0] - (svx * math.cos(ang) - svy * math.sin(ang)), spout[1] - (svx * math.sin(ang) + svy * math.cos(ang)))
     uf = LP.uniforms_for(mixture, poured, surface_angle=-ang, slosh_px=4.0, slosh_phase=t * 3.0)
     flask = Image.fromarray((LP.fragment(uf, flask_glass, t) * 255).astype(np.uint8), "RGBA")
     fs = flask.resize((int(384 * FLASK_SCALE), int(512 * FLASK_SCALE)), Image.LANCZOS)

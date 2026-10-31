@@ -206,7 +206,7 @@ func _check_node() -> void:
 	_check("пустая колба: слоёв 0", int(mat.get_shader_parameter(&"layer_count")) == 0)
 	probe.show_mixture(LAYERED)
 	probe.stir()
-	await _frames(2)
+	# Сразу, без ожидания кадров: иначе итог зависит от частоты кадров машины.
 	_check("stir: смесь мутная", float(mat.get_shader_parameter(&"turbidity")) > TURBID)
 	await get_tree().create_timer(probe.settle_sec + SETTLE_SLACK).timeout
 	_check("за settle_sec отстоялась", float(mat.get_shader_parameter(&"turbidity")) < RESTING)
@@ -294,7 +294,6 @@ func _check_pour() -> void:
 	await _frames(2)
 	_check("settle_now: твин мути остановлен, муть не вернулась", float(mat.get_shader_parameter(&"turbidity")) == 0.0)
 	probe.stir(QUICK_STIR)
-	await _frames(2)
 	var turbid: bool = float(mat.get_shader_parameter(&"turbidity")) > TURBID
 	await get_tree().create_timer(QUICK_STIR + SETTLE_SLACK).timeout
 	_check("stir(сек): мутнеет и отстаивается за заданное время, а не за settle_sec",

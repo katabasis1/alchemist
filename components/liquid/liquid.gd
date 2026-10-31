@@ -75,6 +75,9 @@ func show_mixture(mixture: Dictionary, poured: float = 0.0) -> void:
 func stir(seconds: float = 0.0) -> void:
 	if _settle_tween:
 		_settle_tween.kill()
+	# Муть — сразу, в этом же кадре: твин начинает со следующего, а кривая EASE_OUT за пару
+	# медленных кадров уже заметно светлеет (LIQUID CHECK 41/43 на GTX 660, сессия 50).
+	_set_turbidity(1.0)
 	_settle_tween = create_tween()
 	_settle_tween.tween_method(_set_turbidity, 1.0, 0.0, seconds if seconds > 0.0 else settle_sec) \
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
