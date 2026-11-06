@@ -13,6 +13,10 @@
           python tools/art/derive.py front assets/props/prop_mortar_bowl.png assets/props/prop_mortar_bowl_front.png \
               --ellipse 256,94,180,52
           После финальной картинки эллипс горлышка проверить (docs/art/ASSET_REGISTRY.md) и пересобрать слой.
+          --max-y Y — оставить только строки выше Y (передний край кольца горелки без спиртовки и фитиля:
+          огонь рисуется между колбой и этим слоем и закрывает фитиль, S4.3):
+          python tools/art/derive.py front assets/props/prop_burner.png assets/props/prop_burner_front.png \
+              --ellipse 193,103,116,11 --max-y 160
 Зависимости: Pillow; использует fit_canvas из tools/art/cutout.py.
 """
 from __future__ import annotations
@@ -29,8 +33,9 @@ from cutout import fit_canvas  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def front_layer(img: Image.Image, cx: float, cy: float, rx: float, ry: float) -> Image.Image:
-    """Оставить только пиксели ниже ближней кромки горлышка; кромка сглажена на 1,5 пикселя."""
+def front_layer(img: Image.Image, cx: float, cy: float, rx: float, ry: float, max_y: int | None = None) -> Image.Image:
+    """Оставить только пиксели ниже ближней кромки горлышка (и выше строки max_y, если задана);
+    кромка сглажена на 1,5 пикселя."""
     w, h = img.size
     mask = Image.new("L", (w, h), 0)
     px = mask.load()
@@ -41,6 +46,8 @@ def front_layer(img: Image.Image, cx: float, cy: float, rx: float, ry: float) ->
         for y in range(h):
             t = (y + 0.5 - edge) / feather
             px[x, y] = 0 if t <= 0.0 else 255 if t >= 1.0 else int(255 * t)
+            if max_y is not None and y >= max_y:
+                px[x, y] = 0
     out = img.copy()
     alpha = Image.composite(img.getchannel("A"), Image.new("L", (w, h), 0), mask)
     out.putalpha(alpha)
@@ -64,11 +71,12 @@ def main() -> None:
     fr.add_argument("src", type=Path)
     fr.add_argument("dst", type=Path)
     fr.add_argument("--ellipse", required=True, help="cx,cy,rx,ry горлышка (внутренний край) в пикселях исходника")
+    fr.add_argument("--max-y", type=int, default=None, help="оставить только строки выше этой (px исходника)")
     a = ap.parse_args()
     if a.cmd == "front":
         cx, cy, rx, ry = (float(v) for v in a.ellipse.split(","))
         img = Image.open(a.src).convert("RGBA")
-        out = front_layer(img, cx, cy, rx, ry)
+        out = front_layer(img, cx, cy, rx, ry, a.max_y)
         a.dst.parent.mkdir(parents=True, exist_ok=True)
         out.save(a.dst, optimize=True)
         print(f"{a.dst} {out.size}")

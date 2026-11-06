@@ -111,7 +111,44 @@ def surface_wave(u, s, w, t):
     k = np.clip(s / np.maximum(w, 1.0), -1.0, 1.0)
     idle = u["idle_wave_px"] * np.sin(s * 0.05 - t * u["idle_wave_speed"] * 1.3)
     slosh = u["slosh_px"] * (k * math.cos(u["slosh_phase"]) + 0.35 * np.sin(k * 6.2832 - u["slosh_phase"] * 1.3))
-    return idle + slosh
+    tremble = u["boil"] * u["boil_tremble_px"] * np.sin(s * 0.19 + t * 11.0) * np.sin(s * 0.061 - t * 6.3)
+    return idle + slosh + tremble
+
+
+def boil_bubbles(u, s, h, surface, t):
+    acc = np.zeros(s.shape + (4,))
+    zone = u["boil_spread"] * u["bulb_radius"]
+    span = np.maximum(surface - u["boil_start_px"], 1.0)
+    rmin, rmax = u["boil_radius_px"][0], u["boil_radius_px"][1]
+    boil = u["boil"]
+    for k in range(3):
+        cell = u["boil_cell_px"] * (1.0 + 0.37 * k)
+        shift = cell * 0.31 * k
+        c0 = np.floor((s + shift) / cell)
+        for j in (-1, 0, 1):
+            c = c0 + j
+            cx = (c + 0.5) * cell - shift
+            seed = hash12(c, np.full_like(c, k * 7.3 + 1.0))
+            rise = u["boil_rise_px"] * mix(0.7, 1.3, seed) * mix(0.55, 1.0, boil)
+            cyc = t * rise / span + seed * 13.7
+            idx = np.floor(cyc)
+            prog = cyc - idx
+            r1 = hash12(c + 0.5, idx + k * 31.0)
+            r2 = hash12(idx * 1.7, c - k * 11.0)
+            on = (np.abs(cx) <= zone) * (r2 <= boil)
+            pop = smoothstep(1.0 - u["boil_pop"], 1.0, prog)
+            rad = mix(rmin, rmax, r1 * r1) * mix(0.6, 1.0, prog) * mix(0.7, 1.0, boil) * (1.0 + 0.25 * pop)
+            bx = cx + (r1 - 0.5) * cell * 0.6 + np.sin(t * 3.0 + seed * 6.2832 + prog * 5.0) * u["boil_wobble_px"] * prog
+            by = mix(u["boil_start_px"] + rad, surface, np.minimum(prog / (1.0 - u["boil_pop"]), 1.0))
+            fade = on * (1.0 - smoothstep(0.7, 1.0, pop))
+            qx, qy = s - bx, h - by
+            dist = np.hypot(qx, qy)
+            body = 1.0 - smoothstep(rad - 0.8, rad + 0.8, dist)
+            rim = (1.0 - smoothstep(0.5, 1.5, np.abs(dist - rad + 0.9))) * body
+            spot = 1.0 - smoothstep(rad * 0.22 - 0.6, rad * 0.22 + 0.6, np.hypot(qx + 0.38 * rad, qy - 0.38 * rad))
+            low = smoothstep(0.1, -0.5, qy / np.maximum(rad, 0.001))
+            acc = np.maximum(acc, np.stack([body, rim * (1.0 - low), spot, rim * low], axis=-1) * fade[..., None])
+    return acc
 
 
 def pattern_mask(u, pattern, dx, dy, t):
@@ -181,6 +218,10 @@ def shade_liquid(u, dx, dy, h, s, t):
     surface = surface0 + surface_wave(u, s, w, t)
     arc = front_arc(u, s, surface)
     alpha = 1.0 - smoothstep(-0.8, 0.8, h - (surface + arc))
+    bubble = np.zeros(h.shape + (4,))
+    if u["boil"] > 0.0:
+        bubble = boil_bubbles(u, s, h, surface, t)
+        alpha = np.maximum(alpha, bubble[..., 0])
     murk = u["turbidity"]
     sqx, sqy = (s * 0.45 + np.sin(h * 0.04 + t * 1.1) * 26.0) / u["murk_swirl_px"], h / u["murk_swirl_px"]
     swirl = value_noise(sqx + t * 0.15, sqy - t * 0.5) - 0.5
@@ -221,6 +262,10 @@ def shade_liquid(u, dx, dy, h, s, t):
     col = mix(col, 1.0, (rim * u["rim_light"])[..., None])
     side = smoothstep(0.8, 1.0, np.abs(s) / max(float(w), 1.0)) * (1.0 - smoothstep(0.0, 9.0, np.abs(h - surface)))
     col = mix(col, 1.0, (side * u["meniscus_light"])[..., None])
+    col = mix(col, mix(col, 1.0, u["boil_fill"]), bubble[..., 0:1])
+    col = mix(col, mix(base, 1.0, u["boil_rim_light"]), bubble[..., 1:2])
+    col = mix(col, deep, (bubble[..., 3] * u["boil_rim_shade"])[..., None])
+    col = mix(col, 1.0, (bubble[..., 2] * u["boil_spot"])[..., None])
     return col, alpha
 
 

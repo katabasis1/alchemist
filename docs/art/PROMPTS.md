@@ -40,6 +40,8 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 | P-UI-05 | `ui_badge_round.png` | Рамка-медальон (пузырь заказа) |
 | P-PROP-04 | `prop_shelf_slot.png` | Ячейка полки (деревянный лоток под один ингредиент) |
 | P-PROP-06 | `prop_receiver_beaker.png` | Приёмник Отстойника (пустой сосуд для струи) |
+| P-PROP-07 | `prop_burner.png` | Горелка: латунная тренога-кольцо + спиртовка (без огня и колбы) |
+| P-PROP-08 | `prop_thermometer.png` | Термометр Горелки (пустая стеклянная трубка на деревянной планке) |
 | P-UI-06 | `ui_trash.png` | Корзина «вылить» (деревянное ведёрко) |
 | P-UI-07 | `icon_prop_sheet.png` → `icon_prop_*.png` ×6 | Иконки шести свойств одним листом (агент режет) |
 
@@ -378,4 +380,28 @@ Use the attached reference images strictly as the style guide. Cozy fairytale ca
 A single bright clear crystal gem icon for purity: an upright faceted crystal shard, pale teal and aqua with white highlights on the upper left facets and a small sparkle, chunky rounded silhouette, thick clean dark warm-brown outline, readable at 48 pixels.
 
 Flat front view game UI icon, centered, fully visible with generous empty margin, no frame, no badge, no text. Transparent background (PNG with alpha); if not possible: perfectly flat solid pure magenta #FF00FF background. No shadow. Square 1024x1024.
+```
+
+## P-PROP-07 — Горелка (тренога + спиртовка) → `prop_burner.png`
+
+Станция Горелка (S4.3). Холст 384×384, опора снизу. Колба (`prop_flask_round`) сидит в кольце треноги, огонь — шейдер `components/flame/` между фитилём и дном колбы, поэтому **ни огня, ни колбы** на картинке нет. Важно для сцены: кольцо — тонкий горизонтальный эллипс, под ним свободный просвет до фитиля. Приложи к чату ещё `prop_flask_round.png` и `docs/art/refs/ref_burner_flame_boil.jpg`. Вырезка: `python tools/art/cutout.py <png> -o assets/props/prop_burner.png --canvas 384x384 --pivot bottom`; затем передний край кольца: `python tools/art/derive.py front assets/props/prop_burner.png assets/props/prop_burner_front.png --ellipse 193,103,116,11` (эллипс — просвет кольца, проверить по новой картинке), центр кольца и верх фитиля — в `data/burner/burner_round.tres`.
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+An alchemist's burner stand, EMPTY (nothing on it, no flame): a sturdy polished brass three-legged tripod with a flat horizontal ring on top (the ring is seen slightly from above as a thin ellipse, wide enough to hold the bottom of the attached round flask), three slightly splayed legs with round brass feet; under the ring, centered between the legs, a chunky squat round brass spirit lamp with a short brass collar and a small cream cotton wick sticking up, NOT lit. The wick top is well below the ring, leaving a clear gap for a flame.
+
+Single isolated game asset, centered, straight front view, the whole object fully visible with generous empty margin. Transparent background (PNG with alpha); if transparency is not possible: perfectly flat solid pure magenta #FF00FF background. No flame, no flask, no cast shadow, no floor, no other objects. Square 1024x1024.
+```
+
+## P-PROP-08 — Термометр Горелки (пустой) → `prop_thermometer.png`
+
+Термометр у Горелки (S4.3). Холст 128×512, опора снизу. Столбик, зоны свойств и иконки рисует шейдер `components/thermometer/` **за стеклом**, поэтому трубка и шарик пустые и прозрачные, без делений и цифр. Приложи к чату ещё `prop_flask_round.png` — стекло как у колбы. Вырезка: `python tools/art/cutout.py <png> -o assets/props/prop_thermometer.png --mode global --canvas 128x512 --pivot bottom`; полость трубки и шарика — в `components/thermometer/thermometer_material.tres` (проверить по новой картинке: `python tools/art/burner_preview.py`).
+
+```
+Use the attached reference images strictly as the style guide. Cozy fairytale cartoon style 2D game art for a casual mobile game. Hand-painted look with clean, confident dark warm-brown outlines (#431D0D) of consistent medium-thick weight, soft cel shading with a subtle painterly texture, chunky friendly proportions, warm palette: honey and walnut wood, copper and brass, parchment cream, sage green, with small accents of teal and soft gold. Soft warm key light from the upper left, gentle rim light. Clean readable silhouettes. No text, no letters, no watermark, no skulls, no occult or religious symbols.
+
+An EMPTY alchemist thermometer standing upright: a tall narrow rounded walnut-wood back plate with a polished brass cap on top (small round knob) and a brass base foot at the bottom; mounted on the plate, a perfectly clear EMPTY glass tube, fairly thick and readable, ending at the bottom in a round clear glass bulb held by a brass ring. The glass is see-through: the background shows through the glass tube and bulb (the plate has a vertical slot behind the tube). Bright white highlight stripe along the left side of the tube and bulb, soft light-blue reflection on the right. No liquid, no scale marks, no numbers.
+
+Single isolated game asset, centered, straight front view, tall and narrow, the whole object fully visible with generous empty margin. Transparent background (PNG with alpha); if transparency is not possible: perfectly flat solid pure magenta #FF00FF background that also shows through the glass. No cast shadow, no floor, no other objects. Portrait 1024x1536.
 ```

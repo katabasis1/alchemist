@@ -1,0 +1,28 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://components/thermometer/thermometer.gdshader" id="1_thermo"]
+
+[resource]
+resource_local_to_scene = true
+shader = ExtResource("1_thermo")
+shader_parameter/tube_x = Vector2(55.5, 72.5)
+shader_parameter/tube_top = 90.0
+shader_parameter/bulb_center = Vector2(64.5, 398)
+shader_parameter/bulb_radius = 35.0
+shader_parameter/scale_bottom = 362.0
+shader_parameter/scale_top = 104.0
+shader_parameter/value = 0.0
+shader_parameter/zone_count = 0
+shader_parameter/base_color = Color(0.97, 0.91, 0.76, 1)
+shader_parameter/zone_tint = 0.8
+shader_parameter/active_glow = 0.3
+shader_parameter/tube_shade = 0.22
+shader_parameter/column_half_px = 5.5
+shader_parameter/bulb_gap_px = 5.0
+shader_parameter/column_color = Color(0.9, 0.24, 0.12, 1)
+shader_parameter/column_light = Color(1, 0.66, 0.46, 1)
+shader_parameter/column_edge_shade = 0.35
+shader_parameter/tick_color = Color(0.33, 0.14, 0.06, 1)
+shader_parameter/tick_px = 1.6
+shader_parameter/tick_alpha = 0.7
+shader_parameter/plank_tick_x = Vector2(75, 83)

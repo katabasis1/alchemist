@@ -196,6 +196,11 @@ func _check_heat() -> void:
 			AlchemyRules.steaming({HEAT: 1.0, COLD: 1.0, SLEEP: 1.0, ACID: 1.0}, 60.0, catalog) == [COLD, SLEEP]
 			and AlchemyRules.burning({LIFE: 1.0, HEAT: 1.0}, 95.0, catalog) == [LIFE]
 			and AlchemyRules.burning({LIFE: 1.0}, 89.9, catalog).is_empty())
+	var zones: Array = []
+	for zone: Dictionary in AlchemyRules.heat_zones(catalog):
+		zones.append([zone[AlchemyRules.KEY_TEMP], zone[AlchemyRules.KEY_PROPERTY], zone[AlchemyRules.KEY_BURNS]])
+	_check("зоны термометра: Холод 35°, Сон 55°, Едкость 75° паром, Жизнь 90° горит",  # noqa: magic
+			zones == [[35.0, COLD, false], [55.0, SLEEP, false], [75.0, ACID, false], [90.0, LIFE, true]])
 
 
 ## GDD §5.3: сила — по самому слабому нужному свойству; «безупречно» — ★★★ силы и ★★★ чистоты.

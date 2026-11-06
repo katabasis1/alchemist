@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import functools
 import math
 import random
 import re
@@ -42,6 +43,9 @@ GD_RULES = ROOT / "data" / "alchemy" / "alchemy_rules.gd"
 EPSILON = 0.0001
 KEY_TOP = "top"
 KEY_BOTTOM = "bottom"
+KEY_TEMP = "temp"
+KEY_PROPERTY = "property"
+KEY_BURNS = "burns"
 
 SOFT, MEDIUM, HARD = 0, 1, 2
 NEVER = -1.0
@@ -503,13 +507,34 @@ def burning(mixture: dict, temp: float, catalog: DataCatalog) -> list:
     return result
 
 
+def heat_zones(catalog: DataCatalog) -> list:
+    result = []
+    for data in catalog.properties:
+        if data.evaporate_temp >= 0.0:
+            result.append({KEY_TEMP: data.evaporate_temp, KEY_PROPERTY: data.id, KEY_BURNS: False})
+        if data.burn_temp >= 0.0:
+            result.append({KEY_TEMP: data.burn_temp, KEY_PROPERTY: data.id, KEY_BURNS: True})
+    result.sort(key=functools.cmp_to_key(lambda a, b: -1 if _heat_zone_before(a, b) else
+                                         (1 if _heat_zone_before(b, a) else 0)))
+    return result
+
+
+def _heat_zone_before(a: dict, b: dict) -> bool:
+    if a[KEY_TEMP] != b[KEY_TEMP]:
+        return a[KEY_TEMP] < b[KEY_TEMP]
+    if a[KEY_PROPERTY] != b[KEY_PROPERTY]:
+        return a[KEY_PROPERTY] < b[KEY_PROPERTY]
+    return not a[KEY_BURNS] and b[KEY_BURNS]
+
+
 RULE_FUNCTIONS = [
     "total", "amount", "cleaned", "combine", "scaled", "is_present", "significant", "traces", "strength_stars",
     "purity", "purity_stars", "weakest_stars", "is_flawless", "hardest", "grind_per_circle", "grind_after", "extraction", "extract", "ground",
     "layers", "layer_heights", "pour_top", "height_above_layer", "pour_rate", "pour_height", "pour_tail",
     "pour_tail_after", "pour_between",
     "cut_marks", "cut_admixture", "clean_bands",
-    "temp_after", "time_at_or_above", "heat", "steaming", "burning", "_lies_below",
+    "temp_after", "time_at_or_above", "heat", "steaming", "burning", "heat_zones", "_heat_zone_before",
+    "_lies_below",
 ]
 
 
@@ -1108,6 +1133,25 @@ def check_pour_session(c: Checks, catalog: DataCatalog) -> None:
             == [k for k in flipped if k in pour_between(flipped, 0.1, 0.9, catalog, e)])
 
 
+def check_heat_zones(c: Checks, catalog: DataCatalog) -> None:
+    """Зоны термометра Горелки (S4.3): пороги из точек свойств, по возрастанию T."""
+    zones = heat_zones(catalog)
+    got = [(z[KEY_TEMP], z[KEY_PROPERTY], z[KEY_BURNS]) for z in zones]
+    c.check("зоны термометра: Холод 35°, Сон 55°, Едкость 75° паром, Жизнь 90° горит",
+            got == [(35.0, "cold", False), (55.0, "sleep", False), (75.0, "acid", False), (90.0, "life", True)],
+            str(got))
+    twin = DataCatalog(properties=[PropertyData("b", evaporate_temp=50.0), PropertyData("a", evaporate_temp=50.0),
+                                   PropertyData("c", evaporate_temp=40.0, burn_temp=50.0), PropertyData("d")])
+    got = [(z[KEY_TEMP], z[KEY_PROPERTY], z[KEY_BURNS]) for z in heat_zones(twin)]
+    c.check("зоны: равные точки — по id, у свойства бывают обе точки, стойкое не даёт зоны",
+            got == [(40.0, "c", False), (50.0, "a", False), (50.0, "b", False), (50.0, "c", True)], str(got))
+    c.check("зоны: пустой каталог — зон нет", heat_zones(DataCatalog()) == [])
+    first = heat_zones(catalog)[0][KEY_TEMP]
+    c.check("ниже первой зоны ничего не уходит, на ней — уходит",
+            steaming({"cold": 1.0, "sleep": 1.0, "acid": 1.0}, first - 0.01, catalog) == []
+            and steaming({"cold": 1.0}, first, catalog) == ["cold"])
+
+
 def check_sync(c: Checks) -> None:
     if not GD_RULES.exists():
         c.check("alchemy_rules.gd на месте", False, str(GD_RULES))
@@ -1131,6 +1175,7 @@ def self_test(catalog: DataCatalog) -> int:
     check_determinism(c, catalog)
     check_cut(c, catalog)
     check_pour_session(c, catalog)
+    check_heat_zones(c, catalog)
     check_sync(c)
     total_checks = c.passed + len(c.failed)
     print("RULES: %d/%d %s" % (c.passed, total_checks, "OK" if not c.failed else "FAIL"))

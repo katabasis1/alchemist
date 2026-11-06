@@ -26,6 +26,10 @@ const EPSILON: float = 0.0001
 ## Ключи результата pour_top: что ушло в Приёмник (верх) и что осталось в Отстойнике (низ).
 const KEY_TOP: StringName = &"top"
 const KEY_BOTTOM: StringName = &"bottom"
+## Ключи зоны heat_zones: с какой температуры, какое свойство, сгорает (true) или уходит паром (false).
+const KEY_TEMP: StringName = &"temp"
+const KEY_PROPERTY: StringName = &"property"
+const KEY_BURNS: StringName = &"burns"
 
 
 # --- Смесь (GDD §3.2) ---------------------------------------------------------------------------------------------
@@ -447,6 +451,27 @@ static func burning(mixture: Dictionary, temp: float, catalog: DataCatalog) -> A
 		if data != null and data.burns_at(temp):
 			result.append(property_id)
 	return result
+
+
+## Пороги нагрева по каталогу — зоны термометра Горелки (S4.3): с какой T свойство уходит паром или сгорает.
+## По возрастанию T, равные — по id (пар раньше дыма). Стойкие свойства зон не дают; у свойства бывают обе точки.
+static func heat_zones(catalog: DataCatalog) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for data: PropertyData in catalog.properties:
+		if data.evaporate_temp >= 0.0:
+			result.append({KEY_TEMP: data.evaporate_temp, KEY_PROPERTY: data.id, KEY_BURNS: false})
+		if data.burn_temp >= 0.0:
+			result.append({KEY_TEMP: data.burn_temp, KEY_PROPERTY: data.id, KEY_BURNS: true})
+	result.sort_custom(_heat_zone_before)
+	return result
+
+
+static func _heat_zone_before(a: Dictionary, b: Dictionary) -> bool:
+	if a[KEY_TEMP] != b[KEY_TEMP]:
+		return a[KEY_TEMP] < b[KEY_TEMP]
+	if a[KEY_PROPERTY] != b[KEY_PROPERTY]:
+		return String(a[KEY_PROPERTY]) < String(b[KEY_PROPERTY])
+	return not a[KEY_BURNS] and b[KEY_BURNS]
 
 
 ## Тяжелее ли a, чем b (лежит ниже). Равная плотность — по имени id, чтобы порядок не зависел от входа.

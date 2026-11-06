@@ -7,6 +7,7 @@
 ## Для слива (S4.2): pour_angle() — наклон по уровню (LiquidPourTilt, D22), top_color() — цвет струи,
 ## surface_point() — середина поверхности в мире (искорка среза), texture_to_global() — точка холста колбы в мире
 ## (носик для струи), stir(сек) / settle_now() — муть на заданное время и мгновенное отстаивание (тап).
+## Для горелки (S4.3): set_boil(0…1) — кипение (пузыри со дна, дрожь поверхности), boil_level() — текущее.
 ## Сигналы: нет. Зависимости: DataCatalog, EconomyConfig, LiquidSlosh, LiquidPourTilt (@export), LiquidLayers,
 ##   ShaderMaterial с liquid.gdshader (liquid_material.tres, local to scene: у каждой колбы свои слои).
 class_name Liquid
@@ -24,6 +25,7 @@ extends Sprite2D
 
 var _material: ShaderMaterial
 var _settle_tween: Tween
+var _boil: float = 0.0
 ## Слои, показанные последним show_mixture: верх каждого в долях полной колбы и цвет.
 var _tops: PackedFloat32Array = PackedFloat32Array()
 var _colors: PackedColorArray = PackedColorArray()
@@ -117,6 +119,16 @@ func texture_to_global(point: Vector2) -> Vector2:
 
 
 ## Волна от толчка: размах в пикселях текстуры, складывается с ещё не затухшей.
+## Кипение 0…1: 0 — спокойно (код пузырей в шейдере не считается), 1 — бурлит. Задаёт горелка по температуре.
+func set_boil(value: float) -> void:
+	_boil = clampf(value, 0.0, 1.0)
+	_material.set_shader_parameter(&"boil", _boil)
+
+
+func boil_level() -> float:
+	return _boil
+
+
 func bump(strength_px: float) -> void:
 	_bump_px += strength_px
 

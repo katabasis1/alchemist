@@ -1,5 +1,5 @@
 // liquid.gdshader — жидкость в круглой колбе (S4.1): слои по плотности, узоры свойств, поверхность со светлой
-// кромкой, светящиеся швы, муть отстаивания, наклон и раскачка. Стиль — docs/art/refs/ref_liquid_*.jpg.
+// кромкой, светящиеся швы, муть отстаивания, наклон и раскачка, кипение (S4.3). Стиль — docs/art/refs/ref_liquid_*.jpg.
 // Рисуется на Sprite2D с текстурой колбы: TEXTURE — стекло, оно ложится поверх жидкости (одна отрисовка, одна
 // картинка). Полость — круг (шар) + полоса (горло) в пикселях текстуры; финальная колба того же холста и формы
 // встаёт без правок, иначе подстроить группу shape.
@@ -56,6 +56,26 @@ uniform float pattern_skip : hint_range(0.0, 1.0) = 0.15;
 uniform float murk_swirl_px = 48.0;
 // Насколько муть сводит цвета слоёв к общему: 1 — одна заливка, меньше — видны разводы цветов.
 uniform float murk_blend : hint_range(0.0, 1.0) = 0.6;
+// Кипение (S4.3, ref_burner_flame_boil): круглые пузыри со дна над пламенем, светлее жидкости, со светлой
+// обводкой и белой точкой-бликом; идут сквозь слои, у поверхности вспухают куполом и лопаются; поверхность дрожит.
+// boil 0…1 задаёт Liquid.set_boil (горелка: BurnerConfig, 30° → 95°); 0 — пузырей нет, код кипения не считается.
+uniform float boil : hint_range(0.0, 1.0) = 0.0;
+// Ширина колонки пузырей (три набора колонок вперемешку), px; зона появления — доля радиуса шара от середины.
+uniform float boil_cell_px = 18.0;
+uniform float boil_spread : hint_range(0.0, 1.0) = 0.62;
+// Откуда стартуют (над дном шара), px; радиус пузыря от и до, px; скорость подъёма при boil = 1, px/с.
+uniform float boil_start_px = 6.0;
+uniform vec2 boil_radius_px = vec2(3.5, 15.0);
+uniform float boil_rise_px = 110.0;
+uniform float boil_wobble_px = 2.5;
+// Доля цикла пузыря, когда он куполом стоит на поверхности и лопается.
+uniform float boil_pop : hint_range(0.0, 0.5) = 0.14;
+uniform float boil_tremble_px = 2.2;
+// Светлее жидкости внутри, светлая обводка сверху и тень по нижней кромке (цвет «глубины» слоя), белый блик.
+uniform float boil_fill : hint_range(0.0, 1.0) = 0.35;
+uniform float boil_rim_light : hint_range(0.0, 1.0) = 0.85;
+uniform float boil_rim_shade : hint_range(0.0, 1.0) = 0.6;
+uniform float boil_spot : hint_range(0.0, 1.0) = 0.95;
 
 varying vec4 modulate;
 
@@ -107,7 +127,47 @@ float surface_wave(float s, float w, float t) {
 	float k = clamp(s / max(w, 1.0), -1.0, 1.0);
 	float idle = idle_wave_px * sin(s * 0.05 - t * idle_wave_speed * 1.3);
 	float slosh = slosh_px * (k * cos(slosh_phase) + 0.35 * sin(k * 6.2832 - slosh_phase * 1.3));
-	return idle + slosh;
+	float tremble = boil * boil_tremble_px * sin(s * 0.19 + t * 11.0) * sin(s * 0.061 - t * 6.3);
+	return idle + slosh + tremble;
+}
+
+// Пузыри кипения в точке (s, h): x — тело, y — светлая обводка (верх), z — блик, w — тень нижней кромки. Колонки по s у дна; в каждой —
+// один пузырь за цикл, размер и сдвиг новые каждый цикл; при слабом кипении часть колонок пустует.
+vec4 boil_bubbles(float s, float h, float surface, float t) {
+	vec4 acc = vec4(0.0);
+	float zone = boil_spread * bulb_radius;
+	float span = max(surface - boil_start_px, 1.0);
+	for (int k = 0; k < 3; k++) {
+		float cell = boil_cell_px * (1.0 + 0.37 * float(k));
+		float shift = cell * 0.31 * float(k);
+		float c0 = floor((s + shift) / cell);
+		for (int j = -1; j <= 1; j++) {
+			float c = c0 + float(j);
+			float cx = (c + 0.5) * cell - shift;
+			float seed = hash12(vec2(c, float(k) * 7.3 + 1.0));
+			float rise = boil_rise_px * mix(0.7, 1.3, seed) * mix(0.55, 1.0, boil);
+			float cyc = t * rise / span + seed * 13.7;
+			float idx = floor(cyc);
+			float prog = cyc - idx;
+			float r1 = hash12(vec2(c + 0.5, idx + float(k) * 31.0));
+			float r2 = hash12(vec2(idx * 1.7, c - float(k) * 11.0));
+			float on = step(abs(cx), zone) * step(r2, boil);
+			float pop = smoothstep(1.0 - boil_pop, 1.0, prog);
+			float rad = mix(boil_radius_px.x, boil_radius_px.y, r1 * r1) * mix(0.6, 1.0, prog) * mix(0.7, 1.0, boil)
+					* (1.0 + 0.25 * pop);
+			float bx = cx + (r1 - 0.5) * cell * 0.6 + sin(t * 3.0 + seed * 6.2832 + prog * 5.0) * boil_wobble_px * prog;
+			float by = mix(boil_start_px + rad, surface, min(prog / (1.0 - boil_pop), 1.0));
+			float fade = on * (1.0 - smoothstep(0.7, 1.0, pop));
+			vec2 q = vec2(s - bx, h - by);
+			float dist = length(q);
+			float body = 1.0 - smoothstep(rad - 0.8, rad + 0.8, dist);
+			float rim = (1.0 - smoothstep(0.5, 1.5, abs(dist - rad + 0.9))) * body;
+			float spot = 1.0 - smoothstep(rad * 0.22 - 0.6, rad * 0.22 + 0.6, length(q - vec2(-0.38, 0.38) * rad));
+			float low = smoothstep(0.1, -0.5, q.y / max(rad, 0.001));
+			acc = max(acc, vec4(body, rim * (1.0 - low), spot, rim * low) * fade);
+		}
+	}
+	return acc;
 }
 
 float segment(vec2 p, vec2 a, vec2 b) {
@@ -187,6 +247,11 @@ vec4 shade_liquid(vec2 d, float h, float s, float t) {
 	float surface = surface0 + surface_wave(s, w, t);
 	float arc = front_arc(s, surface);
 	float alpha = 1.0 - smoothstep(-0.8, 0.8, h - (surface + arc));
+	vec4 bubble = vec4(0.0);
+	if (boil > 0.0) {
+		bubble = boil_bubbles(s, h, surface, t);
+		alpha = max(alpha, bubble.x);
+	}
 	if (alpha <= 0.0) {
 		return vec4(0.0);
 	}
@@ -227,6 +292,10 @@ vec4 shade_liquid(vec2 d, float h, float s, float t) {
 	col = mix(col, vec3(1.0), rim * rim_light);
 	float side = smoothstep(0.8, 1.0, abs(s) / max(w, 1.0)) * (1.0 - smoothstep(0.0, 9.0, abs(h - surface)));
 	col = mix(col, vec3(1.0), side * meniscus_light);
+	col = mix(col, mix(col, vec3(1.0), boil_fill), bubble.x);
+	col = mix(col, mix(base, vec3(1.0), boil_rim_light), bubble.y);
+	col = mix(col, deep, bubble.w * boil_rim_shade);
+	col = mix(col, vec3(1.0), bubble.z * boil_spot);
 	return vec4(col, alpha);
 }
 

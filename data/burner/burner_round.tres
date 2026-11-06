@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BurnerConfig" format=3]
+
+[ext_resource type="Script" path="res://data/burner/burner_config.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+mouth_px = Vector2(191, 16)
+wick_px = Vector2(193, 202)
+flame_grow_sec = 0.25
+flame_fade_sec = 0.4
+flame_start = 0.55
+boil_from_temp = 30.0
+boil_full_temp = 95.0
+boil_glug_sec = 0.45
+boil_bump_px = 2.0
+steam_per_sec = 5.0
+steam_icon_sec = 1.4
+smoke_per_sec = 4.0
+smoke_jitter_px = 1.5
+smoke_camera_shake = 0.12
+smoke_shake_sec = 0.9
+max_shake = 0.6
+whistle_sec = 1.2
+receive_bump_px = 9.0

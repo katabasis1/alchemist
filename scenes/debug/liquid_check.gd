@@ -34,6 +34,8 @@ const SPEED_UP_PX: float = 6.0
 const BUMP_PX: float = 10.0
 const BUMP_WAIT: float = 1.0
 const BUMP_TOLERANCE: float = 0.15
+## Кипение больше 1 — set_boil зажимает его в 1 (S4.3).
+const BOIL_OVER: float = 1.5
 const NEAR: float = 0.000001
 ## Смеси колб «качание» и «рывки вбок».
 const SWING_MIX: Dictionary = {&"heat": 1.2, &"light": 1.4}
@@ -226,6 +228,11 @@ func _check_node() -> void:
 	await get_tree().create_timer(BUMP_WAIT).timeout
 	var expected: float = BUMP_PX * exp(-slosh.bump_decay * BUMP_WAIT)
 	_check("толчок затухает", absf(float(mat.get_shader_parameter(&"slosh_px")) - expected) < expected * BUMP_TOLERANCE)
+	probe.set_boil(BOIL_OVER)
+	_check("set_boil: кипение зажато в 0…1 и ушло в шейдер", probe.boil_level() == 1.0
+			and float(mat.get_shader_parameter(&"boil")) == 1.0)
+	probe.set_boil(0.0)
+	_check("set_boil(0): кипение выключено", float(mat.get_shader_parameter(&"boil")) == 0.0)
 
 
 ## Слив (S4.2): наклон по уровню (D22) и то, что нужно станции Отстойника от колбы.

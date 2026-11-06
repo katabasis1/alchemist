@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://components/thermometer/thermometer.gd" id="1_thermo"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_thermometer.png" id="2_tex"]
+[ext_resource type="Material" path="res://components/thermometer/thermometer_material.tres" id="3_mat"]
+
+[node name="Thermometer" type="Node2D" node_paths=PackedStringArray("body", "tube", "icons", "cap")]
+script = ExtResource("1_thermo")
+body = NodePath("Body")
+tube = NodePath("Body/Tube")
+icons = [NodePath("Body/Icons/Icon1"), NodePath("Body/Icons/Icon2"), NodePath("Body/Icons/Icon3"), NodePath("Body/Icons/Icon4"), NodePath("Body/Icons/Icon5")]
+cap = NodePath("Body/Cap")
+
+[node name="Body" type="Node2D" parent="."]
+
+[node name="Tube" type="Sprite2D" parent="Body"]
+material = ExtResource("3_mat")
+position = Vector2(0, -256)
+texture = ExtResource("2_tex")
+
+[node name="Icons" type="Node2D" parent="Body"]
+
+[node name="Icon1" type="Sprite2D" parent="Body/Icons"]
+visible = false
+
+[node name="Icon2" type="Sprite2D" parent="Body/Icons"]
+visible = false
+
+[node name="Icon3" type="Sprite2D" parent="Body/Icons"]
+visible = false
+
+[node name="Icon4" type="Sprite2D" parent="Body/Icons"]
+visible = false
+
+[node name="Icon5" type="Sprite2D" parent="Body/Icons"]
+visible = false
+
+[node name="Cap" type="Marker2D" parent="Body"]
+position = Vector2(0, -498)
