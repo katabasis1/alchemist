@@ -140,27 +140,41 @@ def flame_layer(strength: float, t: float, size: tuple, wick: tuple, scale: floa
     return fire_layer, glow
 
 
-def station(strength: float, t: float, mixture: dict | None, boil: float = 0.0) -> Image.Image:
-    """Горелка 0,75 + колба 0,8 в кольце (+ смесь, кипение boil) + пламя + передний край кольца — порядок слоёв станции."""
-    w, h = 400, 520
+STATION_W, STATION_H = 400, 520
+
+
+def layout(headroom: int = 0) -> dict:
+    """Где на холсте станции (STATION_W × STATION_H + headroom сверху) горелка и колба: левые верхние углы
+    картинок b0 (горелка) и f0 (колба). headroom — запас над горлом для пара (vapor_preview.py)."""
+    w, h = STATION_W, STATION_H + headroom
     ox, oy = w / 2, h - 10                            # начало станции — низ горелки
-    img = LP.background(w, h)
+    bw = round(384 * BURNER_SCALE)
+    b0 = (round(ox - bw / 2), round(oy - bw))
+    ring_y = b0[1] + RING[1] * BURNER_SCALE
+    bulb_bottom = ring_y + BULB_BELOW_RING
+    f0 = (round(ox - FLASK_BULB[0] * FLASK_SCALE), round(bulb_bottom - (FLASK_BULB[1] + FLASK_BULB_R) * FLASK_SCALE))
+    return dict(w=w, h=h, b0=b0, f0=f0)
+
+
+def station(strength: float, t: float, mixture: dict | None, boil: float = 0.0, headroom: int = 0,
+            bg: np.ndarray | None = None) -> Image.Image:
+    """Горелка 0,75 + колба 0,8 в кольце (+ смесь, кипение boil) + пламя + передний край кольца — порядок слоёв станции.
+    headroom — запас холста над горлом (см. layout), bg — свой фон (RGBA h × w), иначе светлый фон макетов."""
+    lay = layout(headroom)
+    w, h, b0, f0 = lay["w"], lay["h"], lay["b0"], lay["f0"]
+    img = LP.background(w, h) if bg is None else bg.copy()
     burner = Image.open(BURNER).convert("RGBA")
     bs = burner.resize((round(384 * BURNER_SCALE), round(384 * BURNER_SCALE)), Image.LANCZOS)
-    b0 = (round(ox - bs.width / 2), round(oy - bs.height))
     def put(src):
         layer = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         layer.alpha_composite(src[0], src[1])
         return np.asarray(layer).astype(float) / 255.0
     img = LP.over(img, put((bs, b0)))
-    ring_y = b0[1] + RING[1] * BURNER_SCALE
     glass = np.asarray(Image.open(FLASK).convert("RGBA")).astype(float) / 255.0
     u = LP.uniforms_for(mixture) if mixture else dict(LP.shader_defaults(), layer_count=0, surface_angle=0.0)
     u["boil"] = boil
     flask = Image.fromarray((LP.fragment(u, glass, t) * 255).astype(np.uint8), "RGBA")
     fs = flask.resize((round(384 * FLASK_SCALE), round(512 * FLASK_SCALE)), Image.LANCZOS)
-    bulb_bottom = ring_y + BULB_BELOW_RING
-    f0 = (round(ox - FLASK_BULB[0] * FLASK_SCALE), round(bulb_bottom - (FLASK_BULB[1] + FLASK_BULB_R) * FLASK_SCALE))
     img = LP.over(img, put((fs, f0)))
     wick = (b0[0] + WICK[0] * BURNER_SCALE, b0[1] + WICK[1] * BURNER_SCALE)
     fire, glow = flame_layer(strength, t, (w, h), wick, BURNER_SCALE)

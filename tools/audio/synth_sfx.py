@@ -207,6 +207,95 @@ def clean_cut() -> np.ndarray:
     return _norm(_fade(out, 0.002, 0.06), -11.0)
 
 
+def flame_ignite() -> np.ndarray:
+    """«Фух» розжига (S4.3): мягкий выдох шума, полоса раскрывается вверх, под ним тёплый низкий гул огня."""
+    rng = np.random.default_rng(41)
+    t = _t(0.45)
+    noise = rng.standard_normal(t.size)
+    lo = _band(noise, 180.0, 900.0) * np.minimum(t / 0.04, 1.0) * np.exp(-t / 0.18)
+    hi = _band(noise, 1200.0, 4500.0) * np.exp(-((t - 0.05) / 0.05) ** 2) * 0.6
+    rumble = _band(rng.standard_normal(t.size), 110.0, 280.0) * np.minimum(t / 0.06, 1.0) * np.exp(-t / 0.25) * 1.5
+    return _norm(_fade(lo + hi + rumble, 0.004, 0.08), -11.0)
+
+
+def flame_crackle(seed: int) -> np.ndarray:
+    """Треск огня (S4.3): 2–4 тихих сухих щелчка разной яркости поверх ровного тёплого шума пламени."""
+    rng = np.random.default_rng(seed)
+    t = _t(0.18)
+    out = _band(rng.standard_normal(t.size), 250.0, 1400.0) * 0.2 * np.sin(np.pi * t / t[-1])
+    for _ in range(int(rng.integers(2, 5))):
+        start = int(rng.uniform(0.0, 0.12) * RATE)
+        n = int(rng.uniform(0.003, 0.009) * RATE)
+        click = rng.standard_normal(n) * np.exp(-np.arange(n) / (n * 0.3)) * rng.uniform(0.4, 1.0)
+        end = min(start + n, out.size)
+        out[start:end] += _band(click, 1500.0, 7000.0)[: end - start]
+    return _norm(_fade(out, 0.002, 0.03), -17.0)
+
+
+def boil(seed: int) -> np.ndarray:
+    """«Буль» кипения (S4.3): 2–3 пузыря ниже и круглее «буль» струи, последний лопается щелчком."""
+    rng = np.random.default_rng(seed)
+    t = _t(0.28)
+    base = 210.0 * (1.0 + rng.uniform(-0.15, 0.15))
+    out = np.zeros_like(t)
+    at = 0.0
+    for i in range(int(rng.integers(2, 4))):
+        out += (1.0 - 0.25 * i) * _bubble(t, at, base * (1.0 + 0.3 * i), 0.05, 7.0)
+        at += rng.uniform(0.04, 0.07)
+    pop_at = int(min(at + 0.02, 0.24) * RATE)
+    n = int(0.004 * RATE)
+    out[pop_at:pop_at + n] += _band(rng.standard_normal(n), 2000.0, 6000.0) * 0.35
+    return _norm(_fade(out, 0.001, 0.04), -14.0)
+
+
+def whistle() -> np.ndarray:
+    """Свист на пределе (S4.3): чайник — тон взлетает к ~2,1 кГц и дрожит, с придыханием пара; не резкий."""
+    rng = np.random.default_rng(57)
+    t = _t(0.85)
+    env = np.minimum(t / 0.12, 1.0) * np.clip((t[-1] - t) / 0.25, 0.0, 1.0)
+    freq = 1500.0 + 600.0 * (1.0 - np.exp(-t / 0.08)) + 25.0 * np.sin(2 * np.pi * 6.5 * t)
+    phase = 2 * np.pi * np.cumsum(freq) / RATE
+    tone = np.sin(phase) + 0.18 * np.sin(2 * phase)
+    breath = _band(rng.standard_normal(t.size), 1800.0, 3200.0) * 0.6
+    return _norm(_fade((0.7 * tone + breath) * env, 0.005, 0.06), -15.0)
+
+
+def hiss() -> np.ndarray:
+    """Шипение — горит Жизнь (S4.3): резкое «пш-ш», шум 3–8 кГц затихает, внутри тихо потрескивают капли."""
+    rng = np.random.default_rng(66)
+    t = _t(0.6)
+    out = _band(rng.standard_normal(t.size), 3000.0, 8000.0) * np.minimum(t / 0.015, 1.0) * np.exp(-t / 0.22)
+    for _ in range(9):
+        start = int(rng.uniform(0.0, 0.45) * RATE)
+        n = int(0.003 * RATE)
+        end = min(start + n, out.size)
+        out[start:end] += _band(rng.standard_normal(n), 2000.0, 6000.0)[: end - start] * rng.uniform(0.15, 0.35)
+    return _norm(_fade(out, 0.002, 0.08), -15.0)
+
+
+def steam_pop() -> np.ndarray:
+    """«Пок» — свойство ушло с паром (S4.3): мультяшный хлопок пузыря, тон падает 900 → 420 Гц, + щелчок."""
+    rng = np.random.default_rng(71)
+    t = _t(0.16)
+    freq = 420.0 + 480.0 * np.exp(-t / 0.025)
+    tone = np.sin(2 * np.pi * np.cumsum(freq) / RATE) * np.exp(-t / 0.045)
+    n = int(0.003 * RATE)
+    tone[:n] += _band(rng.standard_normal(n), 1500.0, 6000.0) * 0.8
+    return _norm(_fade(tone, 0.0005, 0.03), -12.0)
+
+
+def steam_done() -> np.ndarray:
+    """«Готово» — всё летучее ушло (S4.3): тёплый деревянный перезвон, две ноты вниз (соль — до), мягче «идеально»."""
+    t = _t(0.7)
+    out = np.zeros_like(t)
+    for delay, base in ((0.0, 784.0), (0.12, 523.25)):
+        tt = np.clip(t - delay, 0.0, None)
+        on = (t >= delay).astype(float)
+        for ratio, amp, decay in ((1.0, 1.0, 0.2), (3.0, 0.2, 0.05), (4.2, 0.08, 0.03)):
+            out += on * amp * np.sin(2 * np.pi * base * ratio * tt) * np.exp(-tt / decay)
+    return _norm(_fade(out, 0.003, 0.06), -12.0)
+
+
 SOUNDS = {
     "sfx_grind_crunch_1.ogg": lambda: crunch(101),
     "sfx_grind_crunch_2.ogg": lambda: crunch(202),
@@ -228,6 +317,17 @@ SOUNDS = {
     "sfx_glug_3.ogg": lambda: glug(33),
     "sfx_settle_bubble.ogg": settle_bubble,
     "sfx_clean_cut.ogg": clean_cut,
+    "sfx_flame_ignite.ogg": flame_ignite,
+    "sfx_flame_crackle_1.ogg": lambda: flame_crackle(81),
+    "sfx_flame_crackle_2.ogg": lambda: flame_crackle(82),
+    "sfx_flame_crackle_3.ogg": lambda: flame_crackle(83),
+    "sfx_boil_1.ogg": lambda: boil(91),
+    "sfx_boil_2.ogg": lambda: boil(92),
+    "sfx_boil_3.ogg": lambda: boil(93),
+    "sfx_whistle.ogg": whistle,
+    "sfx_hiss.ogg": hiss,
+    "sfx_steam_pop.ogg": steam_pop,
+    "sfx_steam_done.ogg": steam_done,
 }
 
 

@@ -20,6 +20,8 @@ extends Resource
 ## Сила пламени (0…1) в начале нагрева. К EconomyConfig.max_temp она дорастает до 1: языки выше и шире.
 ## На пределе огонь больше не растёт (STATIONS §1.3).
 @export_range(0.0, 1.0) var flame_start: float = 0.55
+## Пока огонь горит, раз в столько секунд — треск (SfxComponent сам перебирает варианты и тон).
+@export var crackle_sec: float = 0.55
 
 @export_group("Кипение")
 ## С какой T в колбе появляются пузыри и при какой кипение в полную силу (кипение 0…1 в шейдере жидкости).
@@ -42,9 +44,16 @@ extends Resource
 @export var smoke_per_sec: float = 4.0
 ## Колба мелко дрожит, пока горит Жизнь: размах, px станции.
 @export var smoke_jitter_px: float = 1.5
+## Частота дрожи колбы, Гц.
+@export var smoke_jitter_hz: float = 12.0
 ## Лёгкая тряска камеры, пока горит Жизнь: сила для CameraShake (0…1) и пауза между толчками, с.
 @export_range(0.0, 1.0) var smoke_camera_shake: float = 0.12
 @export var smoke_shake_sec: float = 0.9
+
+@export_group("Термометр")
+## Цвет опасной зоны (свойство там не уходит паром, а сгорает): красно-бурый, как на ref_burner_overheat_smoke.
+## Остальные зоны — цветом свойства, которое в них начинает уходить.
+@export var danger_color: Color = Color(0.62, 0.22, 0.13)
 
 @export_group("Предел")
 ## На EconomyConfig.max_temp термометр трясётся с такой силой (1 — как у шкалы помола при «перетёр»),

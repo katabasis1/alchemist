@@ -1,0 +1,149 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/stations/burner/burner.gd" id="1_burner"]
+[ext_resource type="Resource" path="res://data/economy/economy_config.tres" id="2_economy"]
+[ext_resource type="Resource" path="res://data/catalog.tres" id="3_catalog"]
+[ext_resource type="Resource" path="res://data/burner/burner_round.tres" id="4_config"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_burner.png" id="5_burner"]
+[ext_resource type="Texture2D" path="res://assets/props/prop_burner_front.png" id="6_front"]
+[ext_resource type="PackedScene" path="res://components/liquid/liquid.tscn" id="7_liquid"]
+[ext_resource type="PackedScene" path="res://components/vapor/vapor.tscn" id="8_vapor"]
+[ext_resource type="PackedScene" path="res://components/flame/flame.tscn" id="9_flame"]
+[ext_resource type="PackedScene" path="res://components/thermometer/thermometer.tscn" id="10_thermo"]
+[ext_resource type="PackedScene" path="res://components/hit_area/hit_area.tscn" id="11_hit"]
+[ext_resource type="PackedScene" path="res://scenes/stations/station_trash.tscn" id="12_trash"]
+[ext_resource type="PackedScene" path="res://scenes/fx/fx_dust.tscn" id="13_puff"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state_machine.tscn" id="14_sm"]
+[ext_resource type="PackedScene" path="res://components/state_machine/state.tscn" id="15_state"]
+[ext_resource type="PackedScene" path="res://components/juice_punch/juice_punch.tscn" id="16_punch"]
+[ext_resource type="PackedScene" path="res://components/sfx_component/sfx_component.tscn" id="17_sfx"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_accept.ogg" id="18_accept"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_reject.ogg" id="19_reject"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_flame_ignite.ogg" id="20_ignite"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_flame_crackle_1.ogg" id="21_crackle1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_flame_crackle_2.ogg" id="22_crackle2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_flame_crackle_3.ogg" id="23_crackle3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_boil_1.ogg" id="24_boil1"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_boil_2.ogg" id="25_boil2"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_boil_3.ogg" id="26_boil3"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_whistle.ogg" id="27_whistle"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_hiss.ogg" id="28_hiss"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_steam_pop.ogg" id="29_pop"]
+[ext_resource type="AudioStream" path="res://audio/sfx/sfx_steam_done.ogg" id="30_done"]
+
+[node name="Burner" type="Node2D" node_paths=PackedStringArray("state_machine", "flask", "liquid", "flame", "vapor", "thermometer", "heat_area", "trash", "punch", "whistle_puff", "sfx_receive", "sfx_reject", "sfx_ignite", "sfx_crackle", "sfx_boil", "sfx_whistle", "sfx_hiss", "sfx_pop", "sfx_done")]
+script = ExtResource("1_burner")
+economy = ExtResource("2_economy")
+catalog = ExtResource("3_catalog")
+config = ExtResource("4_config")
+state_machine = NodePath("StateMachine")
+flask = NodePath("Flask")
+liquid = NodePath("Flask/Body/Liquid")
+flame = NodePath("Flame")
+vapor = NodePath("Flask/Body/Vapor")
+thermometer = NodePath("Thermometer")
+heat_area = NodePath("HeatArea")
+trash = NodePath("Trash")
+punch = NodePath("JuicePunch")
+whistle_puff = NodePath("WhistlePuff")
+sfx_receive = NodePath("SfxReceive")
+sfx_reject = NodePath("SfxReject")
+sfx_ignite = NodePath("SfxIgnite")
+sfx_crackle = NodePath("SfxCrackle")
+sfx_boil = NodePath("SfxBoil")
+sfx_whistle = NodePath("SfxWhistle")
+sfx_hiss = NodePath("SfxHiss")
+sfx_pop = NodePath("SfxPop")
+sfx_done = NodePath("SfxDone")
+
+[node name="Thermometer" parent="." instance=ExtResource("10_thermo")]
+position = Vector2(-215, 0)
+scale = Vector2(0.9, 0.9)
+
+[node name="BurnerBack" type="Sprite2D" parent="."]
+position = Vector2(0, -144)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("5_burner")
+
+[node name="Flask" type="Node2D" parent="."]
+position = Vector2(0, -255)
+
+[node name="Body" type="Node2D" parent="Flask"]
+
+[node name="Liquid" parent="Flask/Body" instance=ExtResource("7_liquid")]
+position = Vector2(2.4, -79.2)
+scale = Vector2(0.8, 0.8)
+
+[node name="Vapor" parent="Flask/Body" instance=ExtResource("8_vapor")]
+position = Vector2(1.6, -271.2)
+
+[node name="Flame" parent="." instance=ExtResource("9_flame")]
+position = Vector2(0.75, -136.5)
+scale = Vector2(0.75, 0.75)
+
+[node name="BurnerFront" type="Sprite2D" parent="."]
+position = Vector2(0, -144)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("6_front")
+
+[node name="Trash" parent="." instance=ExtResource("12_trash")]
+position = Vector2(190, -46)
+
+[node name="HeatArea" parent="." instance=ExtResource("11_hit")]
+offset_left = -150.0
+offset_top = -545.0
+offset_right = 150.0
+offset_bottom = 0.0
+
+[node name="WhistlePuff" parent="." instance=ExtResource("13_puff")]
+
+[node name="StateMachine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("14_sm")]
+initial_state = NodePath("Empty")
+
+[node name="Empty" parent="StateMachine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Idle"])
+
+[node name="Idle" parent="StateMachine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Heating", &"Empty"])
+
+[node name="Heating" parent="StateMachine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Cooling", &"Empty"])
+
+[node name="Cooling" parent="StateMachine" instance=ExtResource("15_state")]
+next_states = Array[StringName]([&"Heating", &"Idle", &"Empty"])
+
+[node name="JuicePunch" parent="." node_paths=PackedStringArray("target") instance=ExtResource("16_punch")]
+target = NodePath("../Flask/Body")
+
+[node name="SfxReceive" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("18_accept")])
+
+[node name="SfxReject" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("19_reject")])
+
+[node name="SfxIgnite" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("20_ignite")])
+
+[node name="SfxCrackle" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("21_crackle1"), ExtResource("22_crackle2"), ExtResource("23_crackle3")])
+pitch_jitter = 0.12
+min_interval_sec = 0.1
+
+[node name="SfxBoil" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("24_boil1"), ExtResource("25_boil2"), ExtResource("26_boil3")])
+pitch_jitter = 0.1
+min_interval_sec = 0.08
+
+[node name="SfxWhistle" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("27_whistle")])
+
+[node name="SfxHiss" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("28_hiss")])
+pitch_jitter = 0.06
+
+[node name="SfxPop" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("29_pop")])
+pitch_jitter = 0.08
+
+[node name="SfxDone" parent="." instance=ExtResource("17_sfx")]
+streams = Array[AudioStream]([ExtResource("30_done")])

@@ -18,6 +18,7 @@
 | fx_glow | assets/fx/fx_glow.png | 64×64 | center | — | proc | — | Мягкий ореол: светлячки над порошком, отсветы |
 | fx_puff | assets/fx/fx_puff.png | 64×64 | center | — | proc | — | Облачко пыли (перетёр, бросок в чашу, «пфф» на ¼ круга по пыли) |
 | fx_flakes | assets/fx/fx_flakes.png | 128×32 | center | — | proc | — | Обломки трав, 4 кадра 32×32 (`particles_anim_h_frames = 4`); заливка белая, цвет — смесь в ступке |
+| fx_smoke | assets/fx/fx_smoke.png | 96×96 | center | — | proc | — | Клуб бурого дыма горящей Жизни над Горелкой (S4.3, `Vapor`): пухлые доли, светлый верх, тонкий контур; заливка белая, цвет — частица |
 | prop_shelf_slot | assets/props/prop_shelf_slot.png | 256×192 | bottom | #FF00FF | temp | P-PROP-04 | Ячейка полки под один ингредиент; в сетке и в ленте одна и та же. В GDD §14 — «prop_shelf» |
 | prop_flask_round | assets/props/prop_flask_round.png | 384×512 | bottom | #FF00FF (global) | temp | P-PROP-03 | Стекло прозрачное, жидкость — шейдер |
 | prop_receiver_beaker | assets/props/prop_receiver_beaker.png | 320×384 | bottom | #FF00FF (global) | temp | P-PROP-06 | Приёмник Отстойника (S4.2). Стекло прозрачное, жидкость — шейдер liquid.gdshader со своей полостью (`receiver_liquid_material.tres`): после замены картинки сверить полость на макете. В GDD §14 — «prop_receiver_beaker»; колба-отстойник = `prop_flask_round` (отдельный `prop_settling_flask` не нужен) |

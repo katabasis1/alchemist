@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""fx_textures.py — процедурные текстуры частиц (S2.3a): искра-звезда, мягкий ореол, облачко пыли, обломки трав.
+"""fx_textures.py — процедурные текстуры частиц (S2.3a): искра-звезда, мягкий ореол, облачко пыли, обломки трав;
+клуб дыма (S4.3).
 
 Все текстуры белые (цвет даёт частица: CPUParticles2D.color / color_ramp), фон прозрачный, straight alpha.
 Результат детерминирован (фиксированное зерно), поэтому файлы можно пересобрать в любой момент:
@@ -141,12 +142,45 @@ def flakes(frame: int = 32, frames: int = 4) -> None:
     sheet.save(OUT / "fx_flakes.png", optimize=True)
 
 
+def smoke(n: int = 96) -> None:
+    """Клуб дыма (S4.3, дым Жизни над Горелкой, ref_burner_overheat_smoke): пухлое округлое облако из долей.
+    Доли рисуются сверху вниз (верхние — дальние): у каждой светлый верх, темнее низ и светлый блик по верхней кромке,
+    на дальней доле под кромкой ближней — мягкая тень. По краю облака — тонкий тёмный контур.
+    После умножения на бурый цвет частицы: светлее сверху и по краю долей, темнее снизу."""
+    big = n * SS
+    c = (np.arange(big) + 0.5) / big * 2.0 - 1.0
+    x, y = np.meshgrid(c, c)
+    lobes = [(-0.3, -0.42, 0.3), (0.16, -0.5, 0.36), (0.5, -0.12, 0.34), (-0.52, -0.04, 0.34), (0.0, -0.1, 0.46),
+             (-0.36, 0.36, 0.38), (0.36, 0.36, 0.4), (0.0, 0.48, 0.36)]
+    px = 2.0 / big
+    rgb = np.zeros_like(x)
+    a = np.zeros_like(x)
+    for bx, by, br in sorted(lobes, key=lambda b: b[1]):
+        d = np.sqrt((x - bx) ** 2 + (y - by) ** 2)
+        m = np.clip((br - d) / (1.5 * px), 0, 1)
+        up = np.clip(-(y - by) / br, -1, 1)
+        shadow = np.clip(1 - (d - br) / (br * 0.22), 0, 1) * (d > br) * np.clip(up * 1.5, 0, 1)
+        rgb = rgb * (1 - 0.16 * shadow)
+        shade = 0.8 + 0.16 * np.clip(up * 1.3, 0, 1) - 0.14 * np.clip(-up, 0, 1)
+        rim = np.clip(1 - np.abs(d - br * 0.88) / (br * 0.08), 0, 1) * np.clip(up * 1.8 - 0.3, 0, 1)
+        shade = np.minimum(shade + 0.14 * rim, 1.0)
+        rgb = rgb * (1 - m) + shade * m
+        a = np.maximum(a, m)
+    union = Image.fromarray((a * 255).astype(np.uint8), "L")
+    inner = np.asarray(union.filter(ImageFilter.MinFilter(int(1.6 * SS) * 2 + 1)), np.float32) / 255.0
+    ring = np.clip(a - inner, 0, 1)
+    rgb = rgb * (1 - 0.32 * ring)
+    img = np.dstack([rgb, rgb, rgb, a])
+    out = Image.fromarray((np.clip(img, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").resize((n, n), Image.LANCZOS)
+    out.save(OUT / "fx_smoke.png", optimize=True)
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     spark()
     glow()
     puff()
     flakes()
+    smoke()
     print("fx:", ", ".join(sorted(p.name for p in OUT.glob("*.png"))))
 
 

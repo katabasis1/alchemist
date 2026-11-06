@@ -27,6 +27,13 @@
 | `audio/sfx/sfx_glug_1.ogg` … `_3.ogg` | 0,22 с | «Буль» струи Отстойника: ритм — `SettlerConfig.glug_sec_full` на полной скорости, реже при слабой струе; при удержании во время отстаивания — одиночный «буль» без слива (3 варианта, без повтора подряд) | `Settler` (SfxGlug) | temp |
 | `audio/sfx/sfx_settle_bubble.ogg` | 1,1 с | Смесь отстаивается: бульканье, затихающее к концу (под `settle_time` 1,2 с) | `Settler` (SfxSettle) | temp |
 | `audio/sfx/sfx_clean_cut.ogg` | 0,6 с | «Дзынь» чистого среза: примесь ≤ 5 %, вместе с искоркой на поверхности | `Settler` (SfxClean) ← `cut_made(…, clean = true)` | temp |
+| `audio/sfx/sfx_flame_ignite.ogg` | 0,45 с | «Фух» розжига: нажали на горелку, огонь вспыхнул | `Burner` (SfxIgnite) | temp |
+| `audio/sfx/sfx_flame_crackle_1.ogg` … `_3.ogg` | 0,18 с | Тихий треск огня, пока держат: раз в `BurnerConfig.crackle_sec` (0,55 с), 3 варианта, разброс высоты ±12 % | `Burner` (SfxCrackle) | temp |
+| `audio/sfx/sfx_boil_1.ogg` … `_3.ogg` | 0,28 с | «Буль» кипения: 2–3 пузыря ниже «буль» струи, последний лопается; ритм `boil_glug_sec / кипение` — чем горячее, тем чаще | `Burner` (SfxBoil) | temp |
+| `audio/sfx/sfx_whistle.ogg` | 0,85 с | Свист на пределе (100°): тон чайника ~2,1 кГц с дрожью, раз в `whistle_sec` (1,2 с), вместе с облачком из колпачка термометра | `Burner` (SfxWhistle) | temp |
+| `audio/sfx/sfx_hiss.ogg` | 0,6 с | «Пш-ш» — горит Жизнь (≥ 90°): шипение с потрескиванием, раз в `smoke_shake_sec` (0,9 с), вместе с толчком камеры | `Burner` (SfxHiss) | temp |
+| `audio/sfx/sfx_steam_pop.ogg` | 0,16 с | «Пок» — свойство ушло с паром целиком: иконка выскакивает из горла и лопается | `Burner` (SfxPop) ← `Vapor.pop` | temp |
+| `audio/sfx/sfx_steam_done.ogg` | 0,7 с | «Готово» — всё летучее при этой температуре ушло, пар стих: две тёплые ноты вниз (соль — до) | `Burner` (SfxDone) | temp |
 
 ## Требования к финальным звукам
 
